@@ -25,9 +25,9 @@ export default function Topbar() {
         {/* Left: Brand */}
         <div className="flex items-center gap-2 min-w-[180px]">
           <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-sm">
-            <span className="text-sm font-bold">CC</span>
+            <span className="text-sm font-bold">C</span>
           </div>
-          <span className="hidden sm:block font-medium tracking-wide">Creator Connect</span>
+          <span className="hidden sm:block font-medium tracking-wide">Confique</span>
         </div>
 
         {/* Center: Search */}

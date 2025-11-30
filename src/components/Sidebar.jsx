@@ -26,7 +26,8 @@ export default function Sidebar() {
   const [openEvents, setOpenEvents] = useState(false);
 
   return (
-    <aside className="hidden lg:block w-[260px] shrink-0 border-r border-[#262626] bg-[#0d0d0d] overflow-y-auto">
+    // ✨ ADDED: custom-scrollbar class for a sleek dark scrollbar
+    <aside className="hidden lg:block w-[260px] shrink-0 border-r border-[#262626] bg-[#0d0d0d] overflow-y-auto custom-scrollbar">
       <div className="mx-auto max-w-[240px] py-6">
         <nav className="space-y-1">
           {nav.map((n) => (

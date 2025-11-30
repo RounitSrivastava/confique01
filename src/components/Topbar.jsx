@@ -4,6 +4,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Bell, ChevronDown, LogOut, Settings, User, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 
 const notifications = [
   { id: 1, title: "New comment on your post", time: "2m ago" },
@@ -14,6 +16,8 @@ const notifications = [
 export default function Topbar() {
   const [openBell, setOpenBell] = useState(false);
   const [openUser, setOpenUser] = useState(false);
+  const router = useRouter();
+
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#262626] bg-[#0d0d0d]/80 backdrop-blur supports-[backdrop-filter]:bg-[#0d0d0d]/60">
@@ -99,9 +103,13 @@ export default function Topbar() {
                 className="absolute right-0 mt-2 w-56 rounded-xl border border-[#262626] bg-[#1a1a1a] shadow-sm overflow-hidden"
                 onMouseLeave={() => setOpenUser(false)}
               >
-                <button className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-[#111] transition">
-                  <User className="h-4 w-4 text-gray-300" /> Profile
-                </button>
+                <button
+  onClick={() => router.push("/profile/details")}
+  className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-[#111] transition"
+>
+  <User className="h-4 w-4 text-gray-300" /> Profile
+</button>
+
                 <button className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-[#111] transition">
                   <Settings className="h-4 w-4 text-gray-300" /> Settings
                 </button>

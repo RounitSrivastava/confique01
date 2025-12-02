@@ -104,11 +104,11 @@ export default function Topbar() {
                 onMouseLeave={() => setOpenUser(false)}
               >
                 <button
-  onClick={() => router.push("/profile/details")}
-  className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-[#111] transition"
->
-  <User className="h-4 w-4 text-gray-300" /> Profile
-</button>
+                  onClick={() => router.push("/profile/details")}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-[#111] transition"
+                >
+                  <User className="h-4 w-4 text-gray-300" /> Profile
+                </button>
 
                 <button className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-[#111] transition">
                   <Settings className="h-4 w-4 text-gray-300" /> Settings

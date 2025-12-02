@@ -2,6 +2,7 @@
 "use client";
 
 import CalendarWidget from "@/components/CalendarWidget";
+import { usePathname } from "next/navigation"; // Import usePathname
 
 const popularPosts = [
   { id: "p1", title: "Top 10 Lighting Tips for Studio Shoots", stats: "8.9k views" },
@@ -15,6 +16,13 @@ const popularEvents = [
 ];
 
 export default function RightSidebar() {
+  const pathname = usePathname(); // Call usePathname hook
+
+  // 🎯 New Check: Hide the component if the path is /events OR starts with /profile
+  if (pathname === "/events" || pathname.startsWith("/profile")) {
+    return null;
+  }
+
   return (
     <aside className="hidden xl:flex w-[360px] shrink-0 border-l border-[#262626] bg-[#0d0d0d] overflow-y-auto">
       <div className="mx-auto w-full max-w-[340px] p-4">

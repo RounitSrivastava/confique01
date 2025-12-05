@@ -1,177 +1,378 @@
-import React from 'react';
-import { Heart, MessageCircle, MoreVertical, Edit } from 'lucide-react';
+'use client';
 
-export default function ProfilePage() {
-  const posts = [
+import React, { useState } from 'react';
+import { Calendar, Heart, MessageSquare, Users, Edit2, Plus, MapPin, Clock, Share2, X } from 'lucide-react';
+
+export default function TechProfilePage() {
+  const [activeTab, setActiveTab] = useState('posts');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  const [profile, setProfile] = useState({
+    name: 'Alex Doe',
+    bio: 'Digital creator & coffee enthusiast. Exploring the world one cup at a time. ☕',
+    location: 'San Francisco, CA',
+    website: 'alexdoe.dev',
+    totalPosts: 128,
+    totalLikes: 1200,
+    totalComments: 345,
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop'
+  });
+
+  const [editForm, setEditForm] = useState(profile);
+
+  const [posts, setPosts] = useState([
     {
       id: 1,
-      title: 'The Power of Small Wins in a Startup Journey',
-      excerpt: 'In a startup, big milestones like funding rounds or massive user growth often grab the spotlight, but what truly keeps a team movin...',
-      date: '22/8/2025 at 06:40 pm',
-      likes: 5,
-      comments: 0
+      type: 'event',
+      title: 'Innovate & Create: Our Annual Hackathon',
+      image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=400&h=300&fit=crop',
+      date: 'Dec 15, 2025',
+      time: '9:00 AM - 6:00 PM',
+      location: 'Tech Hub, Downtown',
+      registrations: 87,
+      likes: 234,
+      comments: 45,
+      isRegistered: false
     },
     {
       id: 2,
-      title: 'Building Resilient Tech Teams',
-      excerpt: 'Creating strong technical teams requires more than just hiring talented developers. It requires fostering a culture of continuous learning...',
-      date: '20/8/2025 at 03:15 pm',
-      likes: 2,
-      comments: 0
+      type: 'event',
+      title: 'College Career Fair: Meet Top Companies',
+      image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop',
+      date: 'Dec 20, 2025',
+      time: '10:00 AM - 4:00 PM',
+      location: 'Convention Center',
+      registrations: 156,
+      likes: 189,
+      comments: 32,
+      isRegistered: true
+    },
+    {
+      id: 3,
+      type: 'event',
+      title: 'Guest Lecture: The Future of AI',
+      image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=300&fit=crop',
+      date: 'Dec 10, 2025',
+      time: '2:00 PM - 4:00 PM',
+      location: 'Virtual Event',
+      registrations: 312,
+      likes: 421,
+      comments: 78,
+      isRegistered: true
     }
-  ];
+  ]);
+
+  const handleRegister = (postId) => {
+    setPosts(posts.map(post => 
+      post.id === postId 
+        ? { 
+            ...post, 
+            isRegistered: !post.isRegistered,
+            registrations: post.isRegistered ? post.registrations - 1 : post.registrations + 1
+          }
+        : post
+    ));
+  };
+
+  const handleLike = (postId) => {
+    setPosts(posts.map(post => 
+      post.id === postId 
+        ? { ...post, likes: post.likes + 1 }
+        : post
+    ));
+  };
+
+  const openEditModal = () => {
+    setEditForm(profile);
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleSaveProfile = () => {
+    setProfile(editForm);
+    setIsEditModalOpen(false);
+  };
+
+  const filteredPosts = activeTab === 'registered' 
+    ? posts.filter(post => post.isRegistered)
+    : posts;
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Profile Header Section */}
-        <div className="bg-[#0f0f0f] rounded-2xl p-8 mb-6 relative overflow-hidden">
-          {/* Subtle gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/5 via-transparent to-pink-900/5"></div>
-          
-          <div className="relative flex flex-col md:flex-row gap-8">
-            {/* Left: Profile Picture and Info */}
-            <div className="flex flex-col items-center md:items-start gap-4">
-              <div className="relative">
-                <div className="w-40 h-40 rounded-full bg-gradient-to-br linear-gradient(to right, #7190fd, #9c77fe) flex items-center justify-center shadow-lg shadow-purple-900/50"></div>
-                <div className="absolute bottom-2 right-2 group/edit">
-                  <button className="bg-white/90 text-black rounded-full p-2 hover:bg-white transition-all shadow-lg">
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover/edit:opacity-100 transition-opacity pointer-events-none">
-                    <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-xl">
-                      Edit your profile
-                      <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                    </div>
-                  </div>
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Profile Header */}
+        <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-8 mb-6">
+          <div className="flex flex-col md:flex-row gap-6 items-start">
+            {/* Avatar */}
+            <div className="relative">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-1">
+                <img 
+                  src={profile.avatar}
+                  alt="Profile" 
+                  className="w-full h-full rounded-full object-cover border-4 border-slate-800"
+                />
               </div>
-              <div className="text-center md:text-left">
-                <h1 className="text-3xl font-bold mb-1">vaidehi sharma</h1>
-                <p className="text-gray-400 text-sm">vaidehisharma1913@gmail.com</p>
+              <div className="relative group">
+                <button 
+                  onClick={openEditModal}
+                  className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full hover:bg-blue-700 transition-colors"
+                >
+                  <Edit2 className="w-4 h-4 text-white" />
+                </button>
+                <div className="absolute bottom-12 right-0 bg-slate-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Edit Profile
+                  <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-slate-900"></div>
+                </div>
               </div>
             </div>
 
-            {/* Right: Stats Grid */}
-            <div className="flex-1 flex items-center">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-purple-600 mb-1">2</div>
-                  <div className="text-gray-400 text-sm tracking-wide">POSTS</div>
+            {/* Profile Info */}
+            <div className="flex-1">
+              <div className="mb-3">
+                <h2 className="text-3xl font-bold text-white mb-2">{profile.name}</h2>
+                <p className="text-slate-300 text-lg mb-3">{profile.bio}</p>
+                <div className="flex flex-wrap gap-4 text-slate-400 text-sm">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    <span>{profile.location}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span>🌐</span>
+                    <a href="#" className="text-blue-400 hover:text-blue-300">{profile.website}</a>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-purple-600 mb-1">7</div>
-                  <div className="text-gray-400 text-sm tracking-wide">LIKES</div>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4 mt-6">
+                <div className="bg-slate-700/30 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-white mb-1">{profile.totalPosts}</div>
+                  <div className="text-slate-400 text-sm">Posts</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-pink-400 to-pink-600 mb-1">0</div>
-                  <div className="text-gray-400 text-sm tracking-wide">COMMENTS</div>
+                <div className="bg-slate-700/30 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-white mb-1">{profile.totalLikes.toLocaleString()}</div>
+                  <div className="text-slate-400 text-sm">Likes</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-pink-600 mb-1">0</div>
-                  <div className="text-gray-400 text-sm tracking-wide">REGISTRATIONS</div>
+                <div className="bg-slate-700/30 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-white mb-1">{profile.totalComments}</div>
+                  <div className="text-slate-400 text-sm">Comments</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Posts Section */}
-          <div className="lg:col-span-2">
-            <h2 className="text-2xl font-bold mb-6">Your Posts</h2>
-            
-            <div className="space-y-4">
-              {posts.map((post) => (
-                <div key={post.id} className="bg-[#0f0f0f] rounded-2xl p-6 hover:bg-[#1a1a1a] transition-all duration-300 group">
-                  {/* Post Header */}
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex-shrink-0"></div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold text-white">vaidehi sharma</h3>
-                          <p className="text-xs text-gray-500">{post.date}</p>
+        {/* Action Buttons */}
+        <div className="flex gap-3 mb-6">
+          <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+            <Plus className="w-5 h-5" />
+            Create Event
+          </button>
+          <button className="px-6 bg-slate-700/50 hover:bg-slate-700 text-white py-3 rounded-xl font-semibold transition-colors flex items-center gap-2">
+            <Share2 className="w-5 h-5" />
+            Share Profile
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 overflow-hidden">
+          <div className="flex border-b border-slate-700/50">
+            <button 
+              onClick={() => setActiveTab('posts')}
+              className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
+                activeTab === 'posts' ? 'text-blue-400' : 'text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              All Posts
+              {activeTab === 'posts' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
+              )}
+            </button>
+            <button 
+              onClick={() => setActiveTab('registered')}
+              className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
+                activeTab === 'registered' ? 'text-blue-400' : 'text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              Registered Events
+              {activeTab === 'registered' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
+              )}
+            </button>
+          </div>
+
+          {/* Posts List */}
+          <div className="p-6 space-y-4">
+            {filteredPosts.length > 0 ? (
+              filteredPosts.map(post => (
+                <div key={post.id} className="bg-slate-700/30 rounded-xl overflow-hidden hover:bg-slate-700/40 transition-all border border-slate-600/30">
+                  <div className="flex flex-col md:flex-row">
+                    {/* Event Image */}
+                    <div className="md:w-48 h-48 md:h-auto relative overflow-hidden">
+                      <img 
+                        src={post.image} 
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
+                      {post.isRegistered && (
+                        <div className="absolute top-3 right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                          Registered
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-bold px-4 py-1.5 rounded-full whitespace-nowrap">
-                            Consights
-                          </span>
-                          <button className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors opacity-0 group-hover:opacity-100">
-                            <MoreVertical className="w-5 h-5 text-gray-400" />
-                          </button>
+                      )}
+                    </div>
+
+                    {/* Event Details */}
+                    <div className="flex-1 p-5">
+                      <h3 className="text-xl font-bold text-white mb-3">{post.title}</h3>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2 text-slate-300 text-sm">
+                          <Calendar className="w-4 h-4 text-blue-400" />
+                          <span>{post.date}</span>
                         </div>
+                        <div className="flex items-center gap-2 text-slate-300 text-sm">
+                          <Clock className="w-4 h-4 text-blue-400" />
+                          <span>{post.time}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-300 text-sm">
+                          <MapPin className="w-4 h-4 text-blue-400" />
+                          <span>{post.location}</span>
+                        </div>
+                      </div>
+
+                      {/* Engagement Stats */}
+                      <div className="flex flex-wrap items-center gap-4 mb-4">
+                        <div className="flex items-center gap-1 text-slate-400 text-sm">
+                          <Users className="w-4 h-4" />
+                          <span className="font-semibold text-white">{post.registrations}</span> registered
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-400 text-sm">
+                          <Heart className="w-4 h-4" />
+                          <span className="font-semibold text-white">{post.likes}</span> likes
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-400 text-sm">
+                          <MessageSquare className="w-4 h-4" />
+                          <span className="font-semibold text-white">{post.comments}</span> comments
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3">
+                        <button 
+                          onClick={() => handleRegister(post.id)}
+                          className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                            post.isRegistered 
+                              ? 'bg-slate-600 hover:bg-slate-500 text-white' 
+                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          }`}
+                        >
+                          {post.isRegistered ? 'Unregister' : 'Register'}
+                        </button>
+                        <button 
+                          onClick={() => handleLike(post.id)}
+                          className="p-2 bg-slate-600/50 hover:bg-slate-600 rounded-lg transition-colors"
+                        >
+                          <Heart className="w-5 h-5 text-slate-300" />
+                        </button>
+                        <button className="p-2 bg-slate-600/50 hover:bg-slate-600 rounded-lg transition-colors">
+                          <MessageSquare className="w-5 h-5 text-slate-300" />
+                        </button>
                       </div>
                     </div>
                   </div>
-
-                  {/* Post Content */}
-                  <h4 className="text-xl font-bold mb-3 text-white group-hover:text-purple-400 transition-colors">
-                    {post.title}
-                  </h4>
-                  <p className="text-gray-400 text-sm mb-5 leading-relaxed">
-                    {post.excerpt}
-                  </p>
-
-                  {/* Post Actions */}
-                  <div className="flex items-center gap-6 pt-4 border-t border-gray-800">
-                    <button className="flex items-center gap-2 text-gray-400 hover:text-pink-500 transition-colors">
-                      <Heart className="w-5 h-5" />
-                      <span className="text-sm font-medium">{post.likes}</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-gray-400 hover:text-blue-500 transition-colors">
-                      <MessageCircle className="w-5 h-5" />
-                      <span className="text-sm font-medium">{post.comments}</span>
-                    </button>
-                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Profile Stats Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-[#0f0f0f] rounded-2xl p-6 sticky top-8">
-              <h3 className="text-xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                Profile Stats
-              </h3>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-4 border-b border-gray-800">
-                  <span className="text-gray-300">Posts:</span>
-                  <span className="text-2xl font-bold text-white">2</span>
-                </div>
-                
-                <div className="flex items-center justify-between py-4 border-b border-gray-800">
-                  <span className="text-gray-300">Likes Received:</span>
-                  <span className="text-2xl font-bold text-white">7</span>
-                </div>
-                
-                <div className="flex items-center justify-between py-4 border-b border-gray-800">
-                  <span className="text-gray-300">Comments:</span>
-                  <span className="text-2xl font-bold text-white">0</span>
-                </div>
-                
-                <div className="flex items-center justify-between py-4">
-                  <span className="text-gray-300">Registrations:</span>
-                  <span className="text-2xl font-bold text-white">0</span>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-slate-400 text-lg">No registered events yet</p>
+                <p className="text-slate-500 text-sm mt-2">Register for events to see them here</p>
               </div>
-
-              {/* Additional Info Card */}
-              <div className="mt-6 p-5 bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-xl border border-purple-500/20">
-                <p className="text-sm text-gray-400 mb-2">Total Engagement</p>
-                <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                  9
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Interactions</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1e293b] rounded-2xl max-w-lg w-full">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
+              <h3 className="text-2xl font-bold text-white">Edit Profile</h3>
+              <button 
+                onClick={closeEditModal}
+                className="p-1 hover:bg-slate-700/50 rounded transition-colors"
+              >
+                <X className="w-6 h-6 text-slate-400 hover:text-slate-300" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-5">
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Name
+                </label>
+                <input 
+                  type="text" 
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  placeholder="Enter your name"
+                />
+              </div>
+
+              {/* Role */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Role
+                </label>
+                <input 
+                  type="text" 
+                  value={editForm.location}
+                  onChange={(e) => setEditForm({...editForm, location: e.target.value})}
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  placeholder="Tech Enthusiast & Event Organizer"
+                />
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Bio
+                </label>
+                <textarea 
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
+                  rows={3}
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors resize-none"
+                  placeholder="Digital creator exploring tech one event at a time."
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex gap-3 p-6">
+              <button 
+                onClick={closeEditModal}
+                className="flex-1 px-6 py-3.5 bg-[#0f172a] hover:bg-slate-800 text-white rounded-xl font-medium transition-colors border border-slate-700/50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveProfile}
+                className="flex-1 px-6 py-3.5 bg-cyan-500 hover:bg-cyan-600 text-black rounded-xl font-medium transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

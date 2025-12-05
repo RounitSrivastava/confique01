@@ -1,4 +1,4 @@
-// components/EventsPage.jsx (or page.jsx)
+// EventsPage.jsx
 "use client";
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react"; 
 import Link from "next/link";
@@ -7,14 +7,19 @@ import {
     useRouter, 
     useSearchParams 
 } from "next/navigation";
+
+// --- Import the dedicated view components ---
 import EventDetailsPage from './EventDetailsPage'; 
 import HostEventPage from './HostEventPage'; 
+import AllEventsPage from './AllEventsPage'; 
+// ------------------------------------------
 
 // --- ICON IMPORTS ---
 import {
     Search, User, Zap, Code, Shirt, Medal, Compass, BookOpen, Clock, MapPin, 
     Calendar, Menu, X, Heart, Share2, CheckCircle, MessageSquare, Clipboard, 
-    ChevronRight, ChevronLeft, Gift, ZapOff, ArrowLeft, ClipboardList, Plus
+    ChevronRight, ChevronLeft, Gift, ZapOff, ArrowLeft, ClipboardList, Plus,
+    Eye // Added Eye icon for impressions
 } from "lucide-react";
 
 // --- MOCK DATA ---
@@ -293,11 +298,10 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
         setIsLiked(prev => !prev);
     };
 
-    // --- UPDATED LOGIC: Filter out 'Team' or 'Solo' tags for the card display ---
+    // Filter out 'Team' or 'Solo' tags for the card display
     const tagsToDisplay = event.tags.filter(tag => 
         !tag.includes("Team") && !tag.includes("Solo")
     );
-    // --------------------------------------------------------------------------
 
     return (
         <div
@@ -355,32 +359,45 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
                         </span>
                     </span>
 
-                    <span className="flex items-center space-x-2">
-                        {shareFeedback ? (
-                            <span className="flex items-center text-purple-400 text-xs font-semibold transition-all">
-                                <shareFeedback.icon className="w-3 h-3 mr-1" />
-                                {shareFeedback.text}
-                            </span>
-                        ) : (
-                            <Share2
-                                className="w-4 h-4 text-gray-500 cursor-pointer hover:text-purple-400 transition-colors"
-                                onClick={localHandleShare}
-                            />
-                        )}
-
-                        <Heart
-                            className={`w-4 h-4 cursor-pointer transition-colors ${
-                                isLiked
-                                    ? 'text-red-500 fill-red-500'
-                                    : 'text-gray-500 hover:text-red-500 hover:fill-gray-900'
-                                }`}
-                            onClick={handleLikeClick}
-                        />
+                    {/* IMPRESSIONS AND ACTIONS */}
+                    <span className="flex items-center space-x-3">
+                            {/* Impression Count Display */}
+                            {event.impressions !== undefined && (
+                                <div className="flex items-center text-purple-400 text-xs font-semibold">
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    {event.impressions.toLocaleString()}
+                                </div>
+                            )}
                     </span>
+                    {/* END NEW: IMPRESSIONS AND ACTIONS */}
                 </div>
+                
+                {/* ACTIONS - Moved below to keep Impressions with other metadata */}
+                <div className="flex items-center justify-end text-xs font-medium text-gray-400 mb-2">
+                    {shareFeedback ? (
+                        <span className="flex items-center text-purple-400 text-xs font-semibold transition-all">
+                            <shareFeedback.icon className="w-3 h-3 mr-1" />
+                            {shareFeedback.text}
+                        </span>
+                    ) : (
+                        <Share2
+                            className="w-4 h-4 text-gray-500 cursor-pointer hover:text-purple-400 transition-colors"
+                            onClick={localHandleShare}
+                        />
+                    )}
 
-                {/* CRITICAL CHANGE: Added h-20 (5rem) to lock the height of the title area, ensuring uniform card height. line-clamp-3 prevents overflow. */}
-                <h3 className="text-2xl font-bold text-white mb-2 line-clamp-3 group-hover:text-purple-400 h-20">
+                    <Heart
+                        className={`w-4 h-4 cursor-pointer transition-colors ml-3 ${
+                            isLiked
+                                ? 'text-red-500 fill-red-500'
+                                : 'text-gray-500 hover:text-red-500 hover:fill-gray-900'
+                            }`}
+                        onClick={handleLikeClick}
+                    />
+                </div>
+                
+                {/* FIX APPLIED: Removed 'group-hover:text-purple-400' to keep the text color white on hover. */}
+                <h3 className="text-2xl font-bold text-white mb-2 line-clamp-3 h-20">
                     {event.title}
                 </h3>
 
@@ -397,7 +414,6 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
     );
 };
 
-// --- NEW HORIZONTAL SCROLL COMPONENT ---
 const HorizontalScrollSection = ({ 
     events, 
     onDetailsClick, 
@@ -409,14 +425,12 @@ const HorizontalScrollSection = ({
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
 
-    // Determines if scrolling buttons should be visible (i.e., if there are enough items to scroll)
-    const showScrollButtons = events.length > 3; // Show buttons only if there are more than 3 events
+    const showScrollButtons = events.length > 3; 
 
     const checkScroll = useCallback(() => {
         if (scrollContainerRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-            setCanScrollLeft(scrollLeft > 5); // Added buffer (5px) to ensure left button hides precisely at the start
-            // Buffer (1px) to ensure the right button doesn't disappear prematurely
+            setCanScrollLeft(scrollLeft > 5); 
             setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1); 
         }
     }, []);
@@ -438,9 +452,8 @@ const HorizontalScrollSection = ({
 
     const scroll = (direction) => {
         if (scrollContainerRef.current) {
-            // Scroll a fixed amount (e.g., 2.5 card widths)
-            const cardWidth = 300; // Matches sm:w-[300px] in EventCard
-            const gap = 24; // Matches space-x-6 (1.5rem = 24px)
+            const cardWidth = 300; 
+            const gap = 24; 
             const scrollDistance = (cardWidth * 2) + gap;
 
             const scrollAmount = direction === 'left' ? -scrollDistance : scrollDistance;
@@ -453,7 +466,6 @@ const HorizontalScrollSection = ({
 
     return (
         <section className="py-10 relative">
-            {/* Section Header */}
             <div className="flex flex-col items-center mb-10">
                 <h2 className="text-4xl font-extrabold text-white text-center mb-6">
                     {title}
@@ -472,24 +484,18 @@ const HorizontalScrollSection = ({
             </div>
             
             <div className="relative">
-                {/* Left Scroll Button: Only show if scrolling left is possible */}
                 {showScrollButtons && canScrollLeft && (
                     <button
                         onClick={() => scroll('left')}
-                        className="absolute -left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-gray-800/80 text-white z-10 hover:bg-purple-600/90 transition-all shadow-xl hidden lg:block" // Use lg:block for desktop-only buttons
+                        className="absolute -left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-gray-800/80 text-white z-10 hover:bg-purple-600/90 transition-all shadow-xl hidden lg:block" 
                         aria-label="Scroll events left"
                     >
                         <ChevronLeft className="w-6 h-6" />
                     </button>
                 )}
 
-                {/* Scrollable Container */}
                 <div 
                     ref={scrollContainerRef}
-                    // IMPORTANT: overflow-x-auto for desktop to enable programmatic scroll, 
-                    // and use max-w-full to contain the cards within the parent width.
-                    // pr-6 ensures the last card is not cut off on the right edge.
-                    // The scrollbar is visually hidden using custom classes/techniques common in Tailwind.
                     className="flex space-x-6 overflow-x-auto scrollbar-hide py-4 snap-x snap-mandatory pr-6"
                 >
                     {events.map((event) => (
@@ -503,11 +509,10 @@ const HorizontalScrollSection = ({
                     ))}
                 </div>
 
-                {/* Right Scroll Button: Only show if scrolling right is possible */}
                 {showScrollButtons && canScrollRight && (
                     <button
                         onClick={() => scroll('right')}
-                        className="absolute -right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-gray-800/80 text-white z-10 hover:bg-purple-600/90 transition-all shadow-xl hidden lg:block" // Use lg:block for desktop-only buttons
+                        className="absolute -right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-gray-800/80 text-white z-10 hover:bg-purple-600/90 transition-all shadow-xl hidden lg:block" 
                         aria-label="Scroll events right"
                     >
                         <ChevronRight className="w-6 h-6" />
@@ -517,17 +522,8 @@ const HorizontalScrollSection = ({
         </section>
     );
 };
-// --- END NEW HORIZONTAL SCROLL COMPONENT ---
-
-// NOTE: Since Tailwind doesn't have an official `scrollbar-hide` utility by default, 
-// a custom utility or manual CSS for hiding the scrollbar would be required for a production environment. 
-// For this single-file React component, we proceed with the class name `scrollbar-hide` 
-// assuming it's available or implemented via a plugin (e.g., tailwind-scrollbar-hide) 
-// or custom utility. The structural fix for button visibility and card cutting is implemented.
-
 
 const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 5000 }) => {
-// ... (rest of FeaturedCarousel component remains the same)
     const [currentIndex, setCurrentIndex] = useState(0);
 
     const nextEvent = useCallback(() => {
@@ -603,6 +599,14 @@ const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 500
                         <Calendar className="w-5 h-5 mr-3 text-yellow-300" />
                         {event.date}
                     </p>
+                    {/* NEW: Display Impressions in Featured Carousel */}
+                    {event.impressions !== undefined && (
+                        <p className="text-md text-gray-300 font-medium mb-6 flex items-center justify-center md:justify-start">
+                            <Eye className="w-5 h-5 mr-3 text-purple-300" />
+                            **{event.impressions.toLocaleString()}** Impressions
+                        </p>
+                    )}
+                    {/* END NEW */}
                     <div className="flex items-center justify-center md:justify-start space-x-4">
                         <button className="inline-flex items-center bg-white text-gray-900 font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-gray-200 transition-colors group">
                             Click to view event details
@@ -654,47 +658,188 @@ const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 500
 };
 
 
-// MAIN COMPONENT FOR THE PAGE
+// --- UTILITY FUNCTIONS FOR PERSISTENCE ---
+
+const STORAGE_KEY = 'event_impressions';
+
+// Saves the current dynamic events array to localStorage
+const saveImpressionsToLocalStorage = (events) => {
+    if (typeof window !== 'undefined') {
+        const dataToStore = events.map(e => ({ id: e.id, impressions: e.impressions }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToStore));
+    }
+};
+
+// Gets the initial event data, prioritizing saved impressions from localStorage
+const getInitialImpressions = (mockEvents, featuredEvents) => {
+    // Combine all events for initial structure
+    const ALL_MOCK_DATA = [...mockEvents, ...featuredEvents.filter(e => !mockEvents.some(m => m.id === e.id))];
+    const MAX_MOCK_ID = mockEvents.reduce((max, event) => Math.max(max, event.id), 0);
+    
+    // Default initial impressions based on logic
+    const defaultEvents = ALL_MOCK_DATA.map(event => {
+        // Random base impressions: 500 - 2500
+        let baseImpressions = Math.floor(Math.random() * (2500 - 500 + 1)) + 500;
+        
+        // Boost for 'recently added' (higher ID)
+        const isRecentlyAdded = event.id > MAX_MOCK_ID - 5; 
+        if (isRecentlyAdded) {
+            baseImpressions += Math.floor(Math.random() * (2000 - 500 + 1)) + 500;
+        }
+        // Boost for featured events
+        if (event.isFeatured) {
+            baseImpressions += Math.floor(Math.random() * 500) + 1000;
+        }
+
+        return {
+            ...event,
+            impressions: baseImpressions,
+        };
+    });
+
+    if (typeof window === 'undefined') {
+        return defaultEvents.sort((a, b) => b.impressions - a.impressions);
+    }
+    
+    // Check localStorage for saved data
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (!savedData) {
+        // No saved data, return defaults and save them
+        saveImpressionsToLocalStorage(defaultEvents);
+        return defaultEvents.sort((a, b) => b.impressions - a.impressions);
+    }
+
+    try {
+        const savedImpressionsMap = JSON.parse(savedData).reduce((map, item) => {
+            map[item.id] = item.impressions;
+            return map;
+        }, {});
+
+        // Merge saved impressions with mock data, ensuring impressions never drop below the calculated default
+        const mergedEvents = defaultEvents.map(event => {
+            const savedImpressions = savedImpressionsMap[event.id] || 0;
+            // Ensure the starting impressions are never lower than the saved value
+            const finalImpressions = Math.max(event.impressions, savedImpressions);
+
+            return {
+                ...event,
+                impressions: finalImpressions,
+            };
+        });
+        
+        return mergedEvents.sort((a, b) => b.impressions - a.impressions);
+    } catch (e) {
+        console.error("Error parsing impressions from localStorage:", e);
+        // Fallback to defaults and overwrite corrupted storage
+        saveImpressionsToLocalStorage(defaultEvents);
+        return defaultEvents.sort((a, b) => b.impressions - a.impressions);
+    }
+};
+
+// --- MAIN COMPONENT FOR THE PAGE ---
 const EventsPage = () => {
     const [selectedCategory, setSelectedCategory] = useState("All Events");
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     
-    const searchRef = useRef(null); 
+    // State is initialized using the function that checks localStorage
+    const [dynamicEvents, setDynamicEvents] = useState(() => getInitialImpressions(MOCK_EVENTS, FEATURED_CAROUSEL_EVENTS));
     
-    // --- ROUTING SETUP ---
+    const searchRef = useRef(null); 
     const router = useRouter();
     const searchParams = useSearchParams();
-    const pathname = usePathname(); // <-- Correctly retrieved here
+    const pathname = usePathname(); 
     
-    // Get the event ID from the URL query
     const eventIdParam = searchParams.get('id');
-    // GET THE VIEW PARAMETER
     const viewParam = searchParams.get('view'); 
 
-    // Combine all events for easy lookup
-    const ALL_EVENTS = useMemo(() => {
-        // Includes MOCK_EVENTS and unique FEATURED_CAROUSEL_EVENTS
-        return [...MOCK_EVENTS, ...FEATURED_CAROUSEL_EVENTS.filter(e => !MOCK_EVENTS.some(m => m.id === e.id))];
-    }, []);
+    // 1. TIME-BASED IMPRESSION UPDATE (The automatic, increasing change)
+    useEffect(() => {
+        if (dynamicEvents.length === 0) return;
+
+        const intervalId = setInterval(() => {
+            setDynamicEvents(prevEvents => {
+                const nextEvents = prevEvents.map(event => {
+                    // Add 5 to 50 impressions to every event
+                    const randomIncrease = Math.floor(Math.random() * 46) + 5; 
+                    return {
+                        ...event,
+                        impressions: event.impressions + randomIncrease,
+                    };
+                }).sort((a, b) => b.impressions - a.impressions); // Re-sort to maintain popularity order
+
+                // Save the new state to localStorage immediately after calculation
+                saveImpressionsToLocalStorage(nextEvents);
+                
+                return nextEvents;
+            });
+        }, 10000); // Update every 10 seconds
+
+        return () => clearInterval(intervalId); // Cleanup
+    }, [dynamicEvents.length]);
+
+
+    // All events, sorted dynamically by impressions
+    const ALL_EVENTS = useMemo(() => dynamicEvents, [dynamicEvents]);
 
     // Determine the event data based on the URL parameter
-    const eventDetailData = eventIdParam 
-        ? ALL_EVENTS.find(e => e.id === parseInt(eventIdParam)) || EVENT_DETAIL_DATA
-        : null;
+    const eventDetailData = useMemo(() => {
+        const data = eventIdParam 
+            ? ALL_EVENTS.find(e => e.id === parseInt(eventIdParam)) || EVENT_DETAIL_DATA
+            : null;
+        return data;
+    }, [eventIdParam, ALL_EVENTS]);
     
+    // --- Calculate Related Events based on the selected event's category ---
+    const relatedEvents = useMemo(() => {
+        if (!eventDetailData) return [];
+        
+        const currentEventId = eventDetailData.id;
+        const currentCategory = eventDetailData.category;
+        
+        return ALL_EVENTS
+            .filter(e => 
+                e.category === currentCategory && 
+                e.id !== currentEventId // Exclude the current event itself
+            )
+            .slice(0, 3); // Take top 3 related events
+    }, [eventDetailData, ALL_EVENTS]);
+    // -------------------------------------------------------------------------
+    
+    
+    // --- UPDATED VIEW LOGIC ---
     const renderDetailsView = eventDetailData !== null;
-    // DEFINE HOST VIEW TOGGLE
     const renderHostView = viewParam === 'host';
-    // ----------------------
+    const renderAllEventsView = viewParam === 'all'; 
+    // --------------------------
 
+    // 2. USER ACTION IMPRESSION BOOST (If user registers/views more)
     const handleDetailsClick = (id) => {
+        setDynamicEvents(prevEvents => {
+            const nextEvents = prevEvents.map(event => {
+                if (event.id === id) {
+                    // Simulate a large surge (e.g., a registration or intense view session)
+                    const userSurge = Math.floor(Math.random() * 200) + 300; // Add 300 to 500 impressions
+                    return {
+                        ...event,
+                        impressions: event.impressions + userSurge,
+                    };
+                }
+                return event;
+            }).sort((a, b) => b.impressions - a.impressions); // Re-sort for immediate popularity change
+
+            // Save the surge to localStorage
+            saveImpressionsToLocalStorage(nextEvents);
+            
+            return nextEvents;
+        });
+
+        // This navigates to the details page
         router.push(`${pathname}?id=${id}`, { scroll: true });
     };
 
     const handleBackClick = () => {
-        // Navigate back to the base URL, clearing all parameters
         router.push(pathname, { scroll: true });
     };
     
@@ -732,21 +877,25 @@ const EventsPage = () => {
         if (!isSearching) setSearchQuery("");
     };
 
+    // --- HANDLERS FOR "VIEW ALL" TO TRIGGER THE NEW PAGE ---
     const handleViewAllPopular = () => {
-        // Reset the filter state and URL, which will show all events.
-        setSelectedCategory("All Events");
-        router.push(pathname, { scroll: true });
+        router.push(`${pathname}?view=all&category=All Events`, { scroll: true });
         setSearchQuery("");
     };
     
-    // New handler for View All Tech
     const handleViewAllTech = () => {
-        setSelectedCategory("Tech");
-        router.push(pathname, { scroll: true });
+        router.push(`${pathname}?view=all&category=Tech`, { scroll: true });
         setSearchQuery("");
     };
+    
+    const handleCategoryClickInListView = (categoryName) => {
+        setSelectedCategory(categoryName);
+        router.push(pathname, { scroll: false }); 
+        setSearchQuery("");
+    }
+    // ------------------------------------------------------------------
 
-    // Renamed from filteredEvents to upcomingEvents to reflect its purpose for the main section
+    // Filtered lists using the dynamic, always-increasing ALL_EVENTS
     const upcomingEvents = useMemo(() => {
         const carouselIds = FEATURED_CAROUSEL_EVENTS.map(e => e.id);
         let filtered = ALL_EVENTS.filter((e) => !carouselIds.includes(e.id));
@@ -768,19 +917,25 @@ const EventsPage = () => {
         return filtered;
     }, [selectedCategory, searchQuery, ALL_EVENTS]);
     
-    // Filtered list for the Tech Events section
     const techEvents = useMemo(() => {
         const carouselIds = FEATURED_CAROUSEL_EVENTS.map(e => e.id);
-        // Exclude featured and keep only 'Tech'
-        return MOCK_EVENTS.filter(
-            (e) => e.category === "Tech" && !carouselIds.includes(e.id)
+        const allMockEventsNoFeatured = ALL_EVENTS.filter(e => !carouselIds.includes(e.id));
+        return allMockEventsNoFeatured.filter(
+            (e) => e.category === "Tech"
         );
-    }, []);
+    }, [ALL_EVENTS]);
+
+    const popularEventsSlice = useMemo(() => {
+        const carouselIds = FEATURED_CAROUSEL_EVENTS.map(e => e.id);
+        const popular = ALL_EVENTS.filter(e => !carouselIds.includes(e.id));
+        // ALL_EVENTS is already sorted by impressions
+        return popular.slice(0, 3);
+    }, [ALL_EVENTS]);
 
 
     const isMobile = () => typeof window !== "undefined" && window.innerWidth < 1024;
 
-    // --- NEW: Close search on outside click ---
+    // --- Close search on outside click ---
     useEffect(() => {
         function handleClickOutside(event) {
             const isClickOnToggleButton = event.target.closest('button[aria-label="Toggle search"]');
@@ -803,8 +958,7 @@ const EventsPage = () => {
     }, [isSearching]);
     // ------------------------------------------
 
-    // Determine the active view key for the dynamic key attribute
-    const activeViewKey = renderHostView ? 'host' : (renderDetailsView ? 'details' : 'list');
+    const activeViewKey = renderHostView ? 'host' : (renderDetailsView ? 'details' : (renderAllEventsView ? 'all' : 'list'));
 
     return (
         <div className="min-h-screen bg-gray-950 text-white font-sans antialiased relative">
@@ -852,10 +1006,9 @@ const EventsPage = () => {
                             <span className="text-gray-200">{item.label}</span>
                         </Link>
                     ))}
-                    {/* Host button in mobile sidebar: UPDATED to use handleHostClick */}
                     <button 
                         onClick={handleHostClick} 
-                        className="flex items-center w-full gap-3 px-3 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-medium"
+                        className="flex items-center w-full gap-3 px-3 py-2 rounded-lg bg-   text-white hover:bg-purple-700 font-medium"
                     >
                        <Plus className="w-4 h-4" />
                        <span>Host Event</span>
@@ -869,7 +1022,7 @@ const EventsPage = () => {
             </aside>
 
             {/* Header (Non-Sticky) - Hidden if Details or Host view is active */}
-            <header className={`z-40 bg-gray-950/90 backdrop-blur-sm shadow-lg shadow-black/30 ${renderDetailsView || renderHostView ? 'hidden lg:block' : ''}`}>
+            <header className={`z-40 bg-gray-950/90 backdrop-blur-sm shadow-lg shadow-black/30 ${renderDetailsView || renderHostView || renderAllEventsView ? 'hidden lg:block' : ''}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
 
                     <div className="flex items-center space-x-6 w-full">
@@ -916,7 +1069,6 @@ const EventsPage = () => {
                     </div>
 
                     <div className="flex items-center space-x-4 ml-auto md:ml-0">
-                        {/* Host Button (Desktop): UPDATED to use handleHostClick */}
                        <button
                             onClick={handleHostClick}
                             className="hidden lg:inline-flex items-center bg-purple-600 text-white text-sm font-medium py-2 px-4 rounded-full hover:bg-purple-700 transition-colors shadow-md shadow-purple-500/50"
@@ -939,7 +1091,6 @@ const EventsPage = () => {
             {/* MAIN CONTENT AREA: Added dynamic key here to fix redirection issue */}
             <main key={activeViewKey}>
                 {renderHostView ? (
-                    // FIX 1: Pass pathname as a prop
                     <HostEventPage parentPathname={pathname} />
                 ) : renderDetailsView ? (
                     // RENDER EVENT DETAILS PAGE
@@ -947,21 +1098,33 @@ const EventsPage = () => {
                         event={eventDetailData}
                         onBackClick={handleBackClick}
                         EVENT_DETAIL_DATA_MOCK={EVENT_DETAIL_DATA} 
+                        relatedEvents={relatedEvents} 
+                        onDetailsClick={handleDetailsClick} // PASS THE HANDLER
                         IconSet={{
                             Clock, ClipboardList, ZapOff, ArrowLeft, Calendar, User, Gift, CheckCircle, Zap
                         }}
                     />
+                ) : renderAllEventsView ? ( 
+                    // RENDER ALL EVENTS PAGE
+                    <AllEventsPage 
+                        ALL_EVENTS={ALL_EVENTS} 
+                        categories={categories} 
+                        onDetailsClick={handleDetailsClick}
+                        onShareClick={handleShareClick}
+                        parentPathname={pathname}
+                    />
                 ) : (
-                    // RENDER EVENTS LIST PAGE
+                    // RENDER EVENTS LIST PAGE (The original home view)
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
 
                         <FeaturedCarousel
-                            events={FEATURED_CAROUSEL_EVENTS}
+                            // Map the static featured events to their dynamic impression counterparts
+                            events={FEATURED_CAROUSEL_EVENTS.map(e => ALL_EVENTS.find(a => a.id === e.id) || e)} 
                             onDetailsClick={handleDetailsClick}
                             onShareClick={handleShareClick}
                         />
 
-                        {/* CATEGORY BAR SECTION (Retained as is) */}
+                        {/* CATEGORY BAR SECTION */}
                         <section className="py-10">
                             <div className="flex justify-center items-center mb-10">
                                 <h2 className="text-4xl font-extrabold text-white text-center">Upcoming Events</h2>
@@ -974,14 +1137,14 @@ const EventsPage = () => {
                                         name={cat.name}
                                         Icon={cat.icon}
                                         isActive={selectedCategory === cat.name}
-                                        onClick={() => setSelectedCategory(cat.name)}
+                                        onClick={() => handleCategoryClickInListView(cat.name)} 
                                     />
                                 ))}
                             </div>
                         </section>
                         {/* END CATEGORY BAR SECTION */}
 
-                        {/* UPCOMING EVENTS SECTION (Now uses HorizontalScrollSection) */}
+                        {/* UPCOMING EVENTS SECTION */}
                         {isSearching && searchQuery.length > 2 && (
                             <div className="text-center py-5">
                                 <p className="text-gray-400 text-lg">
@@ -995,18 +1158,18 @@ const EventsPage = () => {
                             onDetailsClick={handleDetailsClick}
                             onShareClick={handleShareClick}
                             title={selectedCategory === "All Events" ? "All Events" : selectedCategory}
-                            onViewAllClick={handleViewAllPopular}
+                            onViewAllClick={handleViewAllPopular} 
                         />
                         {/* END UPCOMING EVENTS SECTION */}
 
                         
-                        {/* --- NEW TECH EVENTS SECTION (Now uses HorizontalScrollSection) --- */}
+                        {/* --- NEW TECH EVENTS SECTION --- */}
                         <HorizontalScrollSection
                             events={techEvents} 
                             onDetailsClick={handleDetailsClick}
                             onShareClick={handleShareClick}
                             title="Tech Events"
-                            onViewAllClick={handleViewAllTech}
+                            onViewAllClick={handleViewAllTech} 
                         />
                         {/* --- END NEW TECH EVENTS SECTION --- */}
 
@@ -1014,14 +1177,12 @@ const EventsPage = () => {
                         <section className="py-10">
                             {/* POPULAR EVENTS HEADER ROW WITH VIEW ALL BUTTON */}
                             <div className="flex flex-col items-center mb-10">
-                                {/* Title Centered */}
                                 <h2 className="text-4xl font-extrabold text-white text-center mb-6">
                                     Popular Events
                                 </h2>
-                                {/* View All Button aligned to the far right, no border, no background, no curve */}
                                 <div className="w-full flex justify-end">
                                     <button
-                                        onClick={handleViewAllPopular}
+                                        onClick={handleViewAllPopular} 
                                         className="inline-flex items-center text-base font-semibold text-purple-400 hover:text-purple-300 transition-colors px-0 py-0 group" 
                                     >
                                         View All 
@@ -1033,9 +1194,8 @@ const EventsPage = () => {
                             </div>
                             {/* END POPULAR EVENTS HEADER ROW */}
 
-                            {/* This section maintains 3 columns as requested previously - EventCard handles size consistency */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
-                                {MOCK_EVENTS.slice(1, 4).map((event) => (
+                                {popularEventsSlice.map((event) => (
                                     <EventCard
                                         key={`popular-${event.id}`}
                                         event={event}

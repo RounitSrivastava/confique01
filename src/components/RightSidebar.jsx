@@ -1,7 +1,6 @@
 // components/RightSidebar.jsx
 "use client";
 
-import CalendarWidget from "@/components/CalendarWidget";
 import { usePathname } from "next/navigation"; // Import usePathname
 
 const popularPosts = [
@@ -16,9 +15,9 @@ const popularEvents = [
 ];
 
 export default function RightSidebar() {
-  const pathname = usePathname(); // Call usePathname hook
+  const pathname = usePathname();
 
-  // 🎯 New Check: Hide the component if the path is /events OR starts with /profile
+  // Hide sidebar on events page or any profile page
   if (pathname === "/events" || pathname.startsWith("/profile")) {
     return null;
   }
@@ -26,10 +25,9 @@ export default function RightSidebar() {
   return (
     <aside className="hidden xl:flex w-[360px] shrink-0 border-l border-[#262626] bg-[#0d0d0d] overflow-y-auto">
       <div className="mx-auto w-full max-w-[340px] p-4">
-        <CalendarWidget />
 
         {/* Popular Posts */}
-        <section className="mt-6 rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm">
+        <section className="rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm">
           <div className="px-4 py-3 border-b border-[#262626] font-medium">Popular Posts</div>
           <ul className="p-2">
             {popularPosts.map((p) => (
@@ -53,6 +51,7 @@ export default function RightSidebar() {
             ))}
           </ul>
         </section>
+
       </div>
     </aside>
   );

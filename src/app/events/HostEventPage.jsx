@@ -1,10 +1,10 @@
 // components/HostEventPage.jsx
 "use client";
 import React, { useState, useRef } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import {
     Zap, Code, Shirt, Medal, Compass, BookOpen, Clock, MapPin,
-    Calendar, User, Plus, X, ClipboardList, Gift, ChevronDown, ChevronUp, CheckCircle, ArrowLeft, MessageSquare, Menu, Upload, ExternalLink
+    Calendar, User, Plus, X, ClipboardList, Gift, ChevronDown, ChevronUp, CheckCircle, ArrowLeft, MessageSquare, Menu, Upload, ExternalLink, QrCode
 } from "lucide-react";
 
 // Re-using the categories
@@ -12,7 +12,7 @@ const categories = [
     { name: "Tech", icon: Code },
     { name: "Fashion", icon: Shirt },
     { name: "Competition", icon: Medal },
-    { name: "Cultural", icon: Compass },
+    { name: "Cultural", "icon": Compass },
     { name: "Seminar", icon: BookOpen },
     { name: "Workshop", icon: Clock },
     { name: "Others", icon: Zap },
@@ -27,7 +27,7 @@ const SectionTitle = ({ children, icon: Icon, className = "" }) => (
     </h2>
 );
 
-const InputField = ({ label, type = "text", value, onChange, placeholder, required = false, className = "" }) => (
+const InputField = ({ label, type = "text", value, onChange, placeholder, required = false, className = "", disabled = false }) => (
     <div className={`space-y-2 ${className}`}>
         <label className="text-sm font-medium text-gray-400 block">
             {label} {required && <span className="text-red-500">*</span>}
@@ -38,12 +38,13 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, requir
             onChange={onChange}
             placeholder={placeholder}
             required={required}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+            disabled={disabled}
+            className={`w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         />
     </div>
 );
 
-const SelectField = ({ label, value, onChange, options, required = false }) => (
+const SelectField = ({ label, value, onChange, options, required = false, disabled = false }) => (
     <div className="space-y-2">
         <label className="text-sm font-medium text-gray-400 block">
             {label} {required && <span className="text-red-500">*</span>}
@@ -52,7 +53,8 @@ const SelectField = ({ label, value, onChange, options, required = false }) => (
             value={value}
             onChange={onChange}
             required={required}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer"
+            disabled={disabled}
+            className={`w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
             <option value="" disabled>Select {label}</option>
             {options.map((option) => (
@@ -88,16 +90,16 @@ const TagSelector = ({ selectedTags, onTagToggle }) => (
 );
 
 // Reusable Image Upload Component
-const ImageUploader = ({ label, ratioTip, name, file, previewUrl, onFileChange, onRemove }) => {
+const ImageUploader = ({ label, ratioTip, name, file, previewUrl, onFileChange, onRemove, required = true }) => {
     const fileInputRef = useRef(null);
-    const required = !file;
+    const isRequired = required && !file; // Only mark as required if the field is generally required AND no file is present
 
     return (
         <div className="space-y-2">
             <label className="text-sm font-medium text-gray-400 block">
-                {label} {required && <span className="text-red-500">*</span>}
+                {label} {isRequired && <span className="text-red-500">*</span>}
             </label>
-            <p className="text-xs text-purple-300 bg-gray-800 p-2 rounded-lg">{ratioTip}</p>
+            {ratioTip && <p className="text-xs text-purple-300 bg-gray-800 p-2 rounded-lg">{ratioTip}</p>}
 
             {/* Hidden file input */}
             <input
@@ -105,7 +107,7 @@ const ImageUploader = ({ label, ratioTip, name, file, previewUrl, onFileChange, 
                 accept="image/*"
                 ref={fileInputRef}
                 onChange={onFileChange}
-                required={required}
+                required={isRequired}
                 style={{ display: 'none' }}
                 name={name}
             />
@@ -145,43 +147,63 @@ const ImageUploader = ({ label, ratioTip, name, file, previewUrl, onFileChange, 
 };
 
 
-const HostEventPage = ({ parentPathname }) => { 
-    const router = useRouter(); 
+const HostEventPage = ({ parentPathname }) => {
+    const router = useRouter();
+    const PAYMENT_REF_FIELD_NAME = "Payment Ref (Last 4 digits)";
+    const CURRENCY_SYMBOL = "₹";
+    const CURRENCY_CODE = "INR";
 
     const [eventData, setEventData] = useState({
         title: "",
         venue: "",
-        date: "", 
-        // Card Poster (e.g., 4:3)
-        posterPreviewUrl: "", 
-        posterFile: null, 
-        // Header Banner (e.g., 4:1)
-        bannerPreviewUrl: "", 
-        bannerFile: null, 
-        tags: [],
+        date: "",
+        posterPreviewUrl: "",
+        posterFile: null,
+        bannerPreviewUrl: "",
+        bannerFile: null,
+        tags: ["Free"], // Default to free event
         category: "",
         tagline: "",
         hostedBy: "",
         eligibility: "",
         isOnline: false,
-        isFree: false,
+        isFree: true, // Default to true
         registrationStart: "",
         registrationEnd: "",
         prizes: "",
         rounds: [
             { title: "Registration Opens", description: "Sign up and form your teams.", date: "" },
         ],
-        // --- NEW EXTERNAL REGISTRATION STATE ---
+        // --- PAYMENT/QR CODE STATE ---
+        isPaymentRequired: false,
+        paymentAmount: "",
+        paymentCurrency: CURRENCY_CODE, // HARDCODED TO INR
+        qrCodePreviewUrl: "",
+        qrCodeFile: null,
+        // -----------------------------
         isExternalRegistration: false,
         registrationUrl: "",
-        // ---------------------------------------
         customFields: [
             { name: "Team Leader Name", type: "text", required: true },
             { name: "Team Leader Email", type: "email", required: true },
         ]
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submissionStatus, setSubmissionStatus] = useState(null); 
+    const [submissionStatus, setSubmissionStatus] = useState(null);
+
+    // Determines if the event is a Paid event (i.e., NOT free)
+    const isPaidEvent = !eventData.isFree;
+    // Determines if we should show the QR code fields (Paid & Internal Registration)
+    const showQrCodeFields = isPaidEvent && !eventData.isExternalRegistration;
+    
+    // Cleanup for image URLs on component unmount
+    React.useEffect(() => {
+        return () => {
+            if (eventData.posterPreviewUrl) URL.revokeObjectURL(eventData.posterPreviewUrl);
+            if (eventData.bannerPreviewUrl) URL.revokeObjectURL(eventData.bannerPreviewUrl);
+            if (eventData.qrCodePreviewUrl) URL.revokeObjectURL(eventData.qrCodePreviewUrl);
+        };
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -195,7 +217,6 @@ const HostEventPage = ({ parentPathname }) => {
     const handleFileChange = (e, fileKey, previewKey) => {
         const file = e.target.files[0];
         if (file) {
-            // Revoke previous URL to prevent memory leaks
             if (eventData[previewKey]) {
                 URL.revokeObjectURL(eventData[previewKey]);
             }
@@ -209,7 +230,7 @@ const HostEventPage = ({ parentPathname }) => {
             if (eventData[previewKey]) {
                 URL.revokeObjectURL(eventData[previewKey]);
             }
-             setEventData((prev) => ({
+            setEventData((prev) => ({
                 ...prev,
                 [fileKey]: null,
                 [previewKey]: "",
@@ -226,6 +247,56 @@ const HostEventPage = ({ parentPathname }) => {
         }));
     };
     
+    // --- Custom logic for Free/Paid Toggle ---
+    const handleIsFreeToggle = (e) => {
+        const checked = e.target.checked;
+        const tagsWithoutPricing = eventData.tags.filter(t => t !== "Free" && t !== "Paid");
+        const newTag = checked ? "Free" : "Paid";
+        
+        // Remove payment custom field if switching to free
+        const filteredCustomFields = checked ? 
+            eventData.customFields.filter(f => f.name !== PAYMENT_REF_FIELD_NAME) :
+            eventData.customFields;
+        
+        // Add payment custom field if switching to paid AND using internal registration
+        const updatedCustomFields = (!checked && !eventData.isExternalRegistration && !filteredCustomFields.some(f => f.name === PAYMENT_REF_FIELD_NAME)) ?
+            [...filteredCustomFields, { name: PAYMENT_REF_FIELD_NAME, type: "number", required: true }] :
+            filteredCustomFields;
+
+        setEventData(prev => ({ 
+            ...prev, 
+            isFree: checked, 
+            isPaymentRequired: !checked, 
+            tags: [...tagsWithoutPricing, newTag],
+            customFields: updatedCustomFields,
+            qrCodeFile: checked ? null : prev.qrCodeFile, // Clear QR file if switching to free
+            qrCodePreviewUrl: checked ? "" : prev.qrCodePreviewUrl,
+        }));
+    };
+    
+    // --- Custom logic for External Registration Toggle ---
+    const handleIsExternalRegistrationToggle = (e) => {
+        const checked = e.target.checked;
+        
+        // Remove payment custom field if switching to external registration
+        const fieldsWithoutPaymentRef = eventData.customFields.filter(f => f.name !== PAYMENT_REF_FIELD_NAME);
+        
+        // Add payment custom field if switching to internal registration AND paid
+        const fieldsWithPaymentRef = (isPaidEvent && !checked && !fieldsWithoutPaymentRef.some(f => f.name === PAYMENT_REF_FIELD_NAME)) ?
+            [...fieldsWithoutPaymentRef, { name: PAYMENT_REF_FIELD_NAME, type: "number", required: true }] :
+            fieldsWithoutPaymentRef;
+
+        setEventData(prev => ({ 
+            ...prev, 
+            isExternalRegistration: checked, 
+            registrationUrl: checked ? prev.registrationUrl : "", // Clear URL if internal is selected
+            qrCodeFile: checked ? null : prev.qrCodeFile, // Clear QR file if external is selected
+            qrCodePreviewUrl: checked ? "" : prev.qrCodePreviewUrl,
+            customFields: checked ? fieldsWithoutPaymentRef : fieldsWithPaymentRef,
+        }));
+    };
+
+
     // --- Rounds Logic omitted for brevity (no changes) ---
     const handleRoundChange = (index, field, value) => {
         const newRounds = [...eventData.rounds];
@@ -249,7 +320,7 @@ const HostEventPage = ({ parentPathname }) => {
         }
     };
     
-    // --- Custom Fields Logic omitted for brevity (no changes) ---
+    // --- Custom Fields Logic ---
     const handleCustomFieldChange = (index, field, value) => {
         const newFields = [...eventData.customFields];
         newFields[index][field] = value;
@@ -273,7 +344,7 @@ const HostEventPage = ({ parentPathname }) => {
     // --- Cancel Handler ---
     const handleCancelHost = () => {
         if (window.confirm("Are you sure you want to cancel hosting this event? All unsaved data will be lost.")) {
-            router.replace(parentPathname, { scroll: true }); 
+            router.replace(parentPathname, { scroll: true });
         }
     };
 
@@ -290,7 +361,25 @@ const HostEventPage = ({ parentPathname }) => {
             return;
         }
 
-        // --- NEW REGISTRATION VALIDATION ---
+        // --- PAID EVENT VALIDATION ---
+        if (isPaidEvent) {
+            if (!eventData.paymentAmount) {
+                console.error("Form validation failed. Payment Amount is required for all Paid events.");
+                setSubmissionStatus('error_paid_amount');
+                setIsSubmitting(false);
+                return;
+            }
+            
+            // This check only applies if using INTERNAL QR CODE PAYMENT
+            if (showQrCodeFields && !eventData.qrCodeFile) {
+                console.error("Form validation failed. QR Code image is required for QR Code Payment.");
+                setSubmissionStatus('error_qr_code');
+                setIsSubmitting(false);
+                return;
+            }
+        }
+
+        // --- EXTERNAL REGISTRATION VALIDATION ---
         if (eventData.isExternalRegistration && !eventData.registrationUrl) {
              console.error("Form validation failed. External Registration is enabled but URL is missing.");
              setSubmissionStatus('error_url');
@@ -298,17 +387,11 @@ const HostEventPage = ({ parentPathname }) => {
              return;
         }
         
-        // You could also add validation that if not external, customFields must have at least one field.
-        // if (!eventData.isExternalRegistration && eventData.customFields.length === 0) {
-        //     console.error("Form validation failed. Internal registration must have at least one custom field.");
-        //     setSubmissionStatus('error_custom_fields');
-        //     setIsSubmitting(false);
-        //     return;
-        // }
-
-
-        // NOTE: In a real application, you would send eventData.posterFile and eventData.bannerFile to the server.
-        console.log("Mock Uploading Files: Card Poster:", eventData.posterFile.name, "Banner:", eventData.bannerFile.name);
+        // NOTE: In a real application, you would send files to the server.
+        console.log("Mock Uploading Files: Card Poster:", eventData.posterFile?.name, "Banner:", eventData.bannerFile?.name);
+        if (eventData.qrCodeFile) {
+            console.log("Mock Uploading File: QR Code:", eventData.qrCodeFile.name);
+        }
 
         setTimeout(() => {
             console.log("Event Submission Data:", eventData);
@@ -355,7 +438,7 @@ const HostEventPage = ({ parentPathname }) => {
                     <X className="w-6 h-6" />
                 </button>
                 
-                <SectionTitle icon={Plus} className="justify-center">Host Your Event 🚀</SectionTitle>
+                <SectionTitle className="justify-center">Host Your Event 🚀</SectionTitle>
                 <p className="text-center text-gray-400 mb-10">Fill in the details below to list your event.</p>
 
                 <form onSubmit={handleSubmit} className="space-y-10">
@@ -421,19 +504,14 @@ const HostEventPage = ({ parentPathname }) => {
                                      Online Event
                                  </label>
                              </div>
-                            
+                             
                              <div className="flex items-center space-x-2">
                                  <input
                                      type="checkbox"
                                      name="isFree"
                                      id="isFree"
                                      checked={eventData.isFree}
-                                     onChange={(e) => {
-                                         handleInputChange(e);
-                                         const tagsWithoutPricing = eventData.tags.filter(t => t !== "Free" && t !== "Paid");
-                                         const newTag = e.target.checked ? "Free" : "Paid";
-                                         setEventData(prev => ({ ...prev, tags: [...tagsWithoutPricing, newTag] }));
-                                     }}
+                                     onChange={handleIsFreeToggle}
                                      className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
                                  />
                                  <label htmlFor="isFree" className="text-sm font-medium text-gray-300">
@@ -450,6 +528,29 @@ const HostEventPage = ({ parentPathname }) => {
                             placeholder={eventData.isOnline ? "e.g., Zoom Link | Discord Server" : "e.g., KIIT Auditorium | Rose Garden, Campus-18"}
                             required
                         />
+                        
+                        {/* --- Payment Amount Field (Hardcoded INR, type="text" to remove stepper) --- */}
+                        {isPaidEvent && (
+                            <div className="space-y-2 border-l-4 border-yellow-500 pl-3 pt-2">
+                                <label className="text-sm font-medium text-gray-400 block">
+                                    Registration Fee / Amount (Currency: **{CURRENCY_CODE}**) <span className="text-red-500">*</span>
+                                </label>
+                                <div className="flex items-center gap-4">
+                                    <span className="text-xl text-yellow-300">{CURRENCY_SYMBOL}</span>
+                                    <input
+                                        // Changed back to type="text" to remove stepper controls, relying on validation for numeric check
+                                        type="text" 
+                                        name="paymentAmount"
+                                        value={eventData.paymentAmount}
+                                        onChange={handleInputChange}
+                                        placeholder={`e.g., 500`}
+                                        required 
+                                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        {/* ------------------------------------------------ */}
 
                         {/* --- DUAL IMAGE UPLOAD SECTION --- */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
@@ -475,7 +576,7 @@ const HostEventPage = ({ parentPathname }) => {
                         {/* ---------------------------------- */}
 
                     </div>
-                    
+
                     {/* --- Organizer and Registration --- */}
                     <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
                         <SectionTitle icon={User}>Organizer & Registration</SectionTitle>
@@ -577,7 +678,7 @@ const HostEventPage = ({ parentPathname }) => {
                     <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
                         <SectionTitle icon={Menu}>Registration Form Customization</SectionTitle>
 
-                        {/* --- NEW EXTERNAL REGISTRATION TOGGLE --- */}
+                        {/* --- EXTERNAL REGISTRATION TOGGLE --- */}
                         <div className="space-y-4">
                             <div className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg border border-purple-500/50">
                                 <input
@@ -585,7 +686,7 @@ const HostEventPage = ({ parentPathname }) => {
                                     name="isExternalRegistration"
                                     id="isExternalRegistration"
                                     checked={eventData.isExternalRegistration}
-                                    onChange={handleInputChange}
+                                    onChange={handleIsExternalRegistrationToggle}
                                     className="w-5 h-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
                                 />
                                 <label htmlFor="isExternalRegistration" className="text-base font-bold text-purple-400 flex items-center">
@@ -606,27 +707,60 @@ const HostEventPage = ({ parentPathname }) => {
                                         onChange={handleInputChange}
                                         placeholder="e.g., https://eventbrite.com/your-event-link"
                                         type="url"
-                                        required // Validation handled in handleSubmit, but good for UX
+                                        required
                                     />
                                 </>
                             ) : (
                                 <>
+                                    {/* --- CONDITIONAL QR CODE PAYMENT FIELDS --- */}
+                                    {showQrCodeFields && (
+                                        <div className="p-4 bg-yellow-900/30 rounded-lg border border-yellow-500/50 space-y-4">
+                                            <div className="flex items-center space-x-3 text-yellow-300 font-bold">
+                                                <QrCode className="w-5 h-5" />
+                                                <span>QR Code Payment (Internal)</span>
+                                            </div>
+                                            <p className="text-sm text-gray-300">
+                                                Since this is a **Paid** event and internal registration is selected, users will see the amount (**{CURRENCY_SYMBOL} {eventData.paymentAmount}**) and scan this QR code to pay.
+                                            </p>
+                                            
+                                            <ImageUploader
+                                                label="Upload Payment QR Code Image"
+                                                ratioTip="The image users will scan to pay for the event."
+                                                name="qrCodeFile"
+                                                file={eventData.qrCodeFile}
+                                                previewUrl={eventData.qrCodePreviewUrl}
+                                                onFileChange={(e) => handleFileChange(e, 'qrCodeFile', 'qrCodePreviewUrl')}
+                                                onRemove={() => handleFileChange({ target: { files: [] } }, 'qrCodeFile', 'qrCodePreviewUrl')}
+                                                required={true}
+                                            />
+                                            <p className="text-sm text-gray-300 bg-gray-800 p-2 rounded-lg">
+                                                A required system field **"{PAYMENT_REF_FIELD_NAME}"** has been automatically added to the registration form below.
+                                            </p>
+                                        </div>
+                                    )}
+                                    {/* ------------------------------------------ */}
+                                    
                                     <p className="text-gray-400 text-sm mb-4">
                                         Define additional fields you want to collect from users when they register for your event (e.g., College ID, T-Shirt Size).
                                     </p>
                                     
                                     {eventData.customFields.map((field, index) => (
-                                        <div key={index} className="bg-gray-800 p-4 rounded-lg border border-gray-700 space-y-3 relative">
-                                            <h3 className="text-lg font-bold text-yellow-400">Custom Field {index + 1}</h3>
+                                        <div 
+                                            key={index} 
+                                            className={`p-4 rounded-lg border space-y-3 relative ${field.name === PAYMENT_REF_FIELD_NAME ? "bg-red-900/30 border-red-500/50" : "bg-gray-800 border-gray-700"}`}
+                                        >
+                                            <h3 className="text-lg font-bold text-yellow-400">{field.name === PAYMENT_REF_FIELD_NAME ? "SYSTEM FIELD: PAYMENT VERIFICATION" : `Custom Field ${index + 1}`}</h3>
                                             
-                                            <button
-                                                type="button"
-                                                onClick={() => removeCustomField(index)}
-                                                className="absolute top-4 right-4 p-1 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors"
-                                                title="Remove Field"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
+                                            {field.name !== PAYMENT_REF_FIELD_NAME && ( 
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeCustomField(index)}
+                                                    className="absolute top-4 right-4 p-1 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors"
+                                                    title="Remove Field"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            )}
                                             
                                             <InputField
                                                 label="Field Label (What the user sees)"
@@ -634,6 +768,7 @@ const HostEventPage = ({ parentPathname }) => {
                                                 onChange={(e) => handleCustomFieldChange(index, 'name', e.target.value)}
                                                 placeholder="e.g., T-Shirt Size"
                                                 required
+                                                disabled={field.name === PAYMENT_REF_FIELD_NAME}
                                             />
                                             
                                             <div className="grid grid-cols-2 gap-4">
@@ -643,6 +778,7 @@ const HostEventPage = ({ parentPathname }) => {
                                                     onChange={(e) => handleCustomFieldChange(index, 'type', e.target.value)}
                                                     options={[{name: 'text'}, {name: 'number'}, {name: 'email'}, {name: 'date'}, {name: 'checkbox'}]}
                                                     required
+                                                    disabled={field.name === PAYMENT_REF_FIELD_NAME}
                                                 />
                                                 <div className="flex items-center space-x-2 pt-8">
                                                     <input
@@ -651,6 +787,7 @@ const HostEventPage = ({ parentPathname }) => {
                                                         checked={field.required}
                                                         onChange={(e) => handleCustomFieldChange(index, 'required', e.target.checked)}
                                                         className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                                                        disabled={field.name === PAYMENT_REF_FIELD_NAME}
                                                     />
                                                     <label htmlFor={`required-${index}`} className="text-sm font-medium text-gray-300">
                                                         Required Field
@@ -683,12 +820,22 @@ const HostEventPage = ({ parentPathname }) => {
                     </button>
                     {submissionStatus === 'error' && (
                         <p className="text-red-500 text-center mt-4">
-                            Please correct the form errors and fill out all required fields, **including both images**.
+                            Please correct the form errors and fill out all required fields, **including both Poster and Banner images**.
                         </p>
                     )}
                     {submissionStatus === 'error_url' && (
                          <p className="text-red-500 text-center mt-4">
-                             **External Registration** is enabled, please provide a valid **Registration URL**.
+                              **External Registration** is enabled, please provide a valid **Registration URL**.
+                         </p>
+                    )}
+                    {submissionStatus === 'error_paid_amount' && (
+                         <p className="text-red-500 text-center mt-4">
+                              **Payment Amount** is required for all Paid events.
+                         </p>
+                    )}
+                    {submissionStatus === 'error_qr_code' && (
+                         <p className="text-red-500 text-center mt-4">
+                              **QR Code Image** is required for Paid events with internal QR Code payment.
                          </p>
                     )}
                 </form>

@@ -361,7 +361,7 @@ const HostEventPage = ({ parentPathname }) => {
             return;
         }
 
-        // --- PAID EVENT VALIDATION ---
+        //  PAID EVENT VALIDATION 
         if (isPaidEvent) {
             if (!eventData.paymentAmount) {
                 console.error("Form validation failed. Payment Amount is required for all Paid events.");

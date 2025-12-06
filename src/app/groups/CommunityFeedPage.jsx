@@ -76,7 +76,6 @@ const defaultCommunityInfo = {
   iconUrl: "https://picsum.photos/seed/ph-icon/100/100",
   bannerUrl: "https://picsum.photos/seed/philippines-banner/1200/200",
   isJoined: true,
-  // optional slug fallback (for invite links when no real slug passed)
   slug: "rounit-srivastava",
 };
 
@@ -193,7 +192,7 @@ const ImagePreviewModal = ({ imageUrl, onClose }) => {
 const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
-  const [imageFile, setImageFile] = React.useState(null);
+  const [imageFile, setImageFile] = React.useState(null); // ✅ fixed
   const [imagePreviewUrl, setImagePreviewUrl] = React.useState(null);
 
   const handleClearImage = () => {
@@ -371,13 +370,11 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
 const InviteMenu = React.forwardRef(
   ({ communityName, communitySlug, onClose }, ref) => {
     const handleShare = (method) => {
-      // Fallback base URL for SSR safety
       const baseUrl =
         typeof window !== "undefined"
           ? window.location.origin
           : "https://your-app-url.com";
 
-      // Prefer provided slug; otherwise generate a slug from name
       const slugFromName = (communityName || "")
         .toLowerCase()
         .trim()
@@ -386,7 +383,6 @@ const InviteMenu = React.forwardRef(
 
       const slug = communitySlug || slugFromName || "community";
 
-      // 🔗 New invite link → goes to Explore page with `invited` query
       const inviteLink = `${baseUrl}/groups?invited=${encodeURIComponent(
         slug
       )}`;
@@ -463,7 +459,7 @@ InviteMenu.displayName = "InviteMenu";
 // --------------------
 const CommunityHeader = ({ community, onCreatePost }) => {
   const [isInviteMenuOpen, setIsInviteMenuOpen] = React.useState(false);
-  const joined = true; // Hardcoded to true
+  const joined = true; // Hardcoded Joined
 
   const inviteButtonRef = React.useRef(null);
   const inviteMenuRef = React.useRef(null);
@@ -507,7 +503,7 @@ const CommunityHeader = ({ community, onCreatePost }) => {
         <InviteMenu
           ref={inviteMenuRef}
           communityName={community.name}
-          communitySlug={community.slug} // 🔗 pass slug to InviteMenu
+          communitySlug={community.slug}
           onClose={() => setIsInviteMenuOpen(false)}
         />
       )}
@@ -530,11 +526,11 @@ const CommunityHeader = ({ community, onCreatePost }) => {
           )}
         </div>
 
-        {/* White bar – full width */}
+        {/* Bar – full width */}
         <div className="bg-[#0d0d0d] text-white px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-4">
-          {/* Avatar overlapping the banner */}
+          {/* Avatar overlapping */}
           <div className="-mt-10">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black border-0 border-white overflow-hidden flex items-center justify-center text-xl font-bold text-white">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black border-0 overflow-hidden flex items-center justify-center text-xl font-bold text-white">
               {community.iconUrl ? (
                 <img
                   src={community.iconUrl}
@@ -557,7 +553,7 @@ const CommunityHeader = ({ community, onCreatePost }) => {
             </p>
           </div>
 
-          {/* Buttons on the right */}
+          {/* Buttons */}
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={onCreatePost}
@@ -579,7 +575,7 @@ const CommunityHeader = ({ community, onCreatePost }) => {
         </div>
       </div>
 
-      {/* Description under header */}
+      {/* Description */}
       {community.description && (
         <div className="px-4 sm:px-6 mt-2">
           <p className="text-sm text-gray-300">{community.description}</p>
@@ -695,6 +691,18 @@ const CommentsPage = ({ post, onBack }) => {
     ),
   });
 
+  // Scroll-to-top: when comment page opens, show top first
+  const pageTopRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
+    if (pageTopRef.current) {
+      pageTopRef.current.scrollIntoView({ behavior: "auto", block: "start" });
+    }
+  }, []);
+
   const handleCommentSubmit = () => {
     if (!commentText.trim()) return;
 
@@ -782,7 +790,11 @@ const CommentsPage = ({ post, onBack }) => {
   }, []);
 
   return (
-    <div className="relative bg-[#0d0d0d] text-white min-h-screen pb-20">
+    <div
+      ref={pageTopRef}
+      className="relative bg-[#0d0d0d] text-white min-h-screen pb-20"
+    >
+      {/* Header */}
       <div className="flex items-center px-4 py-3 bg-[#0d0d0d] border-b border-gray-800 z-20">
         <ArrowLeft className="w-6 h-6 cursor-pointer mr-3" onClick={onBack} />
         <div className="overflow-hidden">
@@ -791,6 +803,7 @@ const CommentsPage = ({ post, onBack }) => {
         </div>
       </div>
 
+      {/* Post summary */}
       <div className="px-4 py-3 bg-[#0d0d0d] border-b border-gray-800 z-10">
         <p className="text-xs text-gray-400">
           <span className="text-white font-semibold">{post.author}</span> ·{" "}
@@ -801,6 +814,7 @@ const CommentsPage = ({ post, onBack }) => {
         )}
       </div>
 
+      {/* Comments List */}
       <div>
         {topLevelComments.map((c) => (
           <div key={c.id} className="px-4 py-3 border-b border-gray-800">
@@ -819,6 +833,7 @@ const CommentsPage = ({ post, onBack }) => {
         )}
       </div>
 
+      {/* Fixed comment input bar */}
       <div
         role="region"
         aria-label="Comment input"
@@ -908,7 +923,7 @@ const PostCard = ({
   const format = (n) => (n >= 1000 ? (n / 1000).toFixed(1) + "k" : n);
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4 mx-4 shadow-lg">
+    <div className="bg-gray-150 p-4 rounded-lg border border-gray-700 mb-4 mx-4 shadow-lg">
       {/* Header */}
       <div className="flex justify-between relative">
         <div className="flex items-center">
@@ -1025,7 +1040,7 @@ export default function CommunityFeedPage({ community, onGoBack }) {
 
   React.useEffect(() => {
     if (topRef.current) {
-      topRef.current.scrollIntoView({ behavior: "instant", block: "start" });
+      topRef.current.scrollIntoView({ behavior: "auto", block: "start" });
     }
   }, [selectedPost]);
 
@@ -1088,6 +1103,7 @@ export default function CommunityFeedPage({ community, onGoBack }) {
         filtered.sort((a, b) => b.id - a.id);
         break;
       case "Events":
+        // placeholder
         break;
       default:
         filtered.sort((a, b) => b.upvotes - a.upvotes);
@@ -1121,7 +1137,7 @@ export default function CommunityFeedPage({ community, onGoBack }) {
         />
       )}
 
-      {/* Top bar */}
+      {/* Top bar (back + search) */}
       <div
         className="flex items-center justify-between p-4 bg-[#0d0d0d] border-b border-gray-800"
         ref={topRef}
@@ -1130,7 +1146,7 @@ export default function CommunityFeedPage({ community, onGoBack }) {
           className="w-6 h-6 cursor-pointer text-gray-400 hover:text-white"
           onClick={onGoBack}
         />
-        <div className="flex-1 text-center"></div>
+        <div className="flex-1 text-center" />
         <Search
           className="w-6 h-6 cursor-pointer text-gray-400 hover:text-white"
           onClick={() => setSearchShown(!searchShown)}

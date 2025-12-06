@@ -16,6 +16,7 @@ const trendingCommunities = [
     id: 101,
     name: "Pixel Warriors",
     members: "12.4k",
+    membersCount: 12400,
     background: "bg-gradient-to-br from-black to-black",
     isImage: false,
     slug: "pixel-warriors",
@@ -24,6 +25,7 @@ const trendingCommunities = [
     id: 102,
     name: "Goal Getters Club",
     members: "8.1k",
+    membersCount: 8100,
     image: "/images/soccer-net.jpg",
     isImage: true,
     slug: "goal-getters-club",
@@ -32,6 +34,7 @@ const trendingCommunities = [
     id: 103,
     name: "Crypto Hub",
     members: "32.0k",
+    membersCount: 32000,
     background: "bg-gradient-to-r from-yellow-500 to-amber-700",
     isImage: false,
     slug: "crypto-hub",
@@ -40,6 +43,7 @@ const trendingCommunities = [
     id: 104,
     name: "Foodies Delight",
     members: "15.9k",
+    membersCount: 15900,
     background: "bg-gradient-to-r from-red-500 to-red-700",
     isImage: false,
     slug: "foodies-delight",
@@ -48,6 +52,7 @@ const trendingCommunities = [
     id: 105,
     name: "Space Nerds",
     members: "9.3k",
+    membersCount: 9300,
     background: "bg-gradient-to-r from-purple-600",
     isImage: false,
     slug: "space-nerds",
@@ -56,6 +61,7 @@ const trendingCommunities = [
     id: 106,
     name: "Book Worms HQ",
     members: "11.2k",
+    membersCount: 11200,
     background: "bg-gradient-to-r from-gray-700 to-gray-800",
     isImage: false,
     slug: "book-worms",
@@ -67,6 +73,7 @@ const initialRecommendedCommunitiesData = [
     id: 1,
     name: "Tech Innovators",
     members: "23.7k members",
+    membersCount: 23700,
     description: "Discussions on next-gen tech.",
     icon: "/images/tech-icon.png",
     iconUrl: "/images/tech-icon.png",
@@ -76,6 +83,7 @@ const initialRecommendedCommunitiesData = [
     id: 2,
     name: "Adventurers Unite",
     members: "15.2k members",
+    membersCount: 15200,
     description: "Share your travel stories & tips.",
     icon: "/images/adventure-icon.png",
     iconUrl: "/images/adventure-icon.png",
@@ -85,6 +93,7 @@ const initialRecommendedCommunitiesData = [
     id: 3,
     name: "Bake Off Club",
     members: "9.8k members",
+    membersCount: 9800,
     description: "Recipes, tips, and baking tricks.",
     icon: "/images/bake-icon.png",
     iconUrl: "/images/bake-icon.png",
@@ -94,6 +103,7 @@ const initialRecommendedCommunitiesData = [
     id: 4,
     name: "Fitness Fanatics",
     members: "55.0k members",
+    membersCount: 55000,
     description: "Workouts and nutrition advice.",
     icon: "/images/fitness-icon.png",
     iconUrl: "/images/fitness-icon.png",
@@ -103,6 +113,7 @@ const initialRecommendedCommunitiesData = [
     id: 5,
     name: "DIY Masters",
     members: "18.3k members",
+    membersCount: 18300,
     description: "Home improvement and crafting.",
     icon: "/images/diy-icon.png",
     iconUrl: "/images/diy-icon.png",
@@ -112,6 +123,7 @@ const initialRecommendedCommunitiesData = [
     id: 6,
     name: "Photography Pros",
     members: "20.1k members",
+    membersCount: 20100,
     description: "Share your best shots and gear talk.",
     icon: "/images/photo-icon.png",
     iconUrl: "/images/photo-icon.png",
@@ -151,7 +163,9 @@ const TrendingCard = ({ community, onNavigate }) => (
 
     <div className="absolute inset-0 p-3 flex flex-col justify-end text-white bg-black bg-opacity-30">
       <p className="font-semibold text-base leading-snug">{community.name}</p>
-      <p className="text-xs text-gray-200">{community.members} members</p>
+      <p className="text-xs text-gray-200">
+        {community.members || `${community.membersCount || 0} members`}
+      </p>
     </div>
   </div>
 );
@@ -189,7 +203,9 @@ const RecommendedItem = ({ community, isJoined, onJoin, onNavigate }) => {
         <div>
           <p className="font-medium text-white">{community.name}</p>
           <p className="text-sm text-gray-400">{community.description}</p>
-          <p className="text-xs text-gray-500 mt-1">{community.members}</p>
+          <p className="text-xs text-gray-500 mt-1">
+            {community.members || `${community.membersCount || 0} members`}
+          </p>
 
           {community.createdByCurrentUser && (
             <p className="text-xs text-amber-400 font-semibold mt-1">
@@ -468,8 +484,21 @@ export default function ExplorePage({
     setJoinedCommunities((prev) => ({ ...prev, [community.id]: true }));
   };
 
+  // 🔴 when clicking any community to navigate → join if needed then navigate
   const handleNavigate = (community) => {
-    if (onNavigateToCommunity) onNavigateToCommunity(community);
+    const isJoined =
+      !!joinedCommunities[community.id] || community.createdByCurrentUser;
+
+    if (!isJoined) {
+      setJoinedCommunities((prev) => ({
+        ...prev,
+        [community.id]: true,
+      }));
+    }
+
+    if (onNavigateToCommunity) {
+      onNavigateToCommunity(community);
+    }
   };
 
   const handleNewCommunitySubmission = (newCommunity) => {
@@ -504,6 +533,20 @@ export default function ExplorePage({
     );
   }, [allCommunities, joinedCommunities]);
 
+  // 🔴 TRENDING BY MEMBERS (top by membersCount)
+  const trendingByMembers = React.useMemo(() => {
+    const map = new Map();
+
+    // include static trending + all other communities
+    [...trendingCommunities, ...allCommunities].forEach((comm) => {
+      map.set(comm.id, comm);
+    });
+
+    return Array.from(map.values()).sort(
+      (a, b) => (b.membersCount || 0) - (a.membersCount || 0)
+    );
+  }, [allCommunities]);
+
   // 🔴 Explorable communities (unjoined) + "invited" reordering
   const explorableViewCommunities = React.useMemo(() => {
     let list = allCommunities.filter(
@@ -511,7 +554,6 @@ export default function ExplorePage({
         !(!!joinedCommunities[community.id] || community.createdByCurrentUser)
     );
 
-    // If user came via invite link, move that community to the top
     if (invitedSlug) {
       const index = list.findIndex(
         (community) => community.slug === invitedSlug
@@ -540,12 +582,13 @@ export default function ExplorePage({
 
   // --- APPLYING LIMITS ---
   const displayTrending = showAllTrending
-    ? trendingCommunities
-    : trendingCommunities.slice(0, INITIAL_DISPLAY_LIMIT);
+    ? trendingByMembers
+    : trendingByMembers.slice(0, INITIAL_DISPLAY_LIMIT);
 
-  const displayJoined = showAllJoined || searchTerm
-    ? userJoinedCommunities
-    : userJoinedCommunities.slice(0, JOINED_DISPLAY_LIMIT);
+  const displayJoined =
+    showAllJoined || searchTerm
+      ? userJoinedCommunities
+      : userJoinedCommunities.slice(0, JOINED_DISPLAY_LIMIT);
 
   const displayRecommended = searchTerm
     ? filteredCommunities
@@ -634,18 +677,17 @@ export default function ExplorePage({
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Trending Communities</h2>
 
-          {trendingCommunities.length > INITIAL_DISPLAY_LIMIT &&
-            !showAllTrending && (
-              <button
-                onClick={() => setShowAllTrending(true)}
-                className="text-purple-450 hover:text-purple-650 flex items-center text-sm font-medium"
-              >
-                See All <ChevronRight className="w-4 h-4 ml-1" />
-              </button>
-            )}
+          {trendingByMembers.length > INITIAL_DISPLAY_LIMIT && !showAllTrending && (
+            <button
+              onClick={() => setShowAllTrending(true)}
+              className="text-purple-450 hover:text-purple-650 flex items-center text-sm font-medium"
+            >
+              See All <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          )}
         </div>
 
-        <div className="flex overflow-x-auto pb-2 -mr-4">
+        <div className="flex overflow-x-auto pb-2 -mr-4 scrollbar-hide">
           {displayTrending.map((community) => (
             <TrendingCard
               key={community.id}

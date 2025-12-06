@@ -1,6 +1,6 @@
 // app/layout.jsx
 import "./globals.css";
-import ClientLayout from "./ClientLayout";
+import ClientLayout from "./ClientLayout"; // ⬅️ use app/ClientLayout.jsx
 
 export const metadata = {
   title: "Event Platform",

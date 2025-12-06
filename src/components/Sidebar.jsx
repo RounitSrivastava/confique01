@@ -3,7 +3,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Home, Users, CalendarDays, BarChart3, Newspaper, ChevronDown } from "lucide-react";
+import {
+  Home,
+  Users,
+  CalendarDays,
+  BarChart3,
+  Newspaper,
+  ChevronDown,
+  X,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 
 const nav = [
@@ -14,56 +22,48 @@ const nav = [
   { icon: Newspaper, label: "News", href: "/news" },
 ];
 
-export default function Sidebar({ mobileOpen = false, onRequestClose = () => {} }) {
-  // 1. All Hook calls must be at the very top and unconditional.
+export default function Sidebar({ isOpen = false, onClose = () => {} }) {
   const [openQuick, setOpenQuick] = useState(true);
-  const [isClientMobile, setIsClientMobile] = useState(false); 
-  const pathname = usePathname(); 
+  const [isClientMobile, setIsClientMobile] = useState(false);
+  const pathname = usePathname();
   const mmRef = useRef(null);
 
-  // Helper function to check the viewport width (only called on client)
-  const checkIsMobile = () => 
-    typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches;
+  const checkIsMobile = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 1023px)").matches;
 
-  // 2. Setup matchMedia and listener once the component has mounted (client-side)
+  // Detect mobile viewport
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Set initial state on mount/hydration
-    setIsClientMobile(checkIsMobile()); 
-    
+    setIsClientMobile(checkIsMobile());
+
     mmRef.current = window.matchMedia("(max-width: 1023px)");
-    
-    // Listen for dynamic viewport changes
     const handler = (e) => setIsClientMobile(e.matches);
-    mmRef.current.addEventListener('change', handler);
+    mmRef.current.addEventListener("change", handler);
 
     return () => {
-        // Clean up listener on unmount
-        if (mmRef.current) {
-            mmRef.current.removeEventListener('change', handler);
-        }
-    }
+      if (mmRef.current) {
+        mmRef.current.removeEventListener("change", handler);
+      }
+    };
   }, []);
 
-  // 3. Close mobile slide-over on route change only when mobileOpen is true and viewport is mobile.
+  // Close mobile sidebar only when the route changes
   useEffect(() => {
-    if (mobileOpen && isClientMobile) { 
-      onRequestClose();
+    if (isOpen && isClientMobile) {
+      onClose();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, mobileOpen, isClientMobile]);
+  }, [pathname]);
 
-
-  // --- FIX: Conditional Return MUST come after all Hooks ---
+  // Hide sidebar entirely on /events route
   if (pathname === "/events") {
     return null;
   }
-  // --------------------------------------------------------
 
-  // Called by each Link's onClick to close slide-over when appropriate
   const handleMobileClose = () => {
-    if (mobileOpen && isClientMobile) onRequestClose();
+    if (isOpen && isClientMobile) onClose();
   };
 
   const baseLink =
@@ -71,7 +71,7 @@ export default function Sidebar({ mobileOpen = false, onRequestClose = () => {} 
 
   return (
     <>
-      {/* DESKTOP - persistent */}
+      {/* DESKTOP - persistent sidebar */}
       <aside className="hidden lg:block w-[260px] shrink-0 border-r border-[#262626] bg-[#0d0d0d] overflow-y-auto custom-scrollbar">
         <div className="mx-auto max-w-[240px] py-6">
           <nav className="space-y-1">
@@ -82,7 +82,9 @@ export default function Sidebar({ mobileOpen = false, onRequestClose = () => {} 
                   key={n.label}
                   href={n.href}
                   className={`${baseLink} ${
-                    active ? "bg-[#1a1a1a] border-[#3a3a3a] text-white" : "text-gray-300 hover:bg-[#1a1a1a] hover:border-[#262626]"
+                    active
+                      ? "bg-[#1a1a1a] border-[#3a3a3a] text-white"
+                      : "text-gray-300 hover:bg-[#1a1a1a] hover:border-[#262626]"
                   }`}
                 >
                   <n.icon className="h-4 w-4" />
@@ -98,18 +100,31 @@ export default function Sidebar({ mobileOpen = false, onRequestClose = () => {} 
               className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
             >
               <span>Quick Access</span>
-              <ChevronDown className={`h-4 w-4 transition ${openQuick ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`h-4 w-4 transition ${
+                  openQuick ? "rotate-180" : ""
+                }`}
+              />
             </button>
 
             {openQuick && (
               <div className="mt-2 space-y-2">
-                <Link href="/create-post" className="block rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]">
+                <Link
+                  href="/create-post"
+                  className="block rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
+                >
                   Create Post
                 </Link>
-                <Link href="/create-event" className="block rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]">
+                <Link
+                  href="/create-event"
+                  className="block rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
+                >
                   Create Event
                 </Link>
-                <Link href="/saved" className="block rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]">
+                <Link
+                  href="/saved"
+                  className="block rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
+                >
                   Saved Items
                 </Link>
               </div>
@@ -118,17 +133,19 @@ export default function Sidebar({ mobileOpen = false, onRequestClose = () => {} 
         </div>
       </aside>
 
-      {/* MOBILE - slide-over */}
+      {/* MOBILE - slide-over sidebar */}
       <aside
         className={`fixed top-0 left-0 z-50 h-full w-64 bg-[#0d0d0d] border-r border-[#262626] transform transition-transform duration-300 lg:hidden ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
+          isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        aria-hidden={!mobileOpen}
+        aria-hidden={!isOpen}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
-          <h2 className="text-lg font-extrabold text-purple-400">Nexterday</h2>
-          <button onClick={onRequestClose} className="p-1 rounded-md bg-gray-900 border border-gray-800">
-            ×
+          <h2 className="text-lg font-extrabold text-purple-400">
+            Confique
+          </h2>
+          <button onClick={onClose} className="p-1">
+            <X className="h-5 w-5 text-gray-400" />
           </button>
         </div>
 
@@ -140,7 +157,9 @@ export default function Sidebar({ mobileOpen = false, onRequestClose = () => {} 
                 key={n.label}
                 href={n.href}
                 onClick={handleMobileClose}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 ${active ? "bg-gray-800 text-white" : "text-gray-200"}`}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 ${
+                  active ? "bg-gray-800 text-white" : "text-gray-200"
+                }`}
               >
                 <n.icon className="h-4 w-4" />
                 <span>{n.label}</span>
@@ -150,17 +169,37 @@ export default function Sidebar({ mobileOpen = false, onRequestClose = () => {} 
         </nav>
 
         <div className="p-4 border-t border-gray-800">
-          <Link href="/create-post" onClick={handleMobileClose} className="block px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300">
+          <Link
+            href="/create-post"
+            onClick={handleMobileClose}
+            className="block px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300"
+          >
             Create Post
           </Link>
-          <Link href="/create-event" onClick={handleMobileClose} className="block px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300">
+          <Link
+            href="/create-event"
+            onClick={handleMobileClose}
+            className="block px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300"
+          >
             Create Event
           </Link>
-          <Link href="/saved" onClick={handleMobileClose} className="block px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300">
+          <Link
+            href="/saved"
+            onClick={handleMobileClose}
+            className="block px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300"
+          >
             Saved Items
           </Link>
         </div>
       </aside>
+
+      {/* BACKDROP OVERLAY – click outside to close (mobile only) */}
+      {isOpen && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+        />
+      )}
     </>
   );
 }

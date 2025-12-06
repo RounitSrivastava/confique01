@@ -57,6 +57,21 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
+  // Lock body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    if (isOpen && isClientMobile) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, isClientMobile]);
+
   // Hide sidebar entirely on /events route
   if (pathname === "/events") {
     return null;

@@ -18,7 +18,54 @@ import {
   QrCode,
   List,
   TrendingUp,
+  X as CloseIcon,
 } from "lucide-react";
+
+// ───────── HELPERS (email + notifications) ─────────
+const getCurrentUserEmail = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem("userEmail") || null;
+  } catch {
+    return null;
+  }
+};
+
+const sendRegistrationNotification = (eventTitle) => {
+  if (typeof window === "undefined") return;
+  const email = getCurrentUserEmail();
+  if (!email) return; // no logged-in user
+
+  let store = {};
+  try {
+    store = JSON.parse(localStorage.getItem("notifications") || "{}");
+  } catch {
+    store = {};
+  }
+
+  const userList = Array.isArray(store[email]) ? store[email] : [];
+  const now = new Date();
+
+  const newNotif = {
+    id: Date.now(),
+    title: `Thank you for registering for "${eventTitle}"`,
+    message: `You have successfully registered for ${eventTitle}.`,
+    createdAt: now.toISOString(),
+    time: now.toLocaleTimeString(),
+  };
+
+  const updatedList = [newNotif, ...userList];
+  store[email] = updatedList;
+
+  try {
+    localStorage.setItem("notifications", JSON.stringify(store));
+  } catch {
+    // ignore storage errors
+  }
+
+  // Tell Topbar to refresh & play bell
+  window.dispatchEvent(new Event("confique:new-notification"));
+};
 
 // Reusable SectionTitle component
 const SectionTitle = ({ children, icon: Icon, className = "" }) => (
@@ -219,12 +266,20 @@ const EventDetailsPage = ({
 
     setRegistrationStatus("Registered");
     setShowRegistrationForm(false);
+
+    // 🔔 send notification
+    sendRegistrationNotification(title);
+  };
+
+  const handleCloseForm = () => {
+    setShowRegistrationForm(false);
+    setFormErrors({});
   };
 
   const handleRegister = () => {
     if (registrationStatus !== "Open") return;
 
-    // external -> redirect
+    // external -> redirect (we can't be sure they completed, so no notif here)
     if (isExternalRegistration && registrationUrl) {
       window.open(registrationUrl, "_blank");
       return;
@@ -232,14 +287,15 @@ const EventDetailsPage = ({
 
     // internal:
     if (!hasCustomForm) {
-      // 👉 NO FIELDS CONFIGURED: directly mark registered
+      // 👉 NO FIELDS CONFIGURED: directly mark registered + notify
       console.log("Registered without extra form for event:", title);
       setRegistrationStatus("Registered");
+      sendRegistrationNotification(title);
       return;
     }
 
-    // fields exist: toggle the form
-    setShowRegistrationForm((prev) => !prev);
+    // fields exist: open popup
+    setShowRegistrationForm(true);
   };
 
   const getButtonProps = () => {
@@ -274,13 +330,8 @@ const EventDetailsPage = ({
     }
 
     // internal + open
-    const text =
-      hasCustomForm && showRegistrationForm
-        ? "Hide Registration Form"
-        : "Register Now";
-
     return {
-      text,
+      text: "Register Now",
       className:
         "w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/30 flex items-center justify-center",
       disabled: false,
@@ -290,103 +341,139 @@ const EventDetailsPage = ({
 
   const buttonProps = getButtonProps();
 
-  const renderRegistrationForm = () => {
-    // ❗ if no custom form, NEVER show that grey "no fields" box
+  const renderRegistrationFormModal = () => {
     if (!hasCustomForm || !showRegistrationForm || isExternalRegistration)
       return null;
 
     return (
-      <form
-        onSubmit={handleRegistrationSubmit}
-        className="mt-4 p-4 bg-gray-900 border border-gray-800 rounded-lg space-y-4"
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+        onClick={handleCloseForm}
       >
-        <p className="text-sm text-gray-300 mb-2">
-          Please fill the following details to complete your registration:
-        </p>
-
-        {customFields.map((field, index) => {
-          const value =
-            formData[field.name] ??
-            (field.type === "checkbox" ? false : "");
-          const error = formErrors[field.name];
-
-          let inputEl;
-
-          if (field.type === "checkbox") {
-            inputEl = (
-              <div className="flex items-center space-x-2 mt-1">
-                <input
-                  type="checkbox"
-                  id={`field-${index}`}
-                  checked={!!value}
-                  onChange={(e) =>
-                    handleFormChange(
-                      field.name,
-                      field.type,
-                      e.target.value,
-                      e.target.checked
-                    )
-                  }
-                  className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-                />
-                <label
-                  htmlFor={`field-${index}`}
-                  className="text-sm text-gray-200"
-                >
-                  {field.name}{" "}
-                  {field.required && (
-                    <span className="text-red-500">*</span>
-                  )}
-                </label>
-              </div>
-            );
-          } else {
-            inputEl = (
-              <>
-                <label className="text-xs font-medium text-gray-300 block mb-1">
-                  {field.name}{" "}
-                  {field.required && (
-                    <span className="text-red-500">*</span>
-                  )}
-                </label>
-                <input
-                  type={field.type || "text"}
-                  value={value}
-                  onChange={(e) =>
-                    handleFormChange(
-                      field.name,
-                      field.type,
-                      e.target.value,
-                      false
-                    )
-                  }
-                  className={`w-full px-3 py-2 rounded-lg bg-gray-800 border text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                    error ? "border-red-500" : "border-gray-700"
-                  }`}
-                  placeholder={field.name}
-                />
-              </>
-            );
-          }
-
-          return (
-            <div key={index} className="space-y-1">
-              {inputEl}
-              {error && (
-                <p className="text-xs text-red-400 mt-1">{error}</p>
-              )}
-            </div>
-          );
-        })}
-
-        <button
-          type="submit"
-          className="w-full py-2.5 mt-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center"
+        <div
+          className="relative w-full max-w-lg bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-6"
+          onClick={(e) => e.stopPropagation()}
         >
-          <CheckCircle className="w-4 h-4 mr-2" />
-          Submit Registration
-        </button>
-      </form>
+          <button
+            type="button"
+            onClick={handleCloseForm}
+            className="absolute top-3 right-3 p-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
+          >
+            <CloseIcon className="w-4 h-4" />
+          </button>
+
+          <div className="mb-4">
+            <p className="text-xs uppercase tracking-wide text-purple-400 font-semibold mb-1">
+              Registration • {category}
+            </p>
+            <h3 className="text-xl font-bold text-white mb-1">
+              {title}
+            </h3>
+            <p className="text-xs text-gray-400">
+              Please fill the details below to complete your registration.
+            </p>
+          </div>
+
+          <form
+            onSubmit={handleRegistrationSubmit}
+            className="space-y-4 max-h-[70vh] overflow-y-auto pr-1"
+          >
+            {customFields.map((field, index) => {
+              const value =
+                formData[field.name] ??
+                (field.type === "checkbox" ? false : "");
+              const error = formErrors[field.name];
+
+              let inputEl;
+
+              if (field.type === "checkbox") {
+                inputEl = (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <input
+                      type="checkbox"
+                      id={`field-${index}`}
+                      checked={!!value}
+                      onChange={(e) =>
+                        handleFormChange(
+                          field.name,
+                          field.type,
+                          e.target.value,
+                          e.target.checked
+                        )
+                      }
+                      className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                    />
+                    <label
+                      htmlFor={`field-${index}`}
+                      className="text-sm text-gray-200"
+                    >
+                      {field.name}{" "}
+                      {field.required && (
+                        <span className="text-red-500">*</span>
+                      )}
+                    </label>
+                  </div>
+                );
+              } else {
+                inputEl = (
+                  <>
+                    <label className="text-xs font-medium text-gray-300 block mb-1">
+                      {field.name}{" "}
+                      {field.required && (
+                        <span className="text-red-500">*</span>
+                      )}
+                    </label>
+                    <input
+                      type={field.type || "text"}
+                      value={value}
+                      onChange={(e) =>
+                        handleFormChange(
+                          field.name,
+                          field.type,
+                          e.target.value,
+                          false
+                        )
+                      }
+                      className={`w-full px-3 py-2 rounded-lg bg-gray-800 border text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                        error ? "border-red-500" : "border-gray-700"
+                      }`}
+                      placeholder={field.name}
+                    />
+                  </>
+                );
+              }
+
+              return (
+                <div key={index} className="space-y-1">
+                  {inputEl}
+                  {error && (
+                    <p className="text-xs text-red-400 mt-1">
+                      {error}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+
+            <div className="flex items-center justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={handleCloseForm}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white flex items-center justify-center transition-colors"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Submit & Register
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     );
   };
 
@@ -461,7 +548,7 @@ const EventDetailsPage = ({
             <SectionTitle icon={User}>Organizer & Contact</SectionTitle>
             <p className="text-gray-300">
               Hosted by:{" "}
-              <span className="font-semibold text-purple-400">
+                <span className="font-semibold text-purple-400">
                 {hostedBy || "The Host Organization"}
               </span>
             </p>
@@ -484,7 +571,8 @@ const EventDetailsPage = ({
                       {" "}
                       When you click{" "}
                       <span className="font-semibold">Register Now</span>, a
-                      form will open where you must fill the required details.
+                      popup form will open where you must fill the required
+                      details.
                     </>
                   ) : (
                     <>
@@ -601,11 +689,15 @@ const EventDetailsPage = ({
                   </p>
                   <p className="flex justify-between">
                     Start Date:{" "}
-                    <span className="font-medium text-white">{regStart}</span>
+                    <span className="font-medium text-white">
+                      {regStart}
+                    </span>
                   </p>
                   <p className="flex justify-between">
                     End Date:{" "}
-                    <span className="font-medium text-white">{regEnd}</span>
+                    <span className="font-medium text-white">
+                      {regEnd}
+                    </span>
                   </p>
                   <p className="flex justify-between">
                     Fees:{" "}
@@ -672,9 +764,6 @@ const EventDetailsPage = ({
                   )}
                   {buttonProps.text}
                 </button>
-
-                {/* Registration form (only if host added fields) */}
-                {renderRegistrationForm()}
               </div>
 
               {/* Eligibility Card */}
@@ -749,6 +838,9 @@ const EventDetailsPage = ({
           )}
         </div>
       </div>
+
+      {/* 🔥 POPUP REGISTRATION FORM */}
+      {renderRegistrationFormModal()}
     </div>
   );
 };

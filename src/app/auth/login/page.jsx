@@ -18,7 +18,7 @@ export default function LoginPage() {
     <main className="min-h-screen bg-black text-white relative">
       {/* Page background image */}
       <img
-        src="/background.jpg"
+        src="https://img.freepik.com/premium-photo/portrait-successful-business-woman-suit-gray-isolated-background-serious-office-female-worker-manager-employees-female-employee-young-secretary_545934-23090.jpg?w=200&h=200&fit=crop"
         alt=""
         className="pointer-events-none select-none fixed inset-0 h-full w-full object-cover opacity-30"
       />

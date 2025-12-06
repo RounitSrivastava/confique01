@@ -8,14 +8,14 @@ export default function TechProfilePage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   const [profile, setProfile] = useState({
-    name: 'Alex Doe',
-    bio: 'Digital creator & coffee enthusiast. Exploring the world one cup at a time. ☕',
-    location: 'San Francisco, CA',
-    website: 'alexdoe.dev',
+    name: 'Vaidehi Sharma',
+    bio: 'XYZ',
+    location: 'XYZ',
+    website: 'XYZ',
     totalPosts: 128,
     totalLikes: 1200,
     totalComments: 345,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop'
+    avatar: 'https://img.freepik.com/premium-photo/portrait-successful-business-woman-suit-gray-isolated-background-serious-office-female-worker-manager-employees-female-employee-young-secretary_545934-23090.jpg?w=200&h=200&fit=crop'
   });
 
   const [editForm, setEditForm] = useState(profile);
@@ -101,14 +101,14 @@ export default function TechProfilePage() {
     : posts;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br-gray-900">
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Profile Header */}
         <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-8 mb-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Avatar */}
             <div className="relative">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-1">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br purple-600 p-1">
                 <img 
                   src={profile.avatar}
                   alt="Profile" 
@@ -118,7 +118,7 @@ export default function TechProfilePage() {
               <div className="relative group">
                 <button 
                   onClick={openEditModal}
-                  className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full hover:bg-blue-700 transition-colors"
+                  className="absolute bottom-0 right-0 bg-purple-600 p-2 rounded-full hover:bg-purple-700 transition-colors"
                 >
                   <Edit2 className="w-4 h-4 text-white" />
                 </button>
@@ -166,14 +166,11 @@ export default function TechProfilePage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 mb-6">
-          <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
-            <Plus className="w-5 h-5" />
-            Create Event
-          </button>
-          <button className="px-6 bg-slate-700/50 hover:bg-slate-700 text-white py-3 rounded-xl font-semibold transition-colors flex items-center gap-2">
-            <Share2 className="w-5 h-5" />
-            Share Profile
+        <div className="flex justify-center mb-3">
+          {/* Make the button smaller and centered by removing flex-1 and using inline padding */}
+          <button className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+            <Share2 className="w-4 h-4" />
+            Share profile
           </button>
         </div>
 
@@ -183,23 +180,25 @@ export default function TechProfilePage() {
             <button 
               onClick={() => setActiveTab('posts')}
               className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
-                activeTab === 'posts' ? 'text-blue-400' : 'text-slate-400 hover:text-slate-300'
+                activeTab === 'posts' ? 'text-purple-400' : 'text-slate-400 hover:text-slate-300'
               }`}
             >
               All Posts
               {activeTab === 'posts' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"></div>
               )}
             </button>
+           
+
             <button 
               onClick={() => setActiveTab('registered')}
               className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
-                activeTab === 'registered' ? 'text-blue-400' : 'text-slate-400 hover:text-slate-300'
+                activeTab === 'registered' ? 'text-purple-400' : 'text-slate-400 hover:text-slate-300'
               }`}
             >
               Registered Events
               {activeTab === 'registered' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"></div>
               )}
             </button>
           </div>
@@ -266,7 +265,7 @@ export default function TechProfilePage() {
                           className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
                             post.isRegistered 
                               ? 'bg-slate-600 hover:bg-slate-500 text-white' 
-                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                              : 'bg-purple-600 hover:bg-purple-700 text-white'
                           }`}
                         >
                           {post.isRegistered ? 'Unregister' : 'Register'}
@@ -359,13 +358,13 @@ export default function TechProfilePage() {
             <div className="flex gap-3 p-6">
               <button 
                 onClick={closeEditModal}
-                className="flex-1 px-6 py-3.5 bg-[#0f172a] hover:bg-slate-800 text-white rounded-xl font-medium transition-colors border border-slate-700/50"
+                className="flex-1 px-6 py-3.5 bg-purple-600 hover:bg-slate-800 text-white rounded-xl font-medium transition-colors border border-slate-700/50"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleSaveProfile}
-                className="flex-1 px-6 py-3.5 bg-cyan-500 hover:bg-cyan-600 text-black rounded-xl font-medium transition-colors"
+                className="flex-1 px-6 py-3.5 bg-purple-500 hover:bg-purple-600 text-black rounded-xl font-medium transition-colors"
               >
                 Save
               </button>

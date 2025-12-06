@@ -240,11 +240,11 @@ export default function Topbar({
             >
               <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-600">
                 <Image
-                  src="/avatar-1.png"
+                  src="/employee.jpg"
                   width={36}
                   height={36}
                   alt="User"
-                  className="object-cover"
+                  className="object-cover w-full h-full"
                 />
               </div>
 
@@ -258,11 +258,11 @@ export default function Topbar({
                 <div className="px-4 py-4 flex flex-col items-center border-b border-[#262626]">
                   <div className="h-16 w-16 rounded-full overflow-hidden border border-gray-700 mb-2">
                     <Image
-                      src="/avatar-1.png"
+                      src="/employee.jpg"
                       width={64}
                       height={64}
                       alt="User"
-                      className="object-cover"
+                      className="object-cover w-full h-full"
                     />
                   </div>
                   <p className="text-sm font-semibold text-white">

@@ -47,12 +47,7 @@ export default function RightSidebar() {
   const router = useRouter();
   const [topCommunities, setTopCommunities] = React.useState([]);
 
-  // Hide sidebar on events page or any profile page
-  if (pathname === "/events" || pathname.startsWith("/profile")) {
-    return null;
-  }
-
-  // Load communities + joined map from localStorage
+  // ✅ Hooks always run
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -104,14 +99,17 @@ export default function RightSidebar() {
     const isJoined =
       !!joinedMap[community.id] || community.createdByCurrentUser;
 
-    // If joined → open feed (Explore/AppContainer handles ?focus)
-    // If not joined → ?invited so it appears at top in "Communities For You"
     if (isJoined) {
       router.push(`/groups?focus=${encodeURIComponent(slug)}`);
     } else {
       router.push(`/groups?invited=${encodeURIComponent(slug)}`);
     }
   };
+
+  // ✅ Early return *after* hooks
+  if (pathname === "/events" || pathname.startsWith("/profile")) {
+    return null;
+  }
 
   return (
     <aside className="hidden xl:flex w-[360px] shrink-0 border-l border-[#262626] bg-[#0d0d0d] overflow-y-auto">

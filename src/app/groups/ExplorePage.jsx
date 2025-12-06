@@ -1,8 +1,47 @@
 // /groups/ExplorePage.jsx
 "use client";
 import React from "react";
-import { Search, ChevronRight, Plus, X, Upload } from "lucide-react";
-import { useSearchParams } from "next/navigation"; // 🔴 NEW IMPORT
+import { Search, ChevronRight, Plus, X, Upload, Trash2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+
+// --- ADMIN CONSTANTS / HELPERS ---
+const SITE_OWNER_EMAIL = "confique01@gmail.com";
+
+const getCurrentUserEmail = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem("userEmail") || null;
+  } catch {
+    return null;
+  }
+};
+
+// 🔔 Common helper: push a notification to a specific user
+const pushNotification = (targetEmail, data) => {
+  if (typeof window === "undefined" || !targetEmail) return;
+
+  const createdAt = new Date().toISOString();
+  const notif = {
+    id: `n-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    createdAt,
+    read: false,
+    ...data, // { type, message, communityId, communityName, ... }
+  };
+
+  try {
+    const store = JSON.parse(localStorage.getItem("notifications") || "{}");
+    const list = store[targetEmail] || [];
+    store[targetEmail] = [notif, ...list];
+    localStorage.setItem("notifications", JSON.stringify(store));
+
+    // tell Topbar a new notification arrived
+    window.dispatchEvent(
+      new CustomEvent("confique:new-notification", { detail: notif })
+    );
+  } catch (e) {
+    console.error("Failed to push notification", e);
+  }
+};
 
 // --- CONSTANTS ---
 const INITIAL_DISPLAY_LIMIT = 5;
@@ -170,7 +209,14 @@ const TrendingCard = ({ community, onNavigate }) => (
   </div>
 );
 
-const RecommendedItem = ({ community, isJoined, onJoin, onNavigate }) => {
+const RecommendedItem = ({
+  community,
+  isJoined,
+  onJoin,
+  onNavigate,
+  canDelete,
+  onDelete,
+}) => {
   const buttonClasses = isJoined
     ? "bg-white text-black font-medium py-1.5 px-4 rounded-full text-sm transition-colors"
     : "bg-purple-600 hover:bg-purple-700 text-white font-medium py-1.5 px-4 rounded-full text-sm transition-colors";
@@ -215,16 +261,31 @@ const RecommendedItem = ({ community, isJoined, onJoin, onNavigate }) => {
         </div>
       </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onJoin();
-        }}
-        className={buttonClasses}
-        disabled={isJoined}
-      >
-        {buttonText}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onJoin();
+          }}
+          className={buttonClasses}
+          disabled={isJoined}
+        >
+          {buttonText}
+        </button>
+
+        {canDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="p-1.5 rounded-full bg-red-900/40 hover:bg-red-800 text-red-300 transition-colors"
+            title="Delete community"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 };
@@ -268,7 +329,8 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   const validate = () => {
     const newErrors = {};
     if (!formData.name) newErrors.name = "Community Name is required.";
-    if (!formData.description) newErrors.description = "Description is required.";
+    if (!formData.description)
+      newErrors.description = "Description is required.";
     if (!formData.logoFile) newErrors.logoFile = "Logo is required.";
     if (!formData.bannerFile) newErrors.bannerFile = "Banner is required.";
 
@@ -294,6 +356,8 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
       ? URL.createObjectURL(formData.bannerFile)
       : `/images/${slug}-banner.jpg`;
 
+    const ownerEmail = getCurrentUserEmail() || SITE_OWNER_EMAIL;
+
     const newCommunity = {
       id: Date.now(),
       name: formData.name,
@@ -306,6 +370,7 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
       slug,
       createdByCurrentUser: true,
       role: "admin",
+      ownerEmail,
     };
 
     onSubmitSuccess(newCommunity);
@@ -458,9 +523,9 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 export default function ExplorePage({
   onNavigateToCommunity,
   onCreateNewCommunity,
+  onDeleteCommunity,
   userCreatedCommunities = [],
 }) {
-  // 🔴 Read invite slug from query
   const searchParams = useSearchParams();
   const invitedSlug = searchParams.get("invited");
 
@@ -480,11 +545,30 @@ export default function ExplorePage({
   );
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
 
+  const currentUserEmail =
+    typeof window !== "undefined" ? getCurrentUserEmail() : null;
+  const isSiteOwner = currentUserEmail === SITE_OWNER_EMAIL;
+
+  // user clicks "Join"
   const handleJoin = (community) => {
     setJoinedCommunities((prev) => ({ ...prev, [community.id]: true }));
+
+    // notify community owner when someone joins
+    if (
+      community.ownerEmail &&
+      currentUserEmail &&
+      community.ownerEmail !== currentUserEmail
+    ) {
+      pushNotification(community.ownerEmail, {
+        type: "JOIN",
+        message: `${currentUserEmail} joined your community "${community.name}".`,
+        communityId: community.id,
+        communityName: community.name,
+      });
+    }
   };
 
-  // 🔴 when clicking any community to navigate → join if needed then navigate
+  // when click card → auto join if not joined, then go to feed
   const handleNavigate = (community) => {
     const isJoined =
       !!joinedCommunities[community.id] || community.createdByCurrentUser;
@@ -513,6 +597,34 @@ export default function ExplorePage({
     }
   };
 
+  // site owner / community owner delete
+  const handleDeleteCommunity = (community) => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        `Are you sure you want to delete the community "${community.name}"?`
+      )
+    ) {
+      return;
+    }
+
+    setRecommendedCommunities((prev) =>
+      prev.filter((c) => c.id !== community.id)
+    );
+
+    setJoinedCommunities((prev) => {
+      const copy = { ...prev };
+      delete copy[community.id];
+      return copy;
+    });
+
+    if (onDeleteCommunity) {
+      onDeleteCommunity(community);
+    }
+
+    alert(`Community "${community.name}" deleted.`);
+  };
+
   const allCommunities = React.useMemo(() => {
     const finalSet = new Map();
     [...initialRecommendedCommunitiesData, ...userCreatedCommunities].forEach(
@@ -533,11 +645,9 @@ export default function ExplorePage({
     );
   }, [allCommunities, joinedCommunities]);
 
-  // 🔴 TRENDING BY MEMBERS (top by membersCount)
   const trendingByMembers = React.useMemo(() => {
     const map = new Map();
 
-    // include static trending + all other communities
     [...trendingCommunities, ...allCommunities].forEach((comm) => {
       map.set(comm.id, comm);
     });
@@ -547,7 +657,6 @@ export default function ExplorePage({
     );
   }, [allCommunities]);
 
-  // 🔴 Explorable communities (unjoined) + "invited" reordering
   const explorableViewCommunities = React.useMemo(() => {
     let list = allCommunities.filter(
       (community) =>
@@ -608,17 +717,28 @@ export default function ExplorePage({
 
   const renderCommunityList = (communities) => (
     <div className="space-y-3">
-      {communities.map((community) => (
-        <RecommendedItem
-          key={community.id}
-          community={community}
-          isJoined={
-            !!joinedCommunities[community.id] || community.createdByCurrentUser
-          }
-          onJoin={() => handleJoin(community)}
-          onNavigate={handleNavigate}
-        />
-      ))}
+      {communities.map((community) => {
+        const isJoined =
+          !!joinedCommunities[community.id] || community.createdByCurrentUser;
+
+        const canDelete =
+          isSiteOwner ||
+          (community.ownerEmail &&
+            currentUserEmail &&
+            community.ownerEmail === currentUserEmail);
+
+        return (
+          <RecommendedItem
+            key={community.id}
+            community={community}
+            isJoined={isJoined}
+            onJoin={() => handleJoin(community)}
+            onNavigate={handleNavigate}
+            canDelete={canDelete}
+            onDelete={() => handleDeleteCommunity(community)}
+          />
+        );
+      })}
       {searchTerm && communities.length === 0 && (
         <p className="text-center text-gray-500 py-4">
           No communities found matching "{searchTerm}".

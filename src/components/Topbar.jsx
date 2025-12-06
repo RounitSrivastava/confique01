@@ -6,23 +6,25 @@ import Image from "next/image";
 import { Bell, LogOut, User, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-// Default notifications (used if no prop passed)
-const defaultNotifications = [
-  { id: 1, title: "New comment on your post", time: "2m ago" },
-  { id: 2, title: "Event Reminder: Design Meetup 6 PM", time: "1h ago" },
-  { id: 3, title: "Group invite accepted by Lina", time: "Yesterday" },
-];
+// Helper to get current user email
+const getCurrentUserEmail = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem("userEmail") || null;
+  } catch {
+    return null;
+  }
+};
 
-export default function Topbar({
-  onToggleSidebar = () => {},
-  notifications = defaultNotifications,
-}) {
+export default function Topbar({ onToggleSidebar = () => {} }) {
   const [openBell, setOpenBell] = useState(false);
   const [openUser, setOpenUser] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
-  // 🔔 Bell shake on first mount (can keep this) + on new notifications
   const [isBellShaking, setIsBellShaking] = useState(true);
+
+  const [currentUserEmail, setCurrentUserEmail] = useState(null);
+  const [notifications, setNotifications] = useState([]); // ← from localStorage
 
   const router = useRouter();
 
@@ -31,55 +33,81 @@ export default function Topbar({
   const mobileSearchWrapperRef = useRef(null);
   const mobileSearchInputRef = useRef(null);
 
-  // Track previous notification count
-  const prevNotifCountRef = useRef(notifications.length);
+  const prevNotifCountRef = useRef(0);
 
-  // 🎵 Bell sound
   const bellAudioRef = useRef(null);
 
-  // Initialize audio once on client
+  // ----------------- AUDIO INIT -----------------
   useEffect(() => {
     if (typeof Audio !== "undefined") {
       const audio = new Audio("/bell-ring-390294.mp3");
-      audio.volume = 1; // make sure not muted
+      audio.volume = 1;
       audio.muted = false;
       bellAudioRef.current = audio;
     }
   }, []);
 
-  // Helper: play bell sound safely
   const playBellSound = () => {
     const audio = bellAudioRef.current;
-    if (!audio) {
-      console.warn("Bell audio not initialized");
-      return;
-    }
-
+    if (!audio) return;
     try {
       audio.currentTime = 0;
-      audio.play().catch((err) => {
-        console.warn("Bell audio play blocked/error:", err);
-      });
-    } catch (err) {
-      console.warn("Bell audio error:", err);
-    }
+      audio.play().catch(() => {});
+    } catch {}
   };
 
-  // ⏱ Stop shake after animation (NO sound here now)
+  // ----------------- USER EMAIL + FIRST LOAD -----------------
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const email = getCurrentUserEmail();
+    setCurrentUserEmail(email);
+
+    try {
+      const store = JSON.parse(localStorage.getItem("notifications") || "{}");
+      const myList = email ? store[email] || [] : [];
+      setNotifications(myList);
+      prevNotifCountRef.current = myList.length;
+    } catch {
+      setNotifications([]);
+    }
+  }, []);
+
+  // ----------------- LISTEN FOR NOTIFICATION EVENTS -----------------
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleUpdate = () => {
+      if (!currentUserEmail) return;
+      try {
+        const store = JSON.parse(localStorage.getItem("notifications") || "{}");
+        const myList = store[currentUserEmail] || [];
+        setNotifications(myList);
+      } catch {
+        // ignore
+      }
+    };
+
+    window.addEventListener("confique:new-notification", handleUpdate);
+    window.addEventListener("confique:notifications-updated", handleUpdate);
+
+    return () => {
+      window.removeEventListener("confique:new-notification", handleUpdate);
+      window.removeEventListener("confique:notifications-updated", handleUpdate);
+    };
+  }, [currentUserEmail]);
+
+  // stop shake after a bit
   useEffect(() => {
     if (!isBellShaking) return;
-
     const timer = setTimeout(() => setIsBellShaking(false), 2000);
     return () => clearTimeout(timer);
   }, [isBellShaking]);
 
-  // 🔔+🔊 When NEW notification comes (count increased)
+  // 🔔 when notification count increases → shake + sound
   useEffect(() => {
     const prevCount = prevNotifCountRef.current;
     const currentCount = notifications.length;
 
     if (currentCount > prevCount) {
-      // New notification → shake + sound
       setIsBellShaking(true);
       playBellSound();
     }
@@ -87,7 +115,7 @@ export default function Topbar({
     prevNotifCountRef.current = currentCount;
   }, [notifications.length]);
 
-  // Close dropdowns when clicking outside
+  // close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(e) {
       const outsideUser =
@@ -112,19 +140,31 @@ export default function Topbar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Auto-focus mobile search input
+  // autofocus mobile search
   useEffect(() => {
     if (mobileSearchOpen && mobileSearchInputRef.current) {
       mobileSearchInputRef.current.focus();
     }
   }, [mobileSearchOpen]);
 
-  // 🔔 Bell click handler: open panel + sound (optional)
   const handleBellClick = () => {
     setOpenBell((v) => !v);
     setOpenUser(false);
-    setIsBellShaking(false); // stop animation when user opens panel
-    playBellSound();         // 🔊 sound on click
+    setIsBellShaking(false);
+    playBellSound();
+  };
+
+  // small helper to format time
+  const formatTime = (n) => {
+    if (n.time) return n.time;
+    if (n.createdAt) {
+      try {
+        return new Date(n.createdAt).toLocaleString();
+      } catch {
+        return n.createdAt;
+      }
+    }
+    return "";
   };
 
   return (
@@ -132,7 +172,6 @@ export default function Topbar({
       <div className="mx-auto max-w-[1600px] px-3 md:px-6 h-16 flex items-center gap-4">
         {/* LEFT — LOGO + HAMBURGER (mobile only) */}
         <div className="flex items-center gap-3 min-w-[180px]">
-          {/* Mobile Hamburger Button */}
           <button
             onClick={onToggleSidebar}
             className="flex flex-col justify-center items-center w-9 h-9 rounded-lg hover:bg-[#1a1a1a] lg:hidden"
@@ -142,7 +181,6 @@ export default function Topbar({
             <span className="w-4 h-[2px] bg-gray-100 rounded-full"></span>
           </button>
 
-          {/* Logo */}
           <Image
             src="/Group 51(3).png"
             width={32}
@@ -201,10 +239,11 @@ export default function Topbar({
                 isBellShaking ? "animate-bell-wiggle" : ""
               }`}
             >
-              {/* Bell + dot wrapper */}
               <div className="relative inline-block">
                 <Bell className="h-5 w-5 text-gray-300" />
-                <span className="absolute -top-[0px] -right-[6px] w-2 h-2 bg-purple-500 rounded-full" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-[0px] -right-[6px] w-2 h-2 bg-purple-500 rounded-full" />
+                )}
               </div>
             </button>
 
@@ -215,13 +254,23 @@ export default function Topbar({
                 </div>
 
                 <ul className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 && (
+                    <li className="px-4 py-3 text-sm text-gray-400">
+                      No notifications yet.
+                    </li>
+                  )}
+
                   {notifications.map((n) => (
                     <li
                       key={n.id}
                       className="px-4 py-3 hover:bg-[#111] border-b border-[#262626]/60"
                     >
-                      <p className="text-sm">{n.title}</p>
-                      <p className="text-xs text-gray-400">{n.time}</p>
+                      <p className="text-sm">
+                        {n.title || n.message || "Notification"}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {formatTime(n)}
+                      </p>
                     </li>
                   ))}
                 </ul>

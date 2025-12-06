@@ -1,3 +1,4 @@
+// /groups/CommunityFeedPage.jsx
 "use client";
 import React from "react";
 import {
@@ -18,7 +19,50 @@ import {
   Link,
   Share2,
   MessageCircle,
+  Trash2,
 } from "lucide-react";
+
+// -------------------------
+// Helper: Get current user email
+// -------------------------
+const getCurrentUserEmail = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem("userEmail") || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+// -------------------------
+// Helper: push notifications → localStorage + event
+// -------------------------
+const pushNotifications = (notifications) => {
+  if (typeof window === "undefined" || !Array.isArray(notifications)) return;
+
+  try {
+    const notifStore = JSON.parse(
+      localStorage.getItem("notifications") || "{}"
+    );
+
+    notifications.forEach((n) => {
+      if (!n || !n.targetEmail) return;
+      const list = notifStore[n.targetEmail] || [];
+      notifStore[n.targetEmail] = [n, ...list];
+    });
+
+    localStorage.setItem("notifications", JSON.stringify(notifStore));
+
+    // inform Topbar / others
+    window.dispatchEvent(
+      new CustomEvent("confique:new-notification", {
+        detail: notifications,
+      })
+    );
+  } catch (e) {
+    console.error("Failed to push notifications", e);
+  }
+};
 
 // -------------------------
 // Initial Dummy Feed Data
@@ -30,6 +74,7 @@ const initialPosts = [
     content:
       "Let's discuss why putting the user first is more than just a buzzword. It impacts engagement, retention, and ultimately, the bottom line...",
     author: "design_guru",
+    authorEmail: "design@example.com",
     time: "5h ago",
     upvotes: 1200,
     comments: 312,
@@ -44,6 +89,7 @@ const initialPosts = [
     content:
       "Seeking recommendations and experiences with remote user testing platforms and methodologies.",
     author: "researcher_pro",
+    authorEmail: "researcher@example.com",
     time: "9h ago",
     upvotes: 621,
     comments: 98,
@@ -57,6 +103,7 @@ const initialPosts = [
     title: "My new portfolio concept, feedback welcome!",
     content: null,
     author: "creative_dev",
+    authorEmail: "creative@example.com",
     time: "8h ago",
     upvotes: 874,
     comments: 109,
@@ -77,6 +124,7 @@ const defaultCommunityInfo = {
   bannerUrl: "https://picsum.photos/seed/philippines-banner/1200/200",
   isJoined: true,
   slug: "rounit-srivastava",
+  ownerEmail: "community.owner@example.com",
 };
 
 // --------------------
@@ -91,66 +139,124 @@ const reportTypes = [
   "Intellectual property violation",
 ];
 
-const PostOptionsMenu = React.forwardRef(({ post, onClose, onHide }, ref) => {
-  const [reporting, setReporting] = React.useState(false);
+const PostOptionsMenu = React.forwardRef(
+  (
+    {
+      post,
+      onClose,
+      onHide,
+      onReport,
+      isAdmin,
+      onAdminRemove,
+      canDeleteSelf,
+      onDeleteSelf,
+    },
+    ref
+  ) => {
+    const [reporting, setReporting] = React.useState(false);
 
-  const handleReport = (type) => {
-    alert(`Reported post ${post.id} for: ${type}`);
-    onClose();
-  };
+    const handleReport = (type) => {
+      onReport(post, type);
+      setReporting(false);
+      onClose();
+    };
 
-  const handleHide = () => {
-    onHide(post.id);
-    onClose();
-  };
+    const handleHide = () => {
+      onHide(post.id);
+      onClose();
+    };
 
-  return (
-    <div
-      ref={ref}
-      className="absolute right-0 top-8 z-30 w-64 bg-gray-900 rounded-lg shadow-xl p-2 border border-gray-700"
-    >
-      {!reporting ? (
-        <>
-          <button
-            onClick={() => setReporting(true)}
-            className="flex items-center w-full px-3 py-2 text-sm text-purple-400 hover:bg-gray-900 rounded-md"
-          >
-            <Flag className="w-4 h-4 mr-2" /> Report
-          </button>
+    const handleAdminRemove = () => {
+      if (
+        typeof window === "undefined" ||
+        window.confirm("Are you sure you want to remove this post for everyone?")
+      ) {
+        onAdminRemove(post.id);
+        onClose();
+      }
+    };
 
-          <hr className="border-gray-600 my-1" />
+    const handleDeleteSelf = () => {
+      if (
+        typeof window === "undefined" ||
+        window.confirm("Delete this post for everyone?")
+      ) {
+        onDeleteSelf(post.id);
+        onClose();
+      }
+    };
 
-          <button
-            onClick={handleHide}
-            className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-900 rounded-md"
-          >
-            <EyeOff className="w-4 h-4 mr-2" /> Hide Post
-          </button>
-        </>
-      ) : (
-        <div className="space-y-1">
-          <div className="flex justify-between px-1">
-            <h4 className="text-sm text-white">Select a reason:</h4>
-            <X
-              className="w-4 text-gray-400 cursor-pointer"
-              onClick={() => setReporting(false)}
-            />
-          </div>
-
-          {reportTypes.map((type) => (
+    return (
+      <div
+        ref={ref}
+        className="absolute right-0 top-8 z-30 w-64 bg-gray-900 rounded-lg shadow-xl p-2 border border-gray-700"
+      >
+        {!reporting ? (
+          <>
+            {/* REPORT BUTTON */}
             <button
-              key={type}
-              onClick={() => handleReport(type)}
-              className="w-full px-3 py-2 text-xs text-white hover:bg-purple-500 rounded-md"
+              onClick={() => setReporting(true)}
+              className="flex items-center w-full px-3 py-2 text-sm text-purple-400 hover:bg-gray-900 rounded-md"
             >
-              {type}
+              <Flag className="w-4 h-4 mr-2" /> Report
             </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-});
+
+            {/* DELETE MY POST (AUTHOR ONLY) */}
+            {canDeleteSelf && (
+              <button
+                onClick={handleDeleteSelf}
+                className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/40 rounded-md"
+              >
+                <Trash2 className="w-4 h-4 mr-2" /> Delete my post
+              </button>
+            )}
+
+            {/* HIDE FOR SELF */}
+            <button
+              onClick={handleHide}
+              className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-900 rounded-md"
+            >
+              <EyeOff className="w-4 h-4 mr-2" /> Hide Post
+            </button>
+
+            {/* ADMIN REMOVE (COMMUNITY OWNER OR SITE OWNER) */}
+            {isAdmin && (
+              <>
+                <hr className="border-gray-600 my-1" />
+                <button
+                  onClick={handleAdminRemove}
+                  className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/40 rounded-md"
+                >
+                  <UserX className="w-4 h-4 mr-2" /> Remove from Community
+                </button>
+              </>
+            )}
+          </>
+        ) : (
+          <div className="space-y-1">
+            <div className="flex justify-between px-1">
+              <h4 className="text-sm text-white">Select a reason:</h4>
+              <X
+                className="w-4 text-gray-400 cursor-pointer"
+                onClick={() => setReporting(false)}
+              />
+            </div>
+
+            {reportTypes.map((type) => (
+              <button
+                key={type}
+                onClick={() => handleReport(type)}
+                className="w-full px-3 py-2 text-xs text-white hover:bg-purple-500 rounded-md"
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 PostOptionsMenu.displayName = "PostOptionsMenu";
 
 // --------------------
@@ -192,7 +298,7 @@ const ImagePreviewModal = ({ imageUrl, onClose }) => {
 const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
-  const [imageFile, setImageFile] = React.useState(null); // ✅ fixed
+  const [imageFile, setImageFile] = React.useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = React.useState(null);
 
   const handleClearImage = () => {
@@ -233,11 +339,17 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
 
     const finalImageUrl = imageFile ? imagePreviewUrl : null;
 
+    const currentUserEmail =
+      typeof window !== "undefined"
+        ? localStorage.getItem("userEmail") || "current@user.com"
+        : "current@user.com";
+
     const newPost = {
       id: Date.now(),
       title: title.trim(),
       content: content.trim() || null,
       author: "CurrentUser",
+      authorEmail: currentUserEmail, // used for notif targeting
       time: "Just now",
       upvotes: 1,
       comments: 0,
@@ -455,11 +567,15 @@ const InviteMenu = React.forwardRef(
 InviteMenu.displayName = "InviteMenu";
 
 // --------------------
-// Community Header (full-width, no card)
+// Community Header
 // --------------------
-const CommunityHeader = ({ community, onCreatePost }) => {
+const CommunityHeader = ({
+  community,
+  onCreatePost,
+  isSiteOwner,
+  onDeleteCommunity,
+}) => {
   const [isInviteMenuOpen, setIsInviteMenuOpen] = React.useState(false);
-  const joined = true; // Hardcoded Joined
 
   const inviteButtonRef = React.useRef(null);
   const inviteMenuRef = React.useRef(null);
@@ -571,6 +687,17 @@ const CommunityHeader = ({ community, onCreatePost }) => {
             >
               Joined
             </button>
+
+            {/* SITE OWNER: delete community */}
+            {isSiteOwner && (
+              <button
+                onClick={onDeleteCommunity}
+                className="ml-2 flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-red-700 text-white hover:bg-red-600"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                Delete Community
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -597,7 +724,7 @@ const FilterBar = ({ selected, setActiveFilter }) => (
         className={`px-3 py-1 rounded-full text-sm transition-colors ${
           selected === f
             ? "bg-purple-600 text-white"
-            : "bg-gray-900 text-gray-300 hover:bg-gray-00"
+            : "bg-gray-900 text-gray-300 hover:bg-gray-800"
         }`}
       >
         {f}
@@ -673,7 +800,7 @@ const CommentItem = ({ comment, allComments, onReply }) => {
   );
 };
 
-const CommentsPage = ({ post, onBack }) => {
+const CommentsPage = ({ post, communityInfo, onBack }) => {
   const [commentText, setCommentText] = React.useState("");
   const [comments, setComments] = React.useState(initialDummyComments);
   const [replyingTo, setReplyingTo] = React.useState(null);
@@ -691,7 +818,6 @@ const CommentsPage = ({ post, onBack }) => {
     ),
   });
 
-  // Scroll-to-top: when comment page opens, show top first
   const pageTopRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -706,9 +832,11 @@ const CommentsPage = ({ post, onBack }) => {
   const handleCommentSubmit = () => {
     if (!commentText.trim()) return;
 
+    const currentUserEmail = getCurrentUserEmail();
+
     const newComment = {
       id: Date.now(),
-      author: "u/CurrentUser",
+      author: currentUserEmail || "u/CurrentUser",
       time: "Just now",
       text: commentText.trim(),
       parentId: replyingTo ? replyingTo.id : null,
@@ -717,6 +845,26 @@ const CommentsPage = ({ post, onBack }) => {
     setComments((prevComments) => [...prevComments, newComment]);
     setCommentText("");
     setReplyingTo(null);
+
+    // 🔔 Notify post author on new comment (if not self)
+    if (
+      post.authorEmail &&
+      currentUserEmail &&
+      currentUserEmail !== post.authorEmail
+    ) {
+      const notif = {
+        id: `comment-${post.id}-${Date.now()}`,
+        type: "COMMENT",
+        targetEmail: post.authorEmail,
+        postId: post.id,
+        communitySlug: communityInfo.slug,
+        communityName: communityInfo.name,
+        message: `${currentUserEmail} commented on your post "${post.title}" in "${communityInfo.name}"`,
+        createdAt: new Date().toISOString(),
+        read: false,
+      };
+      pushNotifications([notif]);
+    }
   };
 
   const topLevelComments = comments
@@ -896,6 +1044,11 @@ const PostCard = ({
   onCommentsClick,
   onImageClick,
   onHidePost,
+  onReport,
+  isAdmin,
+  onAdminRemove,
+  canDeleteSelf,
+  onDeleteSelf,
 }) => {
   const isMenuOpen = openMenuId === post.id;
   const menuButtonRef = React.useRef(null);
@@ -952,6 +1105,11 @@ const PostCard = ({
             post={post}
             onClose={() => onToggleMenu(null)}
             onHide={onHidePost}
+            onReport={onReport}
+            isAdmin={isAdmin}
+            onAdminRemove={onAdminRemove}
+            canDeleteSelf={canDeleteSelf}
+            onDeleteSelf={onDeleteSelf}
           />
         )}
       </div>
@@ -1024,7 +1182,11 @@ const PostCard = ({
 // --------------------
 // MAIN FEED PAGE
 // --------------------
-export default function CommunityFeedPage({ community, onGoBack }) {
+export default function CommunityFeedPage({
+  community,
+  onGoBack,
+  onDeleteCommunity, // optional: handle community deletion at parent level
+}) {
   const [activeFilter, setActiveFilter] = React.useState("Hot");
   const [searchShown, setSearchShown] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -1034,9 +1196,20 @@ export default function CommunityFeedPage({ community, onGoBack }) {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [previewImageUrl, setPreviewImageUrl] = React.useState(null);
 
+  const [reports, setReports] = React.useState([]);
+
   const topRef = React.useRef(null);
 
   const communityInfo = community || { ...defaultCommunityInfo, isJoined: true };
+
+  const currentUserEmail =
+    typeof window !== "undefined" ? getCurrentUserEmail() : null;
+  const isSiteOwner = currentUserEmail === "confique01@gmail.com";
+  const isCommunityOwner =
+    communityInfo?.ownerEmail &&
+    currentUserEmail &&
+    communityInfo.ownerEmail === currentUserEmail;
+  const isAdmin = isSiteOwner || isCommunityOwner;
 
   React.useEffect(() => {
     if (topRef.current) {
@@ -1044,21 +1217,38 @@ export default function CommunityFeedPage({ community, onGoBack }) {
     }
   }, [selectedPost]);
 
+  // Load existing reports (optional, if you want persistence across reloads)
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = JSON.parse(localStorage.getItem("reports") || "[]");
+      setReports(stored);
+    } catch (e) {
+      console.error("Failed to parse reports from localStorage", e);
+    }
+  }, []);
+
   const handleNewPost = (newPost) => {
     setPosts((prev) => [newPost, ...prev]);
   };
 
+  // --------------------
+  // VOTE + LIKE NOTIFICATION
+  // --------------------
   const vote = (id, type) => {
+    let likedPost = null;
+    const currentUserEmailLocal = getCurrentUserEmail();
+
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id !== id) return p;
 
         let newUpvotes = p.upvotes;
         let newUserVote = p.userVote;
-        let uv = p.userVote;
+        const previousVote = p.userVote;
 
         if (type === 1) {
-          if (uv === 1) {
+          if (previousVote === 1) {
             newUpvotes -= 1;
             newUserVote = 0;
           } else {
@@ -1066,24 +1256,168 @@ export default function CommunityFeedPage({ community, onGoBack }) {
             newUserVote = 1;
           }
         } else if (type === -1) {
-          if (uv === -1) {
+          if (previousVote === -1) {
             newUserVote = 0;
           } else {
-            if (uv === 1) {
+            if (previousVote === 1) {
               newUpvotes -= 1;
             }
             newUserVote = -1;
           }
         }
 
-        return { ...p, upvotes: newUpvotes, userVote: newUserVote };
+        const updatedPost = { ...p, upvotes: newUpvotes, userVote: newUserVote };
+
+        // detect new like (not unlike) → notify post author
+        if (
+          type === 1 &&
+          newUserVote === 1 &&
+          previousVote !== 1 &&
+          updatedPost.authorEmail &&
+          currentUserEmailLocal &&
+          currentUserEmailLocal !== updatedPost.authorEmail
+        ) {
+          likedPost = updatedPost;
+        }
+
+        return updatedPost;
       })
     );
+
+    // fire notification outside setState mapping
+    if (likedPost && currentUserEmailLocal) {
+      const notif = {
+        id: `like-${likedPost.id}-${Date.now()}`,
+        type: "LIKE",
+        targetEmail: likedPost.authorEmail,
+        postId: likedPost.id,
+        communitySlug: communityInfo.slug,
+        communityName: communityInfo.name,
+        message: `${currentUserEmailLocal} liked your post "${likedPost.title}" in "${communityInfo.name}"`,
+        createdAt: new Date().toISOString(),
+        read: false,
+      };
+      pushNotifications([notif]);
+    }
   };
 
+  // Hide only for current user
   const handleHidePost = (id) => {
     setPosts((prev) => prev.filter((p) => p.id !== id));
-    alert(`Post ${id} has been hidden.`);
+    alert(`Post ${id} has been hidden for you.`);
+  };
+
+  // --------------------
+  // REPORT HANDLER
+  // --------------------
+  const handleReportPost = (post, reason) => {
+    if (!currentUserEmail) {
+      alert("You need to be logged in to report a post.");
+      return;
+    }
+
+    const newReport = {
+      id: Date.now(),
+      postId: post.id,
+      postTitle: post.title,
+      communitySlug: communityInfo.slug,
+      communityName: communityInfo.name,
+      reporterEmail: currentUserEmail,
+      reason,
+      status: "pending", // pending | removed | dismissed
+      createdAt: new Date().toISOString(),
+    };
+
+    setReports((prev) => [newReport, ...prev]);
+
+    try {
+      if (typeof window !== "undefined") {
+        const existingReports = JSON.parse(
+          localStorage.getItem("reports") || "[]"
+        );
+        localStorage.setItem(
+          "reports",
+          JSON.stringify([newReport, ...existingReports])
+        );
+
+        const notifBase = {
+          type: "REPORT",
+          createdAt: newReport.createdAt,
+          read: false,
+          postId: post.id,
+          communitySlug: communityInfo.slug,
+          communityName: communityInfo.name,
+          message: `${currentUserEmail} reported a post in "${communityInfo.name}": "${post.title}" for ${reason}`,
+        };
+
+        const notifications = [];
+
+        if (communityInfo.ownerEmail) {
+          notifications.push({
+            ...notifBase,
+            id: `n-${newReport.id}-community-owner`,
+            targetEmail: communityInfo.ownerEmail,
+          });
+        }
+
+        notifications.push({
+          ...notifBase,
+          id: `n-${newReport.id}-site-owner`,
+          targetEmail: "confique01@gmail.com",
+        });
+
+        pushNotifications(notifications);
+      }
+    } catch (e) {
+      console.error("Failed to save report/notifications", e);
+    }
+
+    alert("Report submitted. Admins will review it.");
+  };
+
+  // --------------------
+  // ADMIN REMOVE POST (for everyone) – used by admin + self delete
+  // --------------------
+  const handleAdminRemovePost = (postId) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+
+    // Mark all related reports as "removed"
+    try {
+      if (typeof window !== "undefined") {
+        const allReports = JSON.parse(
+          localStorage.getItem("reports") || "[]"
+        );
+        const updated = allReports.map((r) =>
+          r.postId === postId ? { ...r, status: "removed" } : r
+        );
+        localStorage.setItem("reports", JSON.stringify(updated));
+        setReports(updated);
+      }
+    } catch (e) {
+      console.error("Failed to update reports after post removal", e);
+    }
+
+    alert("Post removed from the community.");
+  };
+
+  // --------------------
+  // SITE OWNER: DELETE COMMUNITY
+  // --------------------
+  const handleDeleteCommunityClick = () => {
+    if (
+      typeof window === "undefined" ||
+      window.confirm(
+        `Are you sure you want to delete the community "${communityInfo.name}"?`
+      )
+    ) {
+      if (onDeleteCommunity) {
+        onDeleteCommunity(communityInfo);
+      } else {
+        alert(
+          "Community deletion triggered. Implement actual deletion in parent using onDeleteCommunity."
+        );
+      }
+    }
   };
 
   const sortedAndFilteredPosts = React.useMemo(() => {
@@ -1115,6 +1449,7 @@ export default function CommunityFeedPage({ community, onGoBack }) {
     return (
       <CommentsPage
         post={selectedPost}
+        communityInfo={communityInfo}
         onBack={() => setSelectedPost(null)}
       />
     );
@@ -1169,25 +1504,39 @@ export default function CommunityFeedPage({ community, onGoBack }) {
       <CommunityHeader
         community={communityInfo}
         onCreatePost={() => setIsModalOpen(true)}
+        isSiteOwner={isSiteOwner}
+        onDeleteCommunity={handleDeleteCommunityClick}
       />
 
       <FilterBar selected={activeFilter} setActiveFilter={setActiveFilter} />
 
       {/* Post Feed */}
       <div className="pt-4 pb-12">
-        {sortedAndFilteredPosts.map((p) => (
-          <PostCard
-            key={p.id}
-            post={p}
-            openMenuId={openMenuId}
-            onToggleMenu={setOpenMenuId}
-            onUpvote={(id) => vote(id, 1)}
-            onDownvote={(id) => vote(id, -1)}
-            onCommentsClick={(post) => setSelectedPost(post)}
-            onImageClick={setPreviewImageUrl}
-            onHidePost={handleHidePost}
-          />
-        ))}
+        {sortedAndFilteredPosts.map((p) => {
+          const canDeleteSelf =
+            !!currentUserEmail &&
+            p.authorEmail &&
+            p.authorEmail === currentUserEmail;
+
+          return (
+            <PostCard
+              key={p.id}
+              post={p}
+              openMenuId={openMenuId}
+              onToggleMenu={setOpenMenuId}
+              onUpvote={(id) => vote(id, 1)}
+              onDownvote={(id) => vote(id, -1)}
+              onCommentsClick={(post) => setSelectedPost(post)}
+              onImageClick={setPreviewImageUrl}
+              onHidePost={handleHidePost}
+              onReport={handleReportPost}
+              isAdmin={isAdmin}
+              onAdminRemove={handleAdminRemovePost}
+              canDeleteSelf={canDeleteSelf}
+              onDeleteSelf={(postId) => handleAdminRemovePost(postId)}
+            />
+          );
+        })}
 
         {sortedAndFilteredPosts.length === 0 && (
           <div className="p-8 text-center text-gray-500">

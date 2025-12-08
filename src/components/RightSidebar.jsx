@@ -4,7 +4,7 @@
 import React from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-// Fallback communities (if nothing found in localStorage)
+// Fallback communities (in case nothing is stored)
 const FALLBACK_COMMUNITIES = [
   {
     id: 103,
@@ -36,8 +36,8 @@ const FALLBACK_COMMUNITIES = [
   },
 ];
 
-// 🔹 SAME as before — don't touch
-const popularEvents = [
+// Static fallback events (if nothing in localStorage)
+const FALLBACK_POPULAR_EVENTS = [
   { id: "e1", title: "Design Meetup for Creators", stats: "Trending" },
   { id: "e2", title: "AI Tools for Video Editing", stats: "Hot" },
 ];
@@ -46,8 +46,9 @@ export default function RightSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [topCommunities, setTopCommunities] = React.useState([]);
+  const [popularEvents, setPopularEvents] = React.useState([]);
 
-  // ✅ Hooks always run
+  // ✅ Load communities from localStorage
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -65,14 +66,44 @@ export default function RightSidebar() {
         (a, b) => (b.membersCount || 0) - (a.membersCount || 0)
       );
 
-      setTopCommunities(list.slice(0, 4)); // only top 4
-    } catch {
-      const list = [...FALLBACK_COMMUNITIES].sort(
-        (a, b) => (b.membersCount || 0) - (a.membersCount || 0)
-      );
       setTopCommunities(list.slice(0, 4));
+    } catch {
+      setTopCommunities(FALLBACK_COMMUNITIES.slice(0, 4));
     }
   }, []);
+
+  // ✅ Load dynamic popular events from localStorage
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const storedEvents =
+        JSON.parse(localStorage.getItem("confique:events") || "[]") || [];
+
+      if (!Array.isArray(storedEvents) || storedEvents.length === 0) {
+        setPopularEvents(FALLBACK_POPULAR_EVENTS);
+        return;
+      }
+
+      // Sort by impressions (high → low)
+      let list = [...storedEvents].sort(
+        (a, b) => (b.impressions || 0) - (a.impressions || 0)
+      );
+
+      // Only top 2–3
+      list = list.slice(0, 3);
+
+      setPopularEvents(list);
+    } catch {
+      setPopularEvents(FALLBACK_POPULAR_EVENTS);
+    }
+  }, []);
+
+  // Redirect to specific event details page
+  const handlePopularEventClick = (event) => {
+    if (!event || !event.id) return;
+    router.push(`/events?event=${encodeURIComponent(event.id)}`);
+  };
 
   const handleCommunityClick = (community) => {
     if (!community) return;
@@ -96,8 +127,7 @@ export default function RightSidebar() {
       joinedMap = {};
     }
 
-    const isJoined =
-      !!joinedMap[community.id] || community.createdByCurrentUser;
+    const isJoined = !!joinedMap[community.id];
 
     if (isJoined) {
       router.push(`/groups?focus=${encodeURIComponent(slug)}`);
@@ -106,7 +136,7 @@ export default function RightSidebar() {
     }
   };
 
-  // ✅ Early return *after* hooks
+  // Hide sidebar on /events and /profile
   if (pathname === "/events" || pathname.startsWith("/profile")) {
     return null;
   }
@@ -114,11 +144,13 @@ export default function RightSidebar() {
   return (
     <aside className="hidden xl:flex w-[360px] shrink-0 border-l border-[#262626] bg-[#0d0d0d] overflow-y-auto">
       <div className="mx-auto w-full max-w-[340px] p-4">
-        {/* 🔹 Top Communities (dynamic) */}
+
+        {/* 🔹 Top Communities */}
         <section className="rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm">
           <div className="px-4 py-3 border-b border-[#262626] font-medium">
             Top Communities
           </div>
+
           <ul className="p-2">
             {topCommunities.map((c, index) => (
               <li
@@ -129,6 +161,7 @@ export default function RightSidebar() {
                 <span className="text-xs text-gray-500 mt-0.5">
                   #{index + 1}
                 </span>
+
                 <div>
                   <p className="text-sm font-medium">{c.name}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
@@ -137,32 +170,33 @@ export default function RightSidebar() {
                 </div>
               </li>
             ))}
-
-            {topCommunities.length === 0 && (
-              <li className="px-3 py-3 text-xs text-gray-500">
-                No communities yet.
-              </li>
-            )}
           </ul>
         </section>
 
-        {/* 🔹 Popular Events — unchanged */}
+        {/* 🔹 Popular Events (Dynamic) */}
         <section className="mt-6 rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm">
           <div className="px-4 py-3 border-b border-[#262626] font-medium">
             Popular Events
           </div>
+
           <ul className="p-2">
             {popularEvents.map((e) => (
               <li
                 key={e.id}
-                className="px-3 py-2 rounded-lg hover:bg-[#111] transition"
+                onClick={() => handlePopularEventClick(e)}
+                className="px-3 py-2 rounded-lg hover:bg-[#111] cursor-pointer transition"
               >
-                <p className="text-sm">{e.title}</p>
-                <p className="text-xs text-blue-400 mt-0.5">{e.stats}</p>
+                <p className="text-sm font-medium">{e.title}</p>
+                <p className="text-xs text-blue-400 mt-0.5">
+                  {e.impressions
+                    ? `${e.impressions.toLocaleString()} impressions`
+                    : e.stats || "Event"}
+                </p>
               </li>
             ))}
           </ul>
         </section>
+
       </div>
     </aside>
   );

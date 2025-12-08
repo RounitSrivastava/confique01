@@ -7,31 +7,35 @@ import {
   MessageSquare,
   Users,
   Edit2,
-  Plus,
   MapPin,
   Clock,
   Share2,
-  X
+  X,
+  Trash2,
 } from 'lucide-react';
 
 export default function TechProfilePage() {
   const [activeTab, setActiveTab] = useState('posts');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  // EVENT EDIT MODAL
+  const [isEventEditModalOpen, setIsEventEditModalOpen] = useState(false);
+  const [eventEditForm, setEventEditForm] = useState(null);
+
+  // PROFILE
   const [profile, setProfile] = useState({
     name: 'Vaidehi Sharma',
+    email: 'vaidehi.sharma@example.com', // fixed email
     bio: 'XYZ',
     location: 'XYZ',
     website: 'XYZ',
-    totalPosts: 128,
-    totalLikes: 1200,
-    totalComments: 345,
     avatar:
       'https://img.freepik.com/premium-photo/portrait-successful-business-woman-suit-gray-isolated-background-serious-office-female-worker-manager-employees-female-employee-young-secretary_545934-23090.jpg?w=200&h=200&fit=crop'
   });
 
   const [editForm, setEditForm] = useState(profile);
 
+  // EVENTS HOSTED BY THIS PROFILE
   const [posts, setPosts] = useState([
     {
       id: 1,
@@ -77,7 +81,7 @@ export default function TechProfilePage() {
     }
   ]);
 
-  // Community posts state (converted from your static HTML examples)
+  // COMMUNITY POSTS
   const [communityPosts, setCommunityPosts] = useState([
     {
       id: 'c1',
@@ -115,7 +119,7 @@ export default function TechProfilePage() {
       category: 'Gaming',
       title: 'Finally hit Diamond rank in Valorant!',
       content:
-        'After 6 months of grinding, I made it to Diamond! Here are my top 5 tips for climbing the ranks. Drop your rank below and let\'s squad up!',
+        "After 6 months of grinding, I made it to Diamond! Here are my top 5 tips for climbing the ranks. Drop your rank below and let's squad up!",
       image:
         'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=300&fit=crop',
       likes: 567,
@@ -123,6 +127,17 @@ export default function TechProfilePage() {
     }
   ]);
 
+  // ==== DYNAMIC STATS ====
+  const totalHostedEvents = posts.length;
+  const totalRegisteredEvents = posts.filter((p) => p.isRegistered).length;
+  const totalLikes =
+    posts.reduce((sum, p) => sum + p.likes, 0) +
+    communityPosts.reduce((sum, p) => sum + p.likes, 0);
+  const totalComments =
+    posts.reduce((sum, p) => sum + p.comments, 0) +
+    communityPosts.reduce((sum, p) => sum + p.comments, 0);
+
+  // ==== HANDLERS ====
   const handleRegister = (postId) => {
     setPosts((prev) =>
       prev.map((post) =>
@@ -141,13 +156,27 @@ export default function TechProfilePage() {
 
   const handleLike = (postId) => {
     setPosts((prev) =>
-      prev.map((post) => (post.id === postId ? { ...post, likes: post.likes + 1 } : post))
+      prev.map((post) =>
+        post.id === postId ? { ...post, likes: post.likes + 1 } : post
+      )
     );
   };
 
-  // Community like/comment handlers
+  const handleDeletePost = (postId) => {
+    if (
+      !window.confirm(
+        'Are you sure you want to delete this event from your profile?'
+      )
+    ) {
+      return;
+    }
+    setPosts((prev) => prev.filter((post) => post.id !== postId));
+  };
+
   const handleLikeCommunity = (id) => {
-    setCommunityPosts((prev) => prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p)));
+    setCommunityPosts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+    );
   };
 
   const handleCommentCommunity = (id) => {
@@ -166,11 +195,48 @@ export default function TechProfilePage() {
   };
 
   const handleSaveProfile = () => {
-    setProfile(editForm);
+    setProfile((prev) => ({
+      ...prev,
+      name: editForm.name,
+      bio: editForm.bio,
+      location: editForm.location,
+      website: editForm.website,
+      avatar: editForm.avatar
+      // email stays same
+    }));
     setIsEditModalOpen(false);
   };
 
-  // Choose which posts to display based on active tab
+  // LOCAL DEVICE AVATAR CHANGE
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const imageUrl = URL.createObjectURL(file);
+    setEditForm((prev) => ({
+      ...prev,
+      avatar: imageUrl
+    }));
+  };
+
+  // EVENT EDIT MODAL HANDLERS
+  const openEventEditModal = (post) => {
+    setEventEditForm({ ...post });
+    setIsEventEditModalOpen(true);
+  };
+
+  const closeEventEditModal = () => {
+    setIsEventEditModalOpen(false);
+    setEventEditForm(null);
+  };
+
+  const handleSaveEvent = () => {
+    if (!eventEditForm) return;
+    setPosts((prev) =>
+      prev.map((p) => (p.id === eventEditForm.id ? { ...p, ...eventEditForm } : p))
+    );
+    closeEventEditModal();
+  };
+
   const displayedPosts =
     activeTab === 'registered'
       ? posts.filter((p) => p.isRegistered)
@@ -179,10 +245,10 @@ export default function TechProfilePage() {
       : posts;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen" style={{ backgroundColor: '#0d0d0d' }}>
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Profile Header */}
-        <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-8 mb-6">
+        <div className="bg-black-600 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-8 mb-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Avatar */}
             <div className="relative">
@@ -210,7 +276,10 @@ export default function TechProfilePage() {
             {/* Profile Info */}
             <div className="flex-1">
               <div className="mb-3">
-                <h2 className="text-3xl font-bold text-white mb-2">{profile.name}</h2>
+                <h2 className="text-3xl font-bold text-white mb-1">
+                  {profile.name}
+                </h2>
+                <p className="text-slate-400 text-sm mb-3">{profile.email}</p>
                 <p className="text-slate-300 text-lg mb-3">{profile.bio}</p>
                 <div className="flex flex-wrap gap-4 text-slate-400 text-sm">
                   <div className="flex items-center gap-1">
@@ -219,28 +288,39 @@ export default function TechProfilePage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <span>🌐</span>
-                    <a href="#" className="text-blue-400 hover:text-blue-300">
+                    <a
+                      href={profile.website || '#'}
+                      className="text-blue-400 hover:text-blue-300"
+                    >
                       {profile.website}
                     </a>
                   </div>
                 </div>
               </div>
 
-              {/* Stats */}
+              {/* Dynamic Stats */}
               <div className="grid grid-cols-3 gap-4 mt-6">
                 <div className="bg-slate-700/30 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">{profile.totalPosts}</div>
-                  <div className="text-slate-400 text-sm">Posts</div>
+                  <div className="text-3xl font-bold text-white mb-1">
+                    {totalHostedEvents}
+                  </div>
+                  <div className="text-slate-400 text-sm">
+                    Hosted Events
+                  </div>
                 </div>
                 <div className="bg-slate-700/30 rounded-xl p-4 text-center">
                   <div className="text-3xl font-bold text-white mb-1">
-                    {profile.totalLikes.toLocaleString()}
+                    {totalLikes}
                   </div>
-                  <div className="text-slate-400 text-sm">Likes</div>
+                  <div className="text-slate-400 text-sm">Total Likes</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">{profile.totalComments}</div>
-                  <div className="text-slate-400 text-sm">Comments</div>
+                  <div className="text-3xl font-bold text-white mb-1">
+                    {totalComments}
+                  </div>
+                  <div className="text-slate-400 text-sm">
+                    Total Comments
+                  </div>
                 </div>
               </div>
             </div>
@@ -249,7 +329,6 @@ export default function TechProfilePage() {
 
         {/* Action Buttons */}
         <div className="flex justify-center mb-3">
-          {/* Make the button smaller and centered by removing flex-1 and using inline padding */}
           <button className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
             <Share2 className="w-4 h-4" />
             Share profile
@@ -257,22 +336,28 @@ export default function TechProfilePage() {
         </div>
 
         {/* Tabs */}
-        <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 overflow-hidden">
+        <div className="bg-black-600 backdrop-blur-sm rounded-2xl border border-slate-700/50 overflow-hidden">
           <div className="flex border-b border-slate-700/50">
             <button
               onClick={() => setActiveTab('posts')}
               className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
-                activeTab === 'posts' ? 'text-purple-400' : 'text-slate-400 hover:text-slate-300'
+                activeTab === 'posts'
+                  ? 'text-purple-400'
+                  : 'text-slate-400 hover:text-slate-300'
               }`}
             >
-              All Posts
-              {activeTab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />}
+              Hosted Events ({totalHostedEvents})
+              {activeTab === 'posts' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
+              )}
             </button>
 
             <button
               onClick={() => setActiveTab('community')}
               className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
-                activeTab === 'community' ? 'text-purple-400' : 'text-slate-400 hover:text-slate-300'
+                activeTab === 'community'
+                  ? 'text-purple-400'
+                  : 'text-slate-400 hover:text-slate-300'
               }`}
             >
               Community Posts
@@ -284,10 +369,12 @@ export default function TechProfilePage() {
             <button
               onClick={() => setActiveTab('registered')}
               className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
-                activeTab === 'registered' ? 'text-purple-400' : 'text-slate-400 hover:text-slate-300'
+                activeTab === 'registered'
+                  ? 'text-purple-400'
+                  : 'text-slate-400 hover:text-slate-300'
               }`}
             >
-              Registered Events
+              Registered Events ({totalRegisteredEvents})
               {activeTab === 'registered' && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
               )}
@@ -297,7 +384,6 @@ export default function TechProfilePage() {
           {/* Posts List */}
           <div className="p-6 space-y-4">
             {displayedPosts.length > 0 ? (
-              // If community tab — render community-style cards, else render event cards
               activeTab === 'community' ? (
                 communityPosts.map((post) => (
                   <div
@@ -311,15 +397,21 @@ export default function TechProfilePage() {
                         className="w-12 h-12 rounded-full object-cover"
                       />
                       <div className="flex-1">
-                        <h4 className="text-white font-semibold">{post.authorName}</h4>
-                        <p className="text-slate-400 text-sm">{post.timeAgo}</p>
+                        <h4 className="text-white font-semibold">
+                          {post.authorName}
+                        </h4>
+                        <p className="text-slate-400 text-sm">
+                          {post.timeAgo}
+                        </p>
                       </div>
                       <span className="px-3 py-1 bg-purple-600/20 text-purple-400 text-xs font-semibold rounded-full">
                         {post.category}
                       </span>
                     </div>
 
-                    <h3 className="text-xl font-bold text-white mb-2">{post.title}</h3>
+                    <h3 className="text-xl font-bold text-white mb-2">
+                      {post.title}
+                    </h3>
                     <p className="text-slate-300 mb-4">{post.content}</p>
 
                     {post.image && (
@@ -337,7 +429,9 @@ export default function TechProfilePage() {
                           className="flex items-center gap-2 text-slate-400 hover:text-pink-500 transition-colors"
                         >
                           <Heart className="w-5 h-5" />
-                          <span className="font-semibold text-white">{post.likes}</span>
+                          <span className="font-semibold text-white">
+                            {post.likes}
+                          </span>
                         </button>
 
                         <button
@@ -345,7 +439,9 @@ export default function TechProfilePage() {
                           className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors"
                         >
                           <MessageSquare className="w-5 h-5" />
-                          <span className="font-semibold text-white">{post.comments}</span>
+                          <span className="font-semibold text-white">
+                            {post.comments}
+                          </span>
                         </button>
                       </div>
 
@@ -356,28 +452,51 @@ export default function TechProfilePage() {
                   </div>
                 ))
               ) : (
-                // Event/regular posts rendering (your existing structure)
                 posts
-                  .filter((p) => (activeTab === 'registered' ? p.isRegistered : true))
+                  .filter((p) =>
+                    activeTab === 'registered' ? p.isRegistered : true
+                  )
                   .map((post) => (
                     <div
                       key={post.id}
-                      className="bg-slate-700/30 rounded-xl overflow-hidden hover:bg-slate-700/40 transition-all border border-slate-600/30"
+                      className="relative bg-slate-700/30 rounded-xl overflow-hidden hover:bg-slate-700/40 transition-all border border-slate-600/30"
                     >
+                      {/* TOP RIGHT EDIT + DELETE (for host profile) */}
+                      {activeTab === 'posts' && (
+                        <div className="absolute top-3 right-3 flex gap-2 z-10">
+                          <button
+                            onClick={() => openEventEditModal(post)}
+                            className="p-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-600 transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4 text-slate-100" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            className="p-1.5 rounded-full bg-red-500/80 hover:bg-red-500 border border-red-400 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      )}
+
                       <div className="flex flex-col md:flex-row">
-                        {/* Event Image */}
                         <div className="md:w-48 h-48 md:h-auto relative overflow-hidden">
-                          <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
+                          <img
+                            src={post.image}
+                            alt={post.title}
+                            className="w-full h-full object-cover"
+                          />
                           {post.isRegistered && (
-                            <div className="absolute top-3 right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                            <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                               Registered
                             </div>
                           )}
                         </div>
 
-                        {/* Event Details */}
                         <div className="flex-1 p-5">
-                          <h3 className="text-xl font-bold text-white mb-3">{post.title}</h3>
+                          <h3 className="text-xl font-bold text-white mb-3">
+                            {post.title}
+                          </h3>
 
                           <div className="space-y-2 mb-4">
                             <div className="flex items-center gap-2 text-slate-300 text-sm">
@@ -394,35 +513,49 @@ export default function TechProfilePage() {
                             </div>
                           </div>
 
-                          {/* Engagement Stats */}
                           <div className="flex flex-wrap items-center gap-4 mb-4">
                             <div className="flex items-center gap-1 text-slate-400 text-sm">
                               <Users className="w-4 h-4" />
-                              <span className="font-semibold text-white">{post.registrations}</span> registered
+                              <span className="font-semibold text-white">
+                                {post.registrations}
+                              </span>{' '}
+                              registered
                             </div>
                             <div className="flex items-center gap-1 text-slate-400 text-sm">
                               <Heart className="w-4 h-4" />
-                              <span className="font-semibold text-white">{post.likes}</span> likes
+                              <span className="font-semibold text-white">
+                                {post.likes}
+                              </span>{' '}
+                              likes
                             </div>
                             <div className="flex items-center gap-1 text-slate-400 text-sm">
                               <MessageSquare className="w-4 h-4" />
-                              <span className="font-semibold text-white">{post.comments}</span> comments
+                              <span className="font-semibold text-white">
+                                {post.comments}
+                              </span>{' '}
+                              comments
                             </div>
                           </div>
 
-                          {/* Action Buttons */}
-                          <div className="flex gap-3">
+                          <div className="flex flex-wrap gap-3">
                             <button
                               onClick={() => handleRegister(post.id)}
                               className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                                post.isRegistered ? 'bg-slate-600 hover:bg-slate-500 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                post.isRegistered
+                                  ? 'bg-slate-600 hover:bg-slate-500 text-white'
+                                  : 'bg-purple-600 hover:bg-purple-700 text-white'
                               }`}
                             >
                               {post.isRegistered ? 'Unregister' : 'Register'}
                             </button>
-                            <button onClick={() => handleLike(post.id)} className="p-2 bg-slate-600/50 hover:bg-slate-600 rounded-lg transition-colors">
+
+                            <button
+                              onClick={() => handleLike(post.id)}
+                              className="p-2 bg-slate-600/50 hover:bg-slate-600 rounded-lg transition-colors"
+                            >
                               <Heart className="w-5 h-5 text-slate-300" />
                             </button>
+
                             <button className="p-2 bg-slate-600/50 hover:bg-slate-600 rounded-lg transition-colors">
                               <MessageSquare className="w-5 h-5 text-slate-300" />
                             </button>
@@ -435,9 +568,13 @@ export default function TechProfilePage() {
             ) : (
               <div className="text-center py-12">
                 <p className="text-slate-400 text-lg">
-                  {activeTab === 'registered' ? 'No registered events yet' : 'No posts yet'}
+                  {activeTab === 'registered'
+                    ? 'No registered events yet'
+                    : 'No posts yet'}
                 </p>
-                <p className="text-slate-500 text-sm mt-2">Engage to see items here</p>
+                <p className="text-slate-500 text-sm mt-2">
+                  Engage to see items here
+                </p>
               </div>
             )}
           </div>
@@ -447,47 +584,111 @@ export default function TechProfilePage() {
       {/* Edit Profile Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1e293b] rounded-2xl max-w-lg w-full">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
+          <div className="bg-[#1e293b] rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-700/50 flex-shrink-0">
               <h3 className="text-2xl font-bold text-white">Edit Profile</h3>
-              <button onClick={closeEditModal} className="p-1 hover:bg-slate-700/50 rounded transition-colors">
+              <button
+                onClick={closeEditModal}
+                className="p-1 hover:bg-slate-700/50 rounded transition-colors"
+              >
                 <X className="w-6 h-6 text-slate-400 hover:text-slate-300" />
               </button>
             </div>
 
-            {/* Modal Content */}
-            <div className="p-6 space-y-5">
+            {/* Content (scrollable) */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
+              {/* Avatar preview + upload */}
+              <div className="flex items-center gap-4">
+                <img
+                  src={editForm.avatar}
+                  alt="Preview"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-slate-600"
+                />
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-300">
+                    Change profile photo
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="text-sm text-slate-200"
+                  />
+                </div>
+              </div>
+
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Name</label>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Name
+                </label>
                 <input
                   type="text"
                   value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, name: e.target.value })
+                  }
                   className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
                   placeholder="Enter your name"
                 />
               </div>
 
-              {/* Role */}
+              {/* Email (read-only) */}
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Role</label>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Email (cannot be changed)
+                </label>
+                <input
+                  type="email"
+                  value={profile.email}
+                  disabled
+                  className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700/50 rounded-xl text-slate-400 cursor-not-allowed"
+                />
+              </div>
+
+              {/* Role / location */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Role
+                </label>
                 <input
                   type="text"
                   value={editForm.location}
-                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, location: e.target.value })
+                  }
                   className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
                   placeholder="Tech Enthusiast & Event Organizer"
                 />
               </div>
 
+              {/* Website */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Website
+                </label>
+                <input
+                  type="text"
+                  value={editForm.website}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, website: e.target.value })
+                  }
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  placeholder="https://yourportfolio.com"
+                />
+              </div>
+
               {/* Bio */}
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Bio</label>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Bio
+                </label>
                 <textarea
                   value={editForm.bio}
-                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, bio: e.target.value })
+                  }
                   rows={3}
                   className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors resize-none"
                   placeholder="Digital creator exploring tech one event at a time."
@@ -495,16 +696,148 @@ export default function TechProfilePage() {
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="flex gap-3 p-6">
+            {/* Footer */}
+            <div className="flex gap-3 p-6 flex-shrink-0">
               <button
                 onClick={closeEditModal}
-                className="flex-1 px-6 py-3.5 bg-purple-600 hover:bg-slate-800 text-white rounded-xl font-medium transition-colors border border-slate-700/50"
+                className="flex-1 px-6 py-3.5 bg-purple-600 hover:bg-slate-800 text_WHITE rounded-xl font-medium transition-colors border border-slate-700/50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveProfile}
+                className="flex-1 px-6 py-3.5 bg-purple-500 hover:bg-purple-600 text-black rounded-xl font-medium transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Event Modal */}
+      {isEventEditModalOpen && eventEditForm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1e293b] rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-700/50 flex-shrink-0">
+              <h3 className="text-2xl font-bold text-white">Edit Event</h3>
+              <button
+                onClick={closeEventEditModal}
+                className="p-1 hover:bg-slate-700/50 rounded transition-colors"
+              >
+                <X className="w-6 h-6 text-slate-400 hover:text-slate-300" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text_WHITE mb-2">
+                  Event Title
+                </label>
+                <input
+                  type="text"
+                  value={eventEditForm.title}
+                  onChange={(e) =>
+                    setEventEditForm({
+                      ...eventEditForm,
+                      title: e.target.value
+                    })
+                  }
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text_WHITE placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  placeholder="Enter event title"
+                />
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium text_WHITE mb-2">
+                  Date
+                </label>
+                <input
+                  type="text"
+                  value={eventEditForm.date}
+                  onChange={(e) =>
+                    setEventEditForm({
+                      ...eventEditForm,
+                      date: e.target.value
+                    })
+                  }
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text_WHITE placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  placeholder="Dec 15, 2025"
+                />
+              </div>
+
+              {/* Time */}
+              <div>
+                <label className="block text-sm font-medium text_WHITE mb-2">
+                  Time
+                </label>
+                <input
+                  type="text"
+                  value={eventEditForm.time}
+                  onChange={(e) =>
+                    setEventEditForm({
+                      ...eventEditForm,
+                      time: e.target.value
+                    })
+                  }
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text_WHITE placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  placeholder="9:00 AM - 6:00 PM"
+                />
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="block text-sm font-medium text_WHITE mb-2">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={eventEditForm.location}
+                  onChange={(e) =>
+                    setEventEditForm({
+                      ...eventEditForm,
+                      location: e.target.value
+                    })
+                  }
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text_WHITE placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  placeholder="Tech Hub, Downtown"
+                />
+              </div>
+
+              {/* Image URL */}
+              <div>
+                <label className="block text-sm font-medium text_WHITE mb-2">
+                  Cover Image URL
+                </label>
+                <input
+                  type="text"
+                  value={eventEditForm.image}
+                  onChange={(e) =>
+                    setEventEditForm({
+                      ...eventEditForm,
+                      image: e.target.value
+                    })
+                  }
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text_WHITE placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-3 p-6 flex-shrink-0">
+              <button
+                onClick={closeEventEditModal}
+                className="flex-1 px-6 py-3.5 bg-purple-600 hover:bg-slate-800 text_WHITE rounded-xl font-medium transition-colors border border-slate-700/50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEvent}
                 className="flex-1 px-6 py-3.5 bg-purple-500 hover:bg-purple-600 text-black rounded-xl font-medium transition-colors"
               >
                 Save

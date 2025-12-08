@@ -15,13 +15,10 @@ import {
   useSearchParams,
 } from "next/navigation";
 
-// --- Import the dedicated view components ---
 import EventDetailsPage from "./EventDetailsPage";
 import HostEventPage from "./HostEventPage";
 import AllEventsPage from "./AllEventsPage";
-// ------------------------------------------
 
-// --- ICON IMPORTS ---
 import {
   Search,
   User,
@@ -46,6 +43,7 @@ import {
   BarChart3,
   Newspaper,
   Plus,
+  Clipboard,
 } from "lucide-react";
 
 // --- MOCK DATA ---
@@ -568,6 +566,7 @@ const HorizontalScrollSection = ({
   );
 };
 
+// ===== FEATURED CAROUSEL =====
 const FeaturedCarousel = ({
   events,
   onDetailsClick,
@@ -600,18 +599,144 @@ const FeaturedCarousel = ({
     onShareClick(event.id);
   };
 
-  return (
+  const MobileDots = () =>
+    events.length > 1 ? (
+      <div className="mt-4 flex justify-center space-x-2 z-20 sm:hidden">
+        {events.map((_, index) => (
+          <button
+            key={index}
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentIndex(index);
+            }}
+            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+              index === currentIndex
+                ? "bg-white scale-110"
+                : "bg-white/40 hover:bg-white/70"
+            }`}
+            aria-label={`Go to event ${index + 1}`}
+          />
+        ))}
+      </div>
+    ) : null;
+
+  const DesktopDots = () =>
+    events.length > 1 ? (
+      <div className="mt-6 hidden sm:flex justify-center z-20 relative space-x-3">
+        {events.map((_, index) => {
+          const isActive = index === currentIndex;
+          return (
+            <button
+              key={index}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentIndex(index);
+              }}
+              className={`transition-all duration-300 ${
+                isActive
+                  ? "w-6 h-3 rounded-full bg-white"
+                  : "w-3 h-3 rounded-full bg-white/60 hover:bg-white/80"
+              }`}
+              aria-label={`Go to event ${index + 1}`}
+            />
+          );
+        })}
+      </div>
+    ) : null;
+
+  // ===== MOBILE CARD (updated arrows outside) =====
+  const MobileCard = () => (
+    <div className="relative mt-8 mb-10 sm:hidden">
+      <div
+        className="relative max-w-sm mx-auto rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-black cursor-pointer"
+        onClick={() => onDetailsClick(event.id)}
+        key={event.id}
+      >
+        <div className="relative w-full h-[260px]">
+          <img
+            src={event.poster}
+            alt={event.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src =
+                "https://placehold.co/400x550/111827/ffffff?text=Image+Not+Found";
+            }}
+          />
+
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
+
+          <div className="absolute top-3 left-4 flex items-center">
+            <span className="px-3 py-1 rounded-full bg-[#5B3FFF] text-[11px] font-semibold text-white shadow-lg shadow-purple-800/70">
+              Featured Event
+            </span>
+          </div>
+
+          <div className="absolute left-4 right-4 bottom-5">
+            <div className="backdrop-blur-2xl bg-black/40 border border-white/10 rounded-2xl px-4 py-4">
+              <h2 className="text-lg font-bold text-white mb-2">
+                {event.title}
+              </h2>
+
+              <div className="flex items-center text-sm text-gray-200 mb-2">
+                <Calendar className="w-4 h-4 mr-2" />
+                <span>{event.date}</span>
+              </div>
+
+              <button className="mt-1 text-[13px] font-semibold text-white/90 underline-offset-2 hover:underline flex items-center">
+                Click to view event details
+                <span className="ml-1">&rarr;</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ARROWS OUTSIDE CARD */}
+      {/* ARROWS OUTSIDE CARD */}
+{events.length > 1 && (
+  <>
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        prevEvent();
+      }}
+      className="absolute -left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center border border-white/30 shadow-lg shadow-black/60 backdrop-blur-md hover:bg-white/40 transition-colors z-30"
+      aria-label="Previous event"
+    >
+      <ChevronLeft className="w-6 h-6" />
+    </button>
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        nextEvent();
+      }}
+      className="absolute -right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center border border-white/30 shadow-lg shadow-black/60 backdrop-blur-md hover:bg-white/40 transition-colors z-30"
+      aria-label="Next event"
+    >
+      <ChevronRight className="w-6 h-6" />
+    </button>
+  </>
+)}
+
+      <MobileDots />
+    </div>
+  );
+
+  // DESKTOP / TABLET
+  const DesktopCard = () => (
     <div
-      className="relative w-full max-w-5xl mx-auto py-10 px-6 sm:px-12 rounded-[2rem] shadow-2xl mt-12 mb-16 overflow-hidden transform transition-all duration-500 hover:scale-[1.01] cursor-pointer"
+      className="relative w-full max-w-5xl mx-auto py-10 px-6 sm:px-12 rounded-[2rem] shadow-2xl mt-12 mb-16 overflow-hidden transform transition-all duration-500 hover:scale-[1.01] cursor-pointer hidden sm:block"
       key={event.id}
       onClick={() => onDetailsClick(event.id)}
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-xl z-0 rounded-[2rem]" />
       <div
-        className="absolute inset-0 z-0 opacity-80 transition-opacity duration-1000"
+        className="absolute inset-0 z-0 opacity-100 transition-opacity duration-1000"
         style={{
           background:
-            "radial-gradient(circle at 75% 10%, #6D28D9, transparent 50%), radial-gradient(circle at 15% 90%, #9333EA, transparent 50%)",
+            "radial-gradient(circle at 75% 10%, #020617, transparent 55%), radial-gradient(circle at 15% 90%, #111827, transparent 55%)",
         }}
       />
 
@@ -642,12 +767,6 @@ const FeaturedCarousel = ({
 
       <div className="relative z-10 flex flex-col md:flex-row items-center justify-between transition-opacity duration-500 opacity-100">
         <div className="md:w-1/2 p-4 md:pr-8 text-center md:text-left">
-          <span className="inline-block px-4 py-1 text-xs font-semibold text-white bg-purple-600 rounded-full mb-4 shadow-xl">
-            Featured Event{" "}
-            {events.length > 1
-              ? `(${currentIndex + 1}/${events.length})`
-              : ""}
-          </span>
           <h1 className="text-5xl sm:text-7xl font-extrabold text-white leading-tight mb-4 tracking-tighter">
             {event.title}
           </h1>
@@ -697,34 +816,22 @@ const FeaturedCarousel = ({
         </div>
       </div>
 
-      {events.length > 1 && (
-        <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
-          {events.map((_, index) => (
-            <button
-              key={index}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentIndex(index);
-              }}
-              className={`w-3 h-3 rounded-full transition-colors duration-300 ${
-                index === currentIndex
-                  ? "bg-white scale-110"
-                  : "bg-gray-400/50 hover:bg-white/70"
-              }`}
-              aria-label={`Go to event ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
+      <DesktopDots />
     </div>
+  );
+
+  return (
+    <>
+      <MobileCard />
+      <DesktopCard />
+    </>
   );
 };
 
-// --- UTILITY FUNCTIONS FOR PERSISTENCE ---
-
+// --- localStorage helpers ---
 const STORAGE_KEY = "event_impressions";
-// 🔑 Same key used by HostEventPage for hosted events
-const HOSTED_EVENTS_KEY = "events";
+const EVENTS_SNAPSHOT_KEY = "confique:events";
+const HOSTED_EVENTS_KEY = "confique:hostedEvents";
 
 const saveImpressionsToLocalStorage = (events) => {
   if (typeof window !== "undefined") {
@@ -736,7 +843,6 @@ const saveImpressionsToLocalStorage = (events) => {
   }
 };
 
-// 🔥 INITIALIZE EVENTS: mock + featured + HOSTED (from localStorage)
 const getInitialImpressions = (mockEvents, featuredEvents) => {
   const ALL_MOCK_DATA = [
     ...mockEvents,
@@ -747,7 +853,6 @@ const getInitialImpressions = (mockEvents, featuredEvents) => {
     0
   );
 
-  // base set (mocks + featured) with random impressions
   const baseMockEvents = ALL_MOCK_DATA.map((event) => {
     let baseImpressions =
       Math.floor(Math.random() * (2500 - 500 + 1)) + 500;
@@ -766,12 +871,10 @@ const getInitialImpressions = (mockEvents, featuredEvents) => {
     };
   });
 
-  // during SSR safety
   if (typeof window === "undefined") {
     return baseMockEvents.sort((a, b) => b.impressions - a.impressions);
   }
 
-  // 🔽 read hosted events from localStorage
   let hostedEvents = [];
   try {
     const hostedRaw = localStorage.getItem(HOSTED_EVENTS_KEY);
@@ -833,14 +936,13 @@ const getInitialImpressions = (mockEvents, featuredEvents) => {
   }
 };
 
-// --- MAIN COMPONENT FOR THE PAGE ---
+// --- MAIN COMPONENT ---
 const EventsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("All Events");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // 🌟 includes hosted events from localStorage
   const [dynamicEvents, setDynamicEvents] = useState(() =>
     getInitialImpressions(MOCK_EVENTS, FEATURED_CAROUSEL_EVENTS)
   );
@@ -850,8 +952,21 @@ const EventsPage = () => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const eventIdParam = searchParams.get("id");
+  const eventIdParam =
+    searchParams.get("event") || searchParams.get("id");
   const viewParam = searchParams.get("view");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(
+        EVENTS_SNAPSHOT_KEY,
+        JSON.stringify(dynamicEvents)
+      );
+    } catch (e) {
+      console.error("Failed to write events snapshot:", e);
+    }
+  }, [dynamicEvents]);
 
   useEffect(() => {
     if (dynamicEvents.length === 0) return;
@@ -860,8 +975,7 @@ const EventsPage = () => {
       setDynamicEvents((prevEvents) => {
         const nextEvents = prevEvents
           .map((event) => {
-            const randomIncrease =
-              Math.floor(Math.random() * 46) + 5;
+            const randomIncrease = Math.floor(Math.random() * 46) + 5;
             return {
               ...event,
               impressions: event.impressions + randomIncrease,
@@ -880,10 +994,11 @@ const EventsPage = () => {
   const ALL_EVENTS = useMemo(() => dynamicEvents, [dynamicEvents]);
 
   const eventDetailData = useMemo(() => {
-    const data = eventIdParam
-      ? ALL_EVENTS.find((e) => e.id === parseInt(eventIdParam)) ||
-        EVENT_DETAIL_DATA
-      : null;
+    const idNum = eventIdParam ? parseInt(eventIdParam, 10) : null;
+    const data =
+      idNum != null
+        ? ALL_EVENTS.find((e) => e.id === idNum) || EVENT_DETAIL_DATA
+        : null;
     return data;
   }, [eventIdParam, ALL_EVENTS]);
 
@@ -921,7 +1036,7 @@ const EventsPage = () => {
       return nextEvents;
     });
 
-    router.push(`${pathname}?id=${id}`, { scroll: true });
+    router.push(`${pathname}?event=${id}`, { scroll: true });
   };
 
   const handleBackClick = () => {
@@ -938,7 +1053,7 @@ const EventsPage = () => {
   };
 
   const handleShareClick = (id) => {
-    const shareLink = `${window.location.origin}${pathname}?id=${id}`;
+    const shareLink = `${window.location.origin}${pathname}?event=${id}`;
 
     if (navigator.share) {
       navigator
@@ -1053,7 +1168,6 @@ const EventsPage = () => {
     };
   }, [isSearching]);
 
-  // ⭐ Receive hosted event from HostEventPage and inject into dynamicEvents
   const handleEventHosted = (newHostedEvent) => {
     setDynamicEvents((prevEvents) => {
       const impressionsBoost =
@@ -1082,7 +1196,6 @@ const EventsPage = () => {
       return updated.sort((a, b) => b.impressions - a.impressions);
     });
 
-    // 💾 also append into localStorage "events" so it persists after reload
     try {
       if (typeof window !== "undefined") {
         const saved = localStorage.getItem(HOSTED_EVENTS_KEY);
@@ -1097,7 +1210,6 @@ const EventsPage = () => {
       console.error("Failed to persist hosted event:", e);
     }
   };
-  // ⭐ END
 
   const activeViewKey = renderHostView
     ? "host"
@@ -1108,8 +1220,7 @@ const EventsPage = () => {
     : "list";
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white font-sans antialiased relative">
-      {/* Dark overlay */}
+    <div className="min-h-screen bg-[#0d0d0d]/80 text-white font-sans antialiased relative">
       <div
         onClick={() => setSidebarOpen(false)}
         className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 ${
@@ -1119,7 +1230,6 @@ const EventsPage = () => {
         } lg:hidden`}
       />
 
-      {/* Mobile sidebar */}
       <aside
         className={`fixed top-0 left-0 z-50 h-full w-64 bg-[#050509] border-r border-[#262626] transform transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -1186,9 +1296,8 @@ const EventsPage = () => {
         </div>
       </aside>
 
-      {/* Header */}
       <header
-        className={`z-40 bg-gray-950/90 backdrop-blur-sm shadow-lg shadow-black/30 ${
+        className={`z-40 bg-[#0d0d0d]/80 backdrop-blur-sm shadow-lg shadow-black/30 ${
           renderDetailsView || renderHostView || renderAllEventsView
             ? "hidden lg:block"
             : ""
@@ -1196,7 +1305,6 @@ const EventsPage = () => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
           <div className="flex items-center space-x-4 w-full">
-            {/* Mobile: 3-line menu + logo */}
             <div className="flex items-center space-x-3 lg:hidden">
               <button
                 onClick={() => setSidebarOpen(true)}
@@ -1219,7 +1327,6 @@ const EventsPage = () => {
               />
             </div>
 
-            {/* Desktop title */}
             <h1 className="text-2xl font-extrabold tracking-tight text-purple-400 hidden lg:block">
               Confique
             </h1>
@@ -1295,7 +1402,6 @@ const EventsPage = () => {
         </div>
       </header>
 
-      {/* MAIN */}
       <main key={activeViewKey}>
         {renderHostView ? (
           <HostEventPage
@@ -1328,7 +1434,6 @@ const EventsPage = () => {
               onShareClick={handleShareClick}
             />
 
-            {/* CATEGORY BAR */}
             <section className="py-10">
               <div className="flex justify-center items-center mb-10">
                 <h2 className="text-4xl font-extrabold text-white text-center">

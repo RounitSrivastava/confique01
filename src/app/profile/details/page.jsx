@@ -12,7 +12,19 @@ import {
   Share2,
   X,
   Trash2,
+  Check, // 👈 for selected avatar tick
 } from 'lucide-react';
+
+const presetAvatars = [
+  'https://i.pravatar.cc/150?img=1',
+  'https://i.pravatar.cc/150?img=2',
+  'https://i.pravatar.cc/150?img=3',
+  'https://i.pravatar.cc/150?img=4',
+  'https://i.pravatar.cc/150?img=5',
+  'https://i.pravatar.cc/150?img=6',
+  'https://i.pravatar.cc/150?img=7',
+  'https://i.pravatar.cc/150?img=8',
+];
 
 export default function TechProfilePage() {
   const [activeTab, setActiveTab] = useState('posts');
@@ -81,61 +93,11 @@ export default function TechProfilePage() {
     }
   ]);
 
-  // COMMUNITY POSTS
-  const [communityPosts, setCommunityPosts] = useState([
-    {
-      id: 'c1',
-      authorName: 'Sarah Chen',
-      authorAvatar: 'https://i.pravatar.cc/150?img=5',
-      timeAgo: '2 hours ago',
-      category: 'Tech',
-      title: 'Just built my first AI chatbot using GPT-4!',
-      content:
-        'After weeks of learning, I finally deployed my first AI-powered customer service bot. The journey was challenging but incredibly rewarding. Would love to hear your thoughts!',
-      image:
-        'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=300&fit=crop',
-      likes: 342,
-      comments: 67
-    },
-    {
-      id: 'c2',
-      authorName: 'Maya Rodriguez',
-      authorAvatar: 'https://i.pravatar.cc/150?img=9',
-      timeAgo: '5 hours ago',
-      category: 'Fashion',
-      title: 'Sustainable Fashion Collection 2025',
-      content:
-        'Excited to share my latest eco-friendly fashion designs! Made entirely from recycled materials and natural dyes. Fashion can be beautiful AND sustainable! 🌿',
-      image:
-        'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&h=300&fit=crop',
-      likes: 892,
-      comments: 134
-    },
-    {
-      id: 'c3',
-      authorName: 'Alex Kim',
-      authorAvatar: 'https://i.pravatar.cc/150?img=12',
-      timeAgo: '1 day ago',
-      category: 'Gaming',
-      title: 'Finally hit Diamond rank in Valorant!',
-      content:
-        "After 6 months of grinding, I made it to Diamond! Here are my top 5 tips for climbing the ranks. Drop your rank below and let's squad up!",
-      image:
-        'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=300&fit=crop',
-      likes: 567,
-      comments: 89
-    }
-  ]);
-
   // ==== DYNAMIC STATS ====
   const totalHostedEvents = posts.length;
   const totalRegisteredEvents = posts.filter((p) => p.isRegistered).length;
-  const totalLikes =
-    posts.reduce((sum, p) => sum + p.likes, 0) +
-    communityPosts.reduce((sum, p) => sum + p.likes, 0);
-  const totalComments =
-    posts.reduce((sum, p) => sum + p.comments, 0) +
-    communityPosts.reduce((sum, p) => sum + p.comments, 0);
+  const totalLikes = posts.reduce((sum, p) => sum + p.likes, 0);
+  const totalComments = posts.reduce((sum, p) => sum + p.comments, 0);
 
   // ==== HANDLERS ====
   const handleRegister = (postId) => {
@@ -173,18 +135,6 @@ export default function TechProfilePage() {
     setPosts((prev) => prev.filter((post) => post.id !== postId));
   };
 
-  const handleLikeCommunity = (id) => {
-    setCommunityPosts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
-    );
-  };
-
-  const handleCommentCommunity = (id) => {
-    setCommunityPosts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, comments: p.comments + 1 } : p))
-    );
-  };
-
   const openEditModal = () => {
     setEditForm(profile);
     setIsEditModalOpen(true);
@@ -207,7 +157,7 @@ export default function TechProfilePage() {
     setIsEditModalOpen(false);
   };
 
-  // LOCAL DEVICE AVATAR CHANGE
+  // LOCAL DEVICE AVATAR CHANGE (upload)
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -240,8 +190,6 @@ export default function TechProfilePage() {
   const displayedPosts =
     activeTab === 'registered'
       ? posts.filter((p) => p.isRegistered)
-      : activeTab === 'community'
-      ? communityPosts
       : posts;
 
   return (
@@ -353,20 +301,6 @@ export default function TechProfilePage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('community')}
-              className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
-                activeTab === 'community'
-                  ? 'text-purple-400'
-                  : 'text-slate-400 hover:text-slate-300'
-              }`}
-            >
-              Community Posts
-              {activeTab === 'community' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
-              )}
-            </button>
-
-            <button
               onClick={() => setActiveTab('registered')}
               className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
                 activeTab === 'registered'
@@ -384,187 +318,118 @@ export default function TechProfilePage() {
           {/* Posts List */}
           <div className="p-6 space-y-4">
             {displayedPosts.length > 0 ? (
-              activeTab === 'community' ? (
-                communityPosts.map((post) => (
+              posts
+                .filter((p) =>
+                  activeTab === 'registered' ? p.isRegistered : true
+                )
+                .map((post) => (
                   <div
                     key={post.id}
-                    className="bg-slate-700/30 rounded-xl overflow-hidden hover:bg-slate-700/40 transition-all border border-slate-600/30 p-5"
+                    className="relative bg-slate-700/30 rounded-xl overflow-hidden hover:bg-slate-700/40 transition-all border border-slate-600/30"
                   >
-                    <div className="flex items-center gap-3 mb-4">
-                      <img
-                        src={post.authorAvatar}
-                        alt={post.authorName}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                      <div className="flex-1">
-                        <h4 className="text-white font-semibold">
-                          {post.authorName}
-                        </h4>
-                        <p className="text-slate-400 text-sm">
-                          {post.timeAgo}
-                        </p>
+                    {/* TOP RIGHT EDIT + DELETE (for host profile) */}
+                    {activeTab === 'posts' && (
+                      <div className="absolute top-3 right-3 flex gap-2 z-10">
+                        <button
+                          onClick={() => openEventEditModal(post)}
+                          className="p-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-600 transition-colors"
+                        >
+                          <Edit2 className="w-4 h-4 text-slate-100" />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="p-1.5 rounded-full bg-red-500/80 hover:bg-red-500 border border-red-400 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 text-white" />
+                        </button>
                       </div>
-                      <span className="px-3 py-1 bg-purple-600/20 text-purple-400 text-xs font-semibold rounded-full">
-                        {post.category}
-                      </span>
-                    </div>
-
-                    <h3 className="text-xl font-bold text-white mb-2">
-                      {post.title}
-                    </h3>
-                    <p className="text-slate-300 mb-4">{post.content}</p>
-
-                    {post.image && (
-                      <img
-                        src={post.image}
-                        alt={post.title}
-                        className="w-full h-64 object-cover rounded-lg mb-4"
-                      />
                     )}
 
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-600/30">
-                      <div className="flex gap-6">
-                        <button
-                          onClick={() => handleLikeCommunity(post.id)}
-                          className="flex items-center gap-2 text-slate-400 hover:text-pink-500 transition-colors"
-                        >
-                          <Heart className="w-5 h-5" />
-                          <span className="font-semibold text-white">
-                            {post.likes}
-                          </span>
-                        </button>
-
-                        <button
-                          onClick={() => handleCommentCommunity(post.id)}
-                          className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors"
-                        >
-                          <MessageSquare className="w-5 h-5" />
-                          <span className="font-semibold text-white">
-                            {post.comments}
-                          </span>
-                        </button>
+                    <div className="flex flex-col md:flex-row">
+                      <div className="md:w-48 h-48 md:h-auto relative overflow-hidden">
+                        <img
+                          src={post.image}
+                          alt={post.title}
+                          className="w-full h-full object-cover"
+                        />
+                        {post.isRegistered && (
+                          <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                            Registered
+                          </div>
+                        )}
                       </div>
 
-                      <button className="text-slate-400 hover:text-slate-300 transition-colors">
-                        <Share2 className="w-5 h-5" />
-                      </button>
+                      <div className="flex-1 p-5">
+                        <h3 className="text-xl font-bold text-white mb-3">
+                          {post.title}
+                        </h3>
+
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center gap-2 text-slate-300 text-sm">
+                            <Calendar className="w-4 h-4 text-blue-400" />
+                            <span>{post.date}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-300 text-sm">
+                            <Clock className="w-4 h-4 text-blue-400" />
+                            <span>{post.time}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-300 text-sm">
+                            <MapPin className="w-4 h-4 text-blue-400" />
+                            <span>{post.location}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 mb-4">
+                          <div className="flex items-center gap-1 text-slate-400 text-sm">
+                            <Users className="w-4 h-4" />
+                            <span className="font-semibold text-white">
+                              {post.registrations}
+                            </span>{' '}
+                            registered
+                          </div>
+                          <div className="flex items-center gap-1 text-slate-400 text-sm">
+                            <Heart className="w-4 h-4" />
+                            <span className="font-semibold text-white">
+                              {post.likes}
+                            </span>{' '}
+                            likes
+                          </div>
+                          <div className="flex items-center gap-1 text-slate-400 text-sm">
+                            <MessageSquare className="w-4 h-4" />
+                            <span className="font-semibold text-white">
+                              {post.comments}
+                            </span>{' '}
+                            comments
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            onClick={() => handleRegister(post.id)}
+                            className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                              post.isRegistered
+                                ? 'bg-slate-600 hover:bg-slate-500 text-white'
+                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                            }`}
+                          >
+                            {post.isRegistered ? 'Unregister' : 'Register'}
+                          </button>
+
+                          <button
+                            onClick={() => handleLike(post.id)}
+                            className="p-2 bg-slate-600/50 hover:bg-slate-600 rounded-lg transition-colors"
+                          >
+                            <Heart className="w-5 h-5 text-slate-300" />
+                          </button>
+
+                          <button className="p-2 bg-slate-600/50 hover:bg-slate-600 rounded-lg transition-colors">
+                            <MessageSquare className="w-5 h-5 text-slate-300" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))
-              ) : (
-                posts
-                  .filter((p) =>
-                    activeTab === 'registered' ? p.isRegistered : true
-                  )
-                  .map((post) => (
-                    <div
-                      key={post.id}
-                      className="relative bg-slate-700/30 rounded-xl overflow-hidden hover:bg-slate-700/40 transition-all border border-slate-600/30"
-                    >
-                      {/* TOP RIGHT EDIT + DELETE (for host profile) */}
-                      {activeTab === 'posts' && (
-                        <div className="absolute top-3 right-3 flex gap-2 z-10">
-                          <button
-                            onClick={() => openEventEditModal(post)}
-                            className="p-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-600 transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4 text-slate-100" />
-                          </button>
-                          <button
-                            onClick={() => handleDeletePost(post.id)}
-                            className="p-1.5 rounded-full bg-red-500/80 hover:bg-red-500 border border-red-400 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4 text-white" />
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="flex flex-col md:flex-row">
-                        <div className="md:w-48 h-48 md:h-auto relative overflow-hidden">
-                          <img
-                            src={post.image}
-                            alt={post.title}
-                            className="w-full h-full object-cover"
-                          />
-                          {post.isRegistered && (
-                            <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                              Registered
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1 p-5">
-                          <h3 className="text-xl font-bold text-white mb-3">
-                            {post.title}
-                          </h3>
-
-                          <div className="space-y-2 mb-4">
-                            <div className="flex items-center gap-2 text-slate-300 text-sm">
-                              <Calendar className="w-4 h-4 text-blue-400" />
-                              <span>{post.date}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-slate-300 text-sm">
-                              <Clock className="w-4 h-4 text-blue-400" />
-                              <span>{post.time}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-slate-300 text-sm">
-                              <MapPin className="w-4 h-4 text-blue-400" />
-                              <span>{post.location}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-4 mb-4">
-                            <div className="flex items-center gap-1 text-slate-400 text-sm">
-                              <Users className="w-4 h-4" />
-                              <span className="font-semibold text-white">
-                                {post.registrations}
-                              </span>{' '}
-                              registered
-                            </div>
-                            <div className="flex items-center gap-1 text-slate-400 text-sm">
-                              <Heart className="w-4 h-4" />
-                              <span className="font-semibold text-white">
-                                {post.likes}
-                              </span>{' '}
-                              likes
-                            </div>
-                            <div className="flex items-center gap-1 text-slate-400 text-sm">
-                              <MessageSquare className="w-4 h-4" />
-                              <span className="font-semibold text-white">
-                                {post.comments}
-                              </span>{' '}
-                              comments
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-3">
-                            <button
-                              onClick={() => handleRegister(post.id)}
-                              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                                post.isRegistered
-                                  ? 'bg-slate-600 hover:bg-slate-500 text-white'
-                                  : 'bg-purple-600 hover:bg-purple-700 text-white'
-                              }`}
-                            >
-                              {post.isRegistered ? 'Unregister' : 'Register'}
-                            </button>
-
-                            <button
-                              onClick={() => handleLike(post.id)}
-                              className="p-2 bg-slate-600/50 hover:bg-slate-600 rounded-lg transition-colors"
-                            >
-                              <Heart className="w-5 h-5 text-slate-300" />
-                            </button>
-
-                            <button className="p-2 bg-slate-600/50 hover:bg-slate-600 rounded-lg transition-colors">
-                              <MessageSquare className="w-5 h-5 text-slate-300" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-              )
             ) : (
               <div className="text-center py-12">
                 <p className="text-slate-400 text-lg">
@@ -597,24 +462,63 @@ export default function TechProfilePage() {
             </div>
 
             {/* Content (scrollable) */}
-            <div className="p-6 space-y-5 overflow-y-auto flex-1">
-              {/* Avatar preview + upload */}
-              <div className="flex items-center gap-4">
-                <img
-                  src={editForm.avatar}
-                  alt="Preview"
-                  className="w-16 h-16 rounded-full object-cover border-2 border-slate-600"
-                />
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+              {/* Avatar preview + upload + preset avatars */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={editForm.avatar}
+                    alt="Preview"
+                    className="w-16 h-16 rounded-full object-cover border-2 border-slate-600"
+                  />
+                  <div className="space-y-2">
+                    <p className="text-sm text-slate-300">
+                      Change profile photo
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="text-sm text-slate-200"
+                    />
+                  </div>
+                </div>
+
+                {/* Preset avatar choices */}
                 <div className="space-y-2">
                   <p className="text-sm text-slate-300">
-                    Change profile photo
+                    Or choose an avatar
                   </p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="text-sm text-slate-200"
-                  />
+                  <div className="grid grid-cols-4 gap-3">
+                    {presetAvatars.map((url) => {
+                      const isSelected = editForm.avatar === url;
+                      return (
+                        <button
+                          key={url}
+                          type="button"
+                          onClick={() =>
+                            setEditForm((prev) => ({ ...prev, avatar: url }))
+                          }
+                          className={`relative rounded-full p-1 border-2 transition-all ${
+                            isSelected
+                              ? 'border-purple-500 ring-2 ring-purple-500/40'
+                              : 'border-transparent hover:border-slate-500'
+                          }`}
+                        >
+                          <img
+                            src={url}
+                            alt="Avatar option"
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                          {isSelected && (
+                            <div className="absolute -right-1 -bottom-1 bg-purple-600 rounded-full p-0.5">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -700,7 +604,7 @@ export default function TechProfilePage() {
             <div className="flex gap-3 p-6 flex-shrink-0">
               <button
                 onClick={closeEditModal}
-                className="flex-1 px-6 py-3.5 bg-purple-600 hover:bg-slate-800 text_WHITE rounded-xl font-medium transition-colors border border-slate-700/50"
+                className="flex-1 px-6 py-3.5 bg-purple-600 hover:bg-slate-800 text-white rounded-xl font-medium transition-colors border border-slate-700/50"
               >
                 Cancel
               </button>
@@ -734,7 +638,7 @@ export default function TechProfilePage() {
             <div className="p-6 space-y-5 overflow-y-auto flex-1">
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text_WHITE mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   Event Title
                 </label>
                 <input
@@ -746,14 +650,14 @@ export default function TechProfilePage() {
                       title: e.target.value
                     })
                   }
-                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text_WHITE placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
                   placeholder="Enter event title"
                 />
               </div>
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text_WHITE mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   Date
                 </label>
                 <input
@@ -765,14 +669,14 @@ export default function TechProfilePage() {
                       date: e.target.value
                     })
                   }
-                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text_WHITE placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
                   placeholder="Dec 15, 2025"
                 />
               </div>
 
               {/* Time */}
               <div>
-                <label className="block text-sm font-medium text_WHITE mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   Time
                 </label>
                 <input
@@ -784,14 +688,14 @@ export default function TechProfilePage() {
                       time: e.target.value
                     })
                   }
-                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text_WHITE placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
                   placeholder="9:00 AM - 6:00 PM"
                 />
               </div>
 
               {/* Location */}
               <div>
-                <label className="block text-sm font-medium text_WHITE mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   Location
                 </label>
                 <input
@@ -803,14 +707,14 @@ export default function TechProfilePage() {
                       location: e.target.value
                     })
                   }
-                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text_WHITE placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
                   placeholder="Tech Hub, Downtown"
                 />
               </div>
 
               {/* Image URL */}
               <div>
-                <label className="block text-sm font-medium text_WHITE mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   Cover Image URL
                 </label>
                 <input
@@ -822,7 +726,7 @@ export default function TechProfilePage() {
                       image: e.target.value
                     })
                   }
-                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text_WHITE placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
+                  className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
                   placeholder="https://..."
                 />
               </div>
@@ -832,7 +736,7 @@ export default function TechProfilePage() {
             <div className="flex gap-3 p-6 flex-shrink-0">
               <button
                 onClick={closeEventEditModal}
-                className="flex-1 px-6 py-3.5 bg-purple-600 hover:bg-slate-800 text_WHITE rounded-xl font-medium transition-colors border border-slate-700/50"
+                className="flex-1 px-6 py-3.5 bg-purple-600 hover:bg-slate-800 text-white rounded-xl font-medium transition-colors border border-slate-700/50"
               >
                 Cancel
               </button>

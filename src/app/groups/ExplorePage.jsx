@@ -48,7 +48,15 @@ const INITIAL_DISPLAY_LIMIT = 5;
 const JOINED_DISPLAY_LIMIT = 3;
 
 // --- DUMMY DATA ---
-const categories = ["For You", "Gaming", "Sports", "Music", "Tech", "Art"];
+const categories = [
+  "For You",
+  "Tech",
+  "Entrepreneurship",
+  "Gaming",
+  "Sports",
+  "Music",
+  "Art",
+];
 
 const trendingCommunities = [
   {
@@ -56,54 +64,66 @@ const trendingCommunities = [
     name: "Pixel Warriors",
     members: "12.4k",
     membersCount: 12400,
+    description: "Competitive pixel art & speedruns.",
     background: "bg-gradient-to-br from-black to-black",
     isImage: false,
     slug: "pixel-warriors",
+    category: "Gaming",
   },
   {
     id: 102,
     name: "Goal Getters Club",
     members: "8.1k",
     membersCount: 8100,
+    description: "Football tactics, matches and tips.",
     image: "/images/soccer-net.jpg",
     isImage: true,
     slug: "goal-getters-club",
+    category: "Sports",
   },
   {
     id: 103,
     name: "Crypto Hub",
     members: "32.0k",
     membersCount: 32000,
+    description: "News, trading strategies and research.",
     background: "bg-gradient-to-r from-yellow-500 to-amber-700",
     isImage: false,
     slug: "crypto-hub",
+    category: "Tech",
   },
   {
     id: 104,
     name: "Foodies Delight",
     members: "15.9k",
     membersCount: 15900,
+    description: "Recipes, restaurant recs and reviews.",
     background: "bg-gradient-to-r from-red-500 to-red-700",
     isImage: false,
     slug: "foodies-delight",
+    category: "Food",
   },
   {
     id: 105,
     name: "Space Nerds",
     members: "9.3k",
     membersCount: 9300,
+    description: "Astronomy, rockets and space news.",
     background: "bg-gradient-to-r from-purple-600",
     isImage: false,
     slug: "space-nerds",
+    category: "Tech",
   },
   {
     id: 106,
     name: "Book Worms HQ",
     members: "11.2k",
     membersCount: 11200,
+    description: "Book recs, reviews and reading groups.",
     background: "bg-gradient-to-r from-gray-700 to-gray-800",
     isImage: false,
     slug: "book-worms",
+    category: "Art",
   },
 ];
 
@@ -117,6 +137,7 @@ const initialRecommendedCommunitiesData = [
     icon: "/images/tech-icon.png",
     iconUrl: "/images/tech-icon.png",
     slug: "tech-innovators",
+    category: "Tech",
   },
   {
     id: 2,
@@ -127,6 +148,7 @@ const initialRecommendedCommunitiesData = [
     icon: "/images/adventure-icon.png",
     iconUrl: "/images/adventure-icon.png",
     slug: "adventurers-unite",
+    category: "Travel",
   },
   {
     id: 3,
@@ -137,6 +159,7 @@ const initialRecommendedCommunitiesData = [
     icon: "/images/bake-icon.png",
     iconUrl: "/images/bake-icon.png",
     slug: "bake-off-club",
+    category: "Food",
   },
   {
     id: 4,
@@ -147,6 +170,7 @@ const initialRecommendedCommunitiesData = [
     icon: "/images/fitness-icon.png",
     iconUrl: "/images/fitness-icon.png",
     slug: "fitness-fanatics",
+    category: "Sports",
   },
   {
     id: 5,
@@ -157,6 +181,7 @@ const initialRecommendedCommunitiesData = [
     icon: "/images/diy-icon.png",
     iconUrl: "/images/diy-icon.png",
     slug: "diy-masters",
+    category: "Art",
   },
   {
     id: 6,
@@ -167,6 +192,7 @@ const initialRecommendedCommunitiesData = [
     icon: "/images/photo-icon.png",
     iconUrl: "/images/photo-icon.png",
     slug: "photography-pros",
+    category: "Art",
   },
 ];
 
@@ -194,17 +220,25 @@ const TrendingCard = ({ community, onNavigate }) => (
       <img
         src={community.image}
         alt={community.name}
-        className="w-full h-full object-cover"
+        className="w-full h-28 object-cover"
       />
     ) : (
-      <div className={`w-full h-full ${community.background}`} />
+      <div className={`w-full h-28 ${community.background}`} />
     )}
 
-    <div className="absolute inset-0 p-3 flex flex-col justify-end text-white bg-black bg-opacity-30">
-      <p className="font-semibold text-base leading-snug">{community.name}</p>
-      <p className="text-xs text-gray-200">
-        {community.members || `${community.membersCount || 0} members`}
-      </p>
+    <div className="p-3 flex flex-col justify-start text-white bg-transparent">
+      <p className="font-semibold text-sm leading-snug">{community.name}</p>
+      {community.description && (
+        <p className="text-xs text-gray-300 line-clamp-2 mt-1">
+          {community.description}
+        </p>
+      )}
+
+      <div className="mt-auto pt-2">
+        <p className="text-xs text-gray-200">
+          {community.members || `${community.membersCount || 0} members`}
+        </p>
+      </div>
     </div>
   </div>
 );
@@ -258,6 +292,12 @@ const RecommendedItem = ({
               ⭐ You&apos;re the admin
             </p>
           )}
+
+          {community.category && (
+            <p className="text-xs text-gray-400 mt-1">
+              Category: {community.category}
+            </p>
+          )}
         </div>
       </div>
 
@@ -307,6 +347,7 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     description: "",
     bannerFile: null,
     logoFile: null,
+    category: "Tech",
   });
 
   const [errors, setErrors] = React.useState({});
@@ -332,7 +373,8 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     if (!formData.description)
       newErrors.description = "Description is required.";
     if (!formData.logoFile) newErrors.logoFile = "Logo is required.";
-    if (!formData.bannerFile) newErrors.bannerFile = "Banner is required.";
+    // Banner not required anymore
+    if (!formData.category) newErrors.category = "Category is required.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -354,7 +396,7 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
     const bannerUrl = formData.bannerFile
       ? URL.createObjectURL(formData.bannerFile)
-      : `/images/${slug}-banner.jpg`;
+      : null;
 
     const ownerEmail = getCurrentUserEmail() || SITE_OWNER_EMAIL;
 
@@ -371,6 +413,7 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
       createdByCurrentUser: true,
       role: "admin",
       ownerEmail,
+      category: formData.category,
     };
 
     onSubmitSuccess(newCommunity);
@@ -381,6 +424,7 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
       description: "",
       bannerFile: null,
       logoFile: null,
+      category: "Tech",
     });
     onClose();
   };
@@ -399,9 +443,7 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         }`}
       >
         <span
-          className={`text-sm ${
-            file ? "text-white" : "text-gray-400"
-          } truncate`}
+          className={`text-sm ${file ? "text-white" : "text-gray-400"} truncate`}
         >
           {file ? file.name : "No file selected"}
         </span>
@@ -441,11 +483,7 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
       <div className="bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
         <div className="flex justify-between items-center p-5 border-b border-gray-700">
           <h2 className="text-2xl font-bold text-white">🚀 Create New Community</h2>
-          <button
-            className="text-gray-400 hover:text-white"
-            onClick={onClose}
-            type="button"
-          >
+          <button className="text-gray-400 hover:text-white" onClick={onClose} type="button">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -464,9 +502,7 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
                 errors.name ? "border-red-500" : "border-gray-700"
               }`}
             />
-            {errors.name && (
-              <p className="text-red-400 text-xs mt-1">{errors.name}</p>
-            )}
+            {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
           </div>
 
           <div>
@@ -487,6 +523,27 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             )}
           </div>
 
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">Category *</label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className={`w-full px-4 py-2 bg-gray-800 border rounded-lg text-white ${
+                errors.category ? "border-red-500" : "border-gray-700"
+              }`}
+            >
+              {categories
+                .filter((c) => c !== "For You")
+                .map((c) => (
+                  <option key={c} value={c} className="bg-gray-900 text-white">
+                    {c}
+                  </option>
+                ))}
+            </select>
+            {errors.category && <p className="text-red-400 text-xs mt-1">{errors.category}</p>}
+          </div>
+
           <div className="flex space-x-4">
             <FileInput
               label="Community Logo"
@@ -498,10 +555,9 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             />
 
             <FileInput
-              label="Community Banner"
+              label="Community Banner (Optional)"
               name="bannerFile"
               file={formData.bannerFile}
-              required
               inputRef={bannerRef}
               error={errors.bannerFile}
             />
@@ -529,6 +585,16 @@ export default function ExplorePage({
   const searchParams = useSearchParams();
   const invitedSlug = searchParams.get("invited");
 
+  // initialize selectedCategory from query param (if present)
+  const initCategory = (() => {
+    try {
+      const q = typeof window === "undefined" ? null : searchParams.get("category");
+      return q && q.length ? q : "For You";
+    } catch {
+      return "For You";
+    }
+  })();
+
   const [showAllTrending, setShowAllTrending] = React.useState(false);
   const [showAllRecommended, setShowAllRecommended] = React.useState(false);
   const [showAllJoined, setShowAllJoined] = React.useState(false);
@@ -536,18 +602,29 @@ export default function ExplorePage({
   const [recommendedCommunities, setRecommendedCommunities] = React.useState(
     initialRecommendedCommunitiesData
   );
-  const [selectedCategory, setSelectedCategory] = React.useState("For You");
+  const [selectedCategory, setSelectedCategory] = React.useState(initCategory);
   const [joinedCommunities, setJoinedCommunities] = React.useState(
-    userCreatedCommunities.reduce(
-      (acc, comm) => ({ ...acc, [comm.id]: true }),
-      {}
-    )
+    userCreatedCommunities.reduce((acc, comm) => ({ ...acc, [comm.id]: true }), {})
   );
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
 
   const currentUserEmail =
     typeof window !== "undefined" ? getCurrentUserEmail() : null;
   const isSiteOwner = currentUserEmail === SITE_OWNER_EMAIL;
+
+  // if query param changes while on page (e.g. route from /groups?category=Tech), update selection
+  React.useEffect(() => {
+    try {
+      const q = searchParams.get("category");
+      if (q && q.length && q !== selectedCategory) {
+        setSelectedCategory(q);
+      }
+    } catch (e) {
+      // ignore
+    }
+    // only run when the search params string changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams?.toString()]);
 
   // user clicks "Join"
   const handleJoin = (community) => {
@@ -652,10 +729,15 @@ export default function ExplorePage({
       map.set(comm.id, comm);
     });
 
-    return Array.from(map.values()).sort(
+    // If user selected a specific category (not "For You"), only show trending in that category
+    const list = Array.from(map.values()).sort(
       (a, b) => (b.membersCount || 0) - (a.membersCount || 0)
     );
-  }, [allCommunities]);
+
+    return selectedCategory && selectedCategory !== "For You"
+      ? list.filter((c) => c.category === selectedCategory)
+      : list;
+  }, [allCommunities, selectedCategory]);
 
   const explorableViewCommunities = React.useMemo(() => {
     let list = allCommunities.filter(
@@ -663,10 +745,13 @@ export default function ExplorePage({
         !(!!joinedCommunities[community.id] || community.createdByCurrentUser)
     );
 
+    // apply category filter (unless 'For You')
+    if (selectedCategory && selectedCategory !== "For You") {
+      list = list.filter((c) => c.category === selectedCategory);
+    }
+
     if (invitedSlug) {
-      const index = list.findIndex(
-        (community) => community.slug === invitedSlug
-      );
+      const index = list.findIndex((community) => community.slug === invitedSlug);
       if (index > 0) {
         const [invitedCommunity] = list.splice(index, 1);
         list.unshift(invitedCommunity);
@@ -674,20 +759,30 @@ export default function ExplorePage({
     }
 
     return list;
-  }, [allCommunities, joinedCommunities, invitedSlug]);
+  }, [allCommunities, joinedCommunities, invitedSlug, selectedCategory]);
 
   const filteredCommunities = React.useMemo(() => {
-    if (!searchTerm) return explorableViewCommunities;
-
+    // if there's a search term, search across all communities but also respect category
     const lowerSearch = searchTerm.toLowerCase();
 
-    return allCommunities.filter(
+    let base = allCommunities;
+    if (selectedCategory && selectedCategory !== "For You") {
+      base = base.filter((c) => c.category === selectedCategory);
+    }
+
+    if (!searchTerm)
+      return base.filter(
+        (community) =>
+          !(!!joinedCommunities[community.id] || community.createdByCurrentUser)
+      );
+
+    return base.filter(
       (community) =>
         community.name.toLowerCase().includes(lowerSearch) ||
-        community.description.toLowerCase().includes(lowerSearch) ||
-        community.slug.includes(lowerSearch)
+        (community.description || "").toLowerCase().includes(lowerSearch) ||
+        (community.slug || "").includes(lowerSearch)
     );
-  }, [allCommunities, searchTerm, explorableViewCommunities]);
+  }, [allCommunities, searchTerm, joinedCommunities, selectedCategory]);
 
   // --- APPLYING LIMITS ---
   const displayTrending = showAllTrending
@@ -840,8 +935,7 @@ export default function ExplorePage({
             )}
           </div>
 
-          {userJoinedCommunities.length > 0 &&
-            renderCommunityList(displayJoined)}
+          {userJoinedCommunities.length > 0 && renderCommunityList(displayJoined)}
 
           {searchTerm && userJoinedCommunities.length === 0 && (
             <p className="text-center text-gray-500 py-4">

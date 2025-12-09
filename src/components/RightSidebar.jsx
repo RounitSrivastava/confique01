@@ -48,9 +48,12 @@ export default function RightSidebar() {
   const [topCommunities, setTopCommunities] = React.useState([]);
   const [popularEvents, setPopularEvents] = React.useState([]);
 
+  const isSettingsPage =
+    pathname === "/settings" || pathname?.includes("settings");
+
   // ✅ Load communities from localStorage
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || isSettingsPage) return;
 
     try {
       const storedAll =
@@ -70,11 +73,11 @@ export default function RightSidebar() {
     } catch {
       setTopCommunities(FALLBACK_COMMUNITIES.slice(0, 4));
     }
-  }, []);
+  }, [isSettingsPage]);
 
   // ✅ Load dynamic popular events from localStorage
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || isSettingsPage) return;
 
     try {
       const storedEvents =
@@ -97,7 +100,7 @@ export default function RightSidebar() {
     } catch {
       setPopularEvents(FALLBACK_POPULAR_EVENTS);
     }
-  }, []);
+  }, [isSettingsPage]);
 
   // Redirect to specific event details page
   const handlePopularEventClick = (event) => {
@@ -143,60 +146,87 @@ export default function RightSidebar() {
 
   return (
     <aside className="hidden xl:flex w-[360px] shrink-0 border-l border-[#262626] bg-[#0d0d0d] overflow-y-auto">
-      <div className="mx-auto w-full max-w-[340px] p-4">
+      <div className="mx-auto w-full max-w-[340px] p-4 space-y-6">
+        {/* 🔹 Help & Support — ONLY show on Settings page */}
+        {isSettingsPage && (
+          <section className="rounded-2xl bg-[#101010] border border-[#262626] shadow-sm px-6 py-8 text-center">
+            <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-100 to-purple-100">
+              Help &amp; Support
+            </h2>
 
-        {/* 🔹 Top Communities */}
-        <section className="rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm">
-          <div className="px-4 py-3 border-b border-[#262626] font-medium">
-            Top Communities
-          </div>
+            <p className="text-sm text-gray-300 mt-4 leading-relaxed">
+              Facing any issue with <span className="font-semibold">Confique</span>?<br />
+              For support or questions, email us at:
+            </p>
 
-          <ul className="p-2">
-            {topCommunities.map((c, index) => (
-              <li
-                key={c.id}
-                onClick={() => handleCommunityClick(c)}
-                className="px-3 py-2 rounded-lg hover:bg-[#111] transition flex items-start gap-2 cursor-pointer"
+            <div className="mt-5 flex justify-center">
+              <a
+                href="mailto:confique01@gmail.com"
+                className="inline-flex items-center gap-2 text-sm font-medium text-purple-100 hover:text-purple-300 hover:underline transition"
               >
-                <span className="text-xs text-gray-500 mt-0.5">
-                  #{index + 1}
-                </span>
+                <span>📧</span>
+                <span>confique01@gmail.com</span>
+              </a>
+            </div>
+          </section>
+        )}
 
-                <div>
-                  <p className="text-sm font-medium">{c.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {c.members || `${c.membersCount || 0} members`}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+        {/* 🔹 Top Communities & Popular Events — show only when NOT on Settings page */}
+        {!isSettingsPage && (
+          <>
+            {/* Top Communities */}
+            <section className="rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm">
+              <div className="px-4 py-3 border-b border-[#262626] font-medium">
+                Top Communities
+              </div>
 
-        {/* 🔹 Popular Events (Dynamic) */}
-        <section className="mt-6 rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm">
-          <div className="px-4 py-3 border-b border-[#262626] font-medium">
-            Popular Events
-          </div>
+              <ul className="p-2">
+                {topCommunities.map((c, index) => (
+                  <li
+                    key={c.id}
+                    onClick={() => handleCommunityClick(c)}
+                    className="px-3 py-2 rounded-lg hover:bg-[#111] transition flex items-start gap-2 cursor-pointer"
+                  >
+                    <span className="text-xs text-gray-500 mt-0.5">
+                      #{index + 1}
+                    </span>
 
-          <ul className="p-2">
-            {popularEvents.map((e) => (
-              <li
-                key={e.id}
-                onClick={() => handlePopularEventClick(e)}
-                className="px-3 py-2 rounded-lg hover:bg-[#111] cursor-pointer transition"
-              >
-                <p className="text-sm font-medium">{e.title}</p>
-                <p className="text-xs text-blue-400 mt-0.5">
-                  {e.impressions
-                    ? `${e.impressions.toLocaleString()} impressions`
-                    : e.stats || "Event"}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
+                    <div>
+                      <p className="text-sm font-medium">{c.name}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {c.members || `${c.membersCount || 0} members`}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
 
+            {/* Popular Events (Dynamic) */}
+            <section className="rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm">
+              <div className="px-4 py-3 border-b border-[#262626] font-medium">
+                Popular Events
+              </div>
+
+              <ul className="p-2">
+                {popularEvents.map((e) => (
+                  <li
+                    key={e.id}
+                    onClick={() => handlePopularEventClick(e)}
+                    className="px-3 py-2 rounded-lg hover:bg-[#111] cursor-pointer transition"
+                  >
+                    <p className="text-sm font-medium">{e.title}</p>
+                    <p className="text-xs text-blue-400 mt-0.5">
+                      {e.impressions
+                        ? `${e.impressions.toLocaleString()} impressions`
+                        : e.stats || "Event"}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </>
+        )}
       </div>
     </aside>
   );

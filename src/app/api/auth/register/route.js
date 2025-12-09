@@ -18,7 +18,16 @@ export async function POST(req) {
         email,
         passwordHash: hashedPassword,
       },
-    });
+    }); // https://confique.api/events/imp_events
+    // api -> events -> imp_events -> route.js(fetch imp_events)
+    // api -> community -> route.js (fetch community posts) 
+    /*
+        <button onClick={() => {
+            const events = await fetch('/api/events/imp_events').then(res => res.json());
+          }}>
+          Events
+        </button> 
+    */
 
     return NextResponse.json({ message: "User registered successfully" }, { status: 201 });
   } catch (err) {

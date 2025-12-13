@@ -1,30 +1,20 @@
-// components/Topbar.jsx
+// src/components/Topbar.jsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import { Bell, LogOut, User, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-// Helper to get current user email
-const getCurrentUserEmail = () => {
-  if (typeof window === "undefined") return null;
-  try {
-    return localStorage.getItem("userEmail") || null;
-  } catch {
-    return null;
-  }
-};
+const CREDENTIALS = "include";
 
 export default function Topbar({ onToggleSidebar = () => {} }) {
   const [openBell, setOpenBell] = useState(false);
   const [openUser, setOpenUser] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-
   const [isBellShaking, setIsBellShaking] = useState(true);
 
-  const [currentUserEmail, setCurrentUserEmail] = useState(null);
-  const [notifications, setNotifications] = useState([]); // ← from localStorage
+  const [currentUser, setCurrentUser] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
   const router = useRouter();
 
@@ -34,16 +24,18 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
   const mobileSearchInputRef = useRef(null);
 
   const prevNotifCountRef = useRef(0);
-
   const bellAudioRef = useRef(null);
 
-  // ----------------- AUDIO INIT -----------------
+  // ... (unchanged setup effects)
   useEffect(() => {
     if (typeof Audio !== "undefined") {
-      const audio = new Audio("/bell-ring-390294.mp3");
-      audio.volume = 1;
-      audio.muted = false;
-      bellAudioRef.current = audio;
+      try {
+        const audio = new Audio("/bell-ring-390294.mp3");
+        audio.volume = 1;
+        bellAudioRef.current = audio;
+      } catch {
+        bellAudioRef.current = null;
+      }
     }
   }, []);
 
@@ -56,33 +48,136 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     } catch {}
   };
 
-  // ----------------- USER EMAIL + FIRST LOAD -----------------
+  // --- On mount: fetch /api/me (server is source of truth)
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const email = getCurrentUserEmail();
-    setCurrentUserEmail(email);
+    let mounted = true;
 
-    try {
-      const store = JSON.parse(localStorage.getItem("notifications") || "{}");
-      const myList = email ? store[email] || [] : [];
-      setNotifications(myList);
-      prevNotifCountRef.current = myList.length;
-    } catch {
-      setNotifications([]);
+    async function loadUser() {
+      try {
+        const res = await fetch("/api/me", {
+          method: "GET",
+          credentials: CREDENTIALS,
+          cache: "no-store",
+        });
+
+        if (!mounted) return;
+
+        if (!res.ok) {
+          setCurrentUser(null);
+          setNotifications([]);
+          return;
+        }
+
+        const json = await res.json().catch(() => null);
+        const serverUser = json?.user ?? null;
+
+        if (serverUser) {
+          const normalized = {
+            name: serverUser.name || "",
+            email: serverUser.email || "",
+            avatar: serverUser.avatar || null,
+            bio: serverUser.bio || "",
+            location: serverUser.location || "",
+            website: serverUser.website || "",
+          };
+
+          setCurrentUser(normalized);
+
+          // load notifications (local-only store keyed by email)
+          try {
+            const store = JSON.parse(localStorage.getItem("notifications") || "{}");
+            const myList = normalized.email ? store[normalized.email] || [] : [];
+            setNotifications(myList);
+            prevNotifCountRef.current = myList.length;
+          } catch {
+            setNotifications([]);
+          }
+        } else {
+          setCurrentUser(null);
+          setNotifications([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch /api/me:", err);
+        // Do NOT use localStorage to re-create auth — show logged out state
+        setCurrentUser(null);
+        setNotifications([]);
+      }
     }
+
+    loadUser();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // ----------------- LISTEN FOR NOTIFICATION EVENTS -----------------
+  // --- Listen for auth-changed events from login/register/logout so UI updates instantly
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const handleAuthChanged = (e) => {
+      try {
+        const user = e?.detail?.user ?? null;
+        if (user) {
+          const normalized = {
+            name: user.name || "",
+            email: user.email || "",
+            avatar: user.avatar || null,
+            bio: user.bio || "",
+            location: user.location || "",
+            website: user.website || "",
+          };
+          setCurrentUser(normalized);
+
+          try {
+            const store = JSON.parse(localStorage.getItem("notifications") || "{}");
+            setNotifications(normalized.email ? store[normalized.email] || [] : []);
+            prevNotifCountRef.current = (store[normalized.email] || []).length || 0;
+          } catch {
+            setNotifications([]);
+          }
+        } else {
+          // logged out
+          setCurrentUser(null);
+          setNotifications([]);
+        }
+      } catch (err) {
+        console.error("auth-changed handler error:", err);
+      }
+    };
+
+    window.addEventListener("confique:auth-changed", handleAuthChanged);
+    return () => window.removeEventListener("confique:auth-changed", handleAuthChanged);
+  }, []);
+
+  // 🔑 NEW FIX: Listen for explicit profile update events (DISPATCHED BY TechProfilePage.jsx)
+  useEffect(() => {
+    const handleUserUpdated = (e) => {
+        try {
+            const updatedProfile = e?.detail?.user;
+            if (updatedProfile) {
+                // Instantly update currentUser state with the new profile data
+                setCurrentUser(updatedProfile); 
+                // Since Topbar relies on currentUser, displayName and safeAvatar will update immediately.
+            }
+        } catch(err) {
+            console.error("Profile update handler failed:", err);
+        }
+    };
+
+    // Listen for the event dispatched by TechProfilePage.jsx
+    window.addEventListener("confique:user-updated", handleUserUpdated);
+    
+    return () => window.removeEventListener("confique:user-updated", handleUserUpdated);
+  }, []); // Empty dependency array means this listener is set up once
+
+
+  // ... (Other useEffects remain unchanged)
+  useEffect(() => {
     const handleUpdate = () => {
-      if (!currentUserEmail) return;
+      if (!currentUser?.email) return;
       try {
         const store = JSON.parse(localStorage.getItem("notifications") || "{}");
-        const myList = store[currentUserEmail] || [];
-        setNotifications(myList);
+        setNotifications(store[currentUser.email] || []);
       } catch {
-        // ignore
+        setNotifications([]);
       }
     };
 
@@ -93,16 +188,14 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
       window.removeEventListener("confique:new-notification", handleUpdate);
       window.removeEventListener("confique:notifications-updated", handleUpdate);
     };
-  }, [currentUserEmail]);
+  }, [currentUser?.email]);
 
-  // stop shake after a bit
   useEffect(() => {
     if (!isBellShaking) return;
     const timer = setTimeout(() => setIsBellShaking(false), 2000);
     return () => clearTimeout(timer);
   }, [isBellShaking]);
 
-  // 🔔 when notification count increases → shake + sound
   useEffect(() => {
     const prevCount = prevNotifCountRef.current;
     const currentCount = notifications.length;
@@ -115,22 +208,16 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     prevNotifCountRef.current = currentCount;
   }, [notifications.length]);
 
-  // close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(e) {
-      const outsideUser =
-        !userRef.current || !userRef.current.contains(e.target);
-      const outsideBell =
-        !bellRef.current || !bellRef.current.contains(e.target);
-      const outsideSearch =
-        !mobileSearchWrapperRef.current ||
-        !mobileSearchWrapperRef.current.contains(e.target);
+      const outsideUser = !userRef.current || !userRef.current.contains(e.target);
+      const outsideBell = !bellRef.current || !bellRef.current.contains(e.target);
+      const outsideSearch = !mobileSearchWrapperRef.current || !mobileSearchWrapperRef.current.contains(e.target);
 
       if (outsideUser && outsideBell) {
         setOpenUser(false);
         setOpenBell(false);
       }
-
       if (outsideSearch) {
         setMobileSearchOpen(false);
       }
@@ -140,7 +227,6 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // autofocus mobile search
   useEffect(() => {
     if (mobileSearchOpen && mobileSearchInputRef.current) {
       mobileSearchInputRef.current.focus();
@@ -154,10 +240,9 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     playBellSound();
   };
 
-  // small helper to format time
   const formatTime = (n) => {
-    if (n.time) return n.time;
-    if (n.createdAt) {
+    if (n?.time) return n.time;
+    if (n?.createdAt) {
       try {
         return new Date(n.createdAt).toLocaleString();
       } catch {
@@ -167,10 +252,51 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     return "";
   };
 
+  // ------------------------------------------------------------------
+  // *** FIXED LOGOUT HANDLER ***
+  // ------------------------------------------------------------------
+  const handleLogout = async () => {
+    // 1. **CRITICAL FIX:** Clear client state and notify the app **IMMEDIATELY**.
+    setCurrentUser(null);
+    setNotifications([]);
+    window.dispatchEvent(new CustomEvent("confique:auth-changed", { detail: { user: null } }));
+
+    // 2. Clear local storage (optional cleanup)
+    try {
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userAvatar");
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("confique_token");
+    } catch {}
+
+    // 3. Call server to clear the HttpOnly cookie.
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: CREDENTIALS,
+      });
+    } catch (err) {
+      console.error("Logout request failed (cookies may still be cleared):", err);
+      // Continue to navigate even on error, as local state is cleared.
+    } finally {
+      // 4. Navigate to login using router.push for soft navigation.
+      router.push("/auth/login?loggedOut=true"); 
+    }
+  };
+  // ------------------------------------------------------------------
+
+  const displayName =
+    currentUser?.name?.trim() ||
+    (currentUser?.email ? currentUser.email.split("@")[0] : "") ||
+    "User";
+  const displayEmail = currentUser?.email || "";
+  const displayAvatar = currentUser?.avatar || "/employee.jpg";
+  const safeAvatar = typeof displayAvatar === "string" && displayAvatar !== "" ? displayAvatar : "/employee.jpg";
+
   return (
     <header className="sticky top-0 z-40 border-b border-[#262626] bg-[#0d0d0d]/80 backdrop-blur">
       <div className="mx-auto max-w-[1600px] px-3 md:px-6 h-16 flex items-center gap-4">
-        {/* LEFT — LOGO + HAMBURGER (mobile only) */}
         <div className="flex items-center gap-3 min-w-[180px]">
           <button
             onClick={onToggleSidebar}
@@ -181,20 +307,11 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
             <span className="w-4 h-[2px] bg-gray-100 rounded-full"></span>
           </button>
 
-          <Image
-            src="/Group 51(3).png"
-            width={32}
-            height={32}
-            alt="Confique Logo"
-            className="object-contain"
-          />
+          <img src="/Group 51(3).png" width={32} height={32} alt="Confique Logo" className="object-contain" />
 
-          <span className="hidden sm:block font-medium tracking-wide">
-            Confique
-          </span>
+          <span className="hidden sm:block font-medium tracking-wide">Confique</span>
         </div>
 
-        {/* DESKTOP SEARCH */}
         <div className="flex-1 max-w-2xl hidden sm:block">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -205,25 +322,16 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
           </div>
         </div>
 
-        {/* RIGHT SIDE BUTTONS */}
         <div className="ml-auto flex items-center gap-2">
-          {/* MOBILE SEARCH BAR */}
           <div ref={mobileSearchWrapperRef} className="relative sm:hidden">
             {!mobileSearchOpen ? (
-              <button
-                onClick={() => setMobileSearchOpen(true)}
-                className="p-2 rounded-xl hover:bg-[#1a1a1a]"
-              >
+              <button onClick={() => setMobileSearchOpen(true)} className="p-2 rounded-xl hover:bg-[#1a1a1a]">
                 <Search className="h-5 w-5 text-gray-300" />
               </button>
             ) : (
               <div className="flex items-center bg-[#1a1a1a] border border-blue-600 px-3 py-1 rounded-xl w-44">
                 <Search className="h-4 w-4 text-gray-400" />
-                <input
-                  ref={mobileSearchInputRef}
-                  placeholder="Search..."
-                  className="flex-1 bg-transparent outline-none text-sm text-white ml-2"
-                />
+                <input ref={mobileSearchInputRef} placeholder="Search..." className="flex-1 bg-transparent outline-none text-sm text-white ml-2" />
                 <button onClick={() => setMobileSearchOpen(false)}>
                   <X className="h-4 w-4 text-gray-400" />
                 </button>
@@ -231,46 +339,23 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
             )}
           </div>
 
-          {/* NOTIFICATIONS */}
           <div className="relative" ref={bellRef}>
-            <button
-              onClick={handleBellClick}
-              className={`relative flex items-center justify-center w-9 h-9 rounded-xl hover:bg-[#1a1a1a] ${
-                isBellShaking ? "animate-bell-wiggle" : ""
-              }`}
-            >
+            <button onClick={handleBellClick} className={`relative flex items-center justify-center w-9 h-9 rounded-xl hover:bg-[#1a1a1a] ${isBellShaking ? "animate-bell-wiggle" : ""}`}>
               <div className="relative inline-block">
                 <Bell className="h-5 w-5 text-gray-300" />
-                {notifications.length > 0 && (
-                  <span className="absolute -top-[0px] -right-[6px] w-2 h-2 bg-purple-500 rounded-full" />
-                )}
+                {notifications.length > 0 && <span className="absolute -top-[0px] -right-[6px] w-2 h-2 bg-purple-500 rounded-full" />}
               </div>
             </button>
 
             {openBell && (
               <div className="absolute right-0 mt-2 w-80 rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-lg">
-                <div className="px-4 py-3 border-b border-[#262626] font-medium">
-                  Notifications
-                </div>
-
+                <div className="px-4 py-3 border-b border-[#262626] font-medium">Notifications</div>
                 <ul className="max-h-80 overflow-y-auto">
-                  {notifications.length === 0 && (
-                    <li className="px-4 py-3 text-sm text-gray-400">
-                      No notifications yet.
-                    </li>
-                  )}
-
+                  {notifications.length === 0 && <li className="px-4 py-3 text-sm text-gray-400">No notifications yet.</li>}
                   {notifications.map((n) => (
-                    <li
-                      key={n.id}
-                      className="px-4 py-3 hover:bg-[#111] border-b border-[#262626]/60"
-                    >
-                      <p className="text-sm">
-                        {n.title || n.message || "Notification"}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {formatTime(n)}
-                      </p>
+                    <li key={n.id} className="px-4 py-3 hover:bg-[#111] border-b border-[#262626]/60">
+                      <p className="text-sm">{n.title || n.message || "Notification"}</p>
+                      <p className="text-xs text-gray-400">{formatTime(n)}</p>
                     </li>
                   ))}
                 </ul>
@@ -278,7 +363,6 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
             )}
           </div>
 
-          {/* USER MENU */}
           <div className="relative" ref={userRef}>
             <button
               onClick={() => {
@@ -288,53 +372,29 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
               className="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-[#1a1a1a]"
             >
               <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-600">
-                <Image
-                  src="/employee.jpg"
-                  width={36}
-                  height={36}
-                  alt="User"
-                  className="object-cover w-full h-full"
-                />
+                <img src={safeAvatar} alt="User" width={36} height={36} className="object-cover w-full h-full" />
               </div>
 
-              <span className="hidden sm:block text-sm font-medium text-white">
-                Rounit Srivastava
-              </span>
+              <span className="hidden sm:block text-sm font-medium text-white">{displayName}</span>
             </button>
 
             {openUser && (
-              <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#121212] shadow-xl border-[#262626] overflow-hidden">
+              <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#121212] shadow-xl border border-[#262626] overflow-hidden">
                 <div className="px-4 py-4 flex flex-col items-center border-b border-[#262626]">
                   <div className="h-16 w-16 rounded-full overflow-hidden border border-gray-700 mb-2">
-                    <Image
-                      src="/employee.jpg"
-                      width={64}
-                      height={64}
-                      alt="User"
-                      className="object-cover w-full h-full"
-                    />
+                    <img src={safeAvatar} alt="User" width={64} height={64} className="object-cover w-full h-full" />
                   </div>
-                  <p className="text-sm font-semibold text-white">
-                    Rounit Srivastava
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    rounit.kumar2702@gmail.com
-                  </p>
+                  <p className="text-sm font-semibold text-white">{displayName}</p>
+                  <p className="text-xs text-gray-400 mt-1">{displayEmail}</p>
                 </div>
 
-                <button
-                  onClick={() => {
-                    setOpenUser(false);
-                    router.push("/profile/details");
-                  }}
-                  className="w-full px-4 py-3 text-sm flex items-center gap-2 hover:bg-[#181818]"
-                >
+                <button onClick={() => { setOpenUser(false); router.push("/profile/details"); }} className="w-full px-4 py-3 text-sm flex items-center gap-2 hover:bg-[#181818]">
                   <User className="h-4 w-4 text-gray-300" /> Profile
                 </button>
 
                 <div className="border-t border-[#262626]" />
 
-                <button className="w-full px-4 py-3 text-sm flex items-center gap-2 text-red-400 hover:bg-[#181818]">
+                <button onClick={handleLogout} className="w-full px-4 py-3 text-sm flex items-center gap-2 text-red-400 hover:bg-[#181818]">
                   <LogOut className="h-4 w-4" /> Logout
                 </button>
               </div>

@@ -18,7 +18,54 @@ import {
   QrCode,
   List,
   TrendingUp,
+  X as CloseIcon,
 } from "lucide-react";
+
+// ───────── HELPERS (email + notifications) ─────────
+const getCurrentUserEmail = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem("userEmail") || null;
+  } catch {
+    return null;
+  }
+};
+
+const sendRegistrationNotification = (eventTitle) => {
+  if (typeof window === "undefined") return;
+  const email = getCurrentUserEmail();
+  if (!email) return; // no logged-in user
+
+  let store = {};
+  try {
+    store = JSON.parse(localStorage.getItem("notifications") || "{}");
+  } catch {
+    store = {};
+  }
+
+  const userList = Array.isArray(store[email]) ? store[email] : [];
+  const now = new Date();
+
+  const newNotif = {
+    id: Date.now(),
+    title: `Thank you for registering for "${eventTitle}"`,
+    message: `You have successfully registered for ${eventTitle}.`,
+    createdAt: now.toISOString(),
+    time: now.toLocaleTimeString(),
+  };
+
+  const updatedList = [newNotif, ...userList];
+  store[email] = updatedList;
+
+  try {
+    localStorage.setItem("notifications", JSON.stringify(store));
+  } catch {
+    // ignore storage errors
+  }
+
+  // Tell Topbar to refresh & play bell
+  window.dispatchEvent(new Event("confique:new-notification"));
+};
 
 // Reusable SectionTitle component
 const SectionTitle = ({ children, icon: Icon, className = "" }) => (
@@ -135,7 +182,7 @@ const EventDetailsPage = ({
     tags = [],
     registrationStart,
     registrationEnd,
-  } = displayEvent;
+  } = displayEvent || {};
 
   const CURRENCY_SYMBOL = "₹";
 
@@ -182,6 +229,22 @@ const EventDetailsPage = ({
     }
   }, [checkEventStatus, registrationStatus]);
 
+  // --- REGISTRATION STORAGE KEY & helpers ---
+  const REG_KEY = "confique:event_registrations";
+
+  const incrementStoredRegistration = (eventKey) => {
+    try {
+      const raw = localStorage.getItem(REG_KEY) || "{}";
+      const map = JSON.parse(raw);
+      map[eventKey] = (Number(map[eventKey] || 0) + 1);
+      localStorage.setItem(REG_KEY, JSON.stringify(map));
+      return map[eventKey];
+    } catch (err) {
+      console.error("Failed to persist registration:", err);
+      return null;
+    }
+  };
+
   // --- REGISTRATION FORM HELPERS ---
 
   const handleFormChange = (fieldName, fieldType, value, checked) => {
@@ -219,12 +282,39 @@ const EventDetailsPage = ({
 
     setRegistrationStatus("Registered");
     setShowRegistrationForm(false);
+
+    // persist + dispatch registration update
+    try {
+      const eventKey = displayEvent?.id ?? displayEvent?.title ?? Date.now();
+      const finalCount = incrementStoredRegistration(eventKey);
+
+      // dispatch update for host/profile listeners
+      window.dispatchEvent(
+        new CustomEvent("confique:registrations-updated", {
+          detail: {
+            id: displayEvent?.id,
+            title: displayEvent?.title,
+            registrations: finalCount,
+          },
+        })
+      );
+    } catch (err) {
+      console.error("Error updating registrations:", err);
+    }
+
+    // 🔔 send notification
+    sendRegistrationNotification(title);
+  };
+
+  const handleCloseForm = () => {
+    setShowRegistrationForm(false);
+    setFormErrors({});
   };
 
   const handleRegister = () => {
     if (registrationStatus !== "Open") return;
 
-    // external -> redirect
+    // external -> redirect (we can't be sure they completed, so no notif here)
     if (isExternalRegistration && registrationUrl) {
       window.open(registrationUrl, "_blank");
       return;
@@ -232,14 +322,35 @@ const EventDetailsPage = ({
 
     // internal:
     if (!hasCustomForm) {
-      // 👉 NO FIELDS CONFIGURED: directly mark registered
+      // 👉 NO FIELDS CONFIGURED: directly mark registered + notify
       console.log("Registered without extra form for event:", title);
       setRegistrationStatus("Registered");
+
+      // persist + dispatch
+      try {
+        const eventKey = displayEvent?.id ?? displayEvent?.title ?? Date.now();
+        const finalCount = incrementStoredRegistration(eventKey);
+
+        window.dispatchEvent(
+          new CustomEvent("confique:registrations-updated", {
+            detail: {
+              id: displayEvent?.id,
+              title: displayEvent?.title,
+              registrations: finalCount,
+            },
+          })
+        );
+      } catch (err) {
+        console.error("Failed to persist registration:", err);
+      }
+
+      // 🔔 send notification
+      sendRegistrationNotification(title);
       return;
     }
 
-    // fields exist: toggle the form
-    setShowRegistrationForm((prev) => !prev);
+    // fields exist: open popup
+    setShowRegistrationForm(true);
   };
 
   const getButtonProps = () => {
@@ -274,13 +385,8 @@ const EventDetailsPage = ({
     }
 
     // internal + open
-    const text =
-      hasCustomForm && showRegistrationForm
-        ? "Hide Registration Form"
-        : "Register Now";
-
     return {
-      text,
+      text: "Register Now",
       className:
         "w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/30 flex items-center justify-center",
       disabled: false,
@@ -290,103 +396,124 @@ const EventDetailsPage = ({
 
   const buttonProps = getButtonProps();
 
-  const renderRegistrationForm = () => {
-    // ❗ if no custom form, NEVER show that grey "no fields" box
+  const renderRegistrationFormModal = () => {
     if (!hasCustomForm || !showRegistrationForm || isExternalRegistration)
       return null;
 
     return (
-      <form
-        onSubmit={handleRegistrationSubmit}
-        className="mt-4 p-4 bg-gray-900 border border-gray-800 rounded-lg space-y-4"
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+        onClick={handleCloseForm}
       >
-        <p className="text-sm text-gray-300 mb-2">
-          Please fill the following details to complete your registration:
-        </p>
-
-        {customFields.map((field, index) => {
-          const value =
-            formData[field.name] ??
-            (field.type === "checkbox" ? false : "");
-          const error = formErrors[field.name];
-
-          let inputEl;
-
-          if (field.type === "checkbox") {
-            inputEl = (
-              <div className="flex items-center space-x-2 mt-1">
-                <input
-                  type="checkbox"
-                  id={`field-${index}`}
-                  checked={!!value}
-                  onChange={(e) =>
-                    handleFormChange(
-                      field.name,
-                      field.type,
-                      e.target.value,
-                      e.target.checked
-                    )
-                  }
-                  className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-                />
-                <label
-                  htmlFor={`field-${index}`}
-                  className="text-sm text-gray-200"
-                >
-                  {field.name}{" "}
-                  {field.required && (
-                    <span className="text-red-500">*</span>
-                  )}
-                </label>
-              </div>
-            );
-          } else {
-            inputEl = (
-              <>
-                <label className="text-xs font-medium text-gray-300 block mb-1">
-                  {field.name}{" "}
-                  {field.required && (
-                    <span className="text-red-500">*</span>
-                  )}
-                </label>
-                <input
-                  type={field.type || "text"}
-                  value={value}
-                  onChange={(e) =>
-                    handleFormChange(
-                      field.name,
-                      field.type,
-                      e.target.value,
-                      false
-                    )
-                  }
-                  className={`w-full px-3 py-2 rounded-lg bg-gray-800 border text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                    error ? "border-red-500" : "border-gray-700"
-                  }`}
-                  placeholder={field.name}
-                />
-              </>
-            );
-          }
-
-          return (
-            <div key={index} className="space-y-1">
-              {inputEl}
-              {error && (
-                <p className="text-xs text-red-400 mt-1">{error}</p>
-              )}
-            </div>
-          );
-        })}
-
-        <button
-          type="submit"
-          className="w-full py-2.5 mt-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center"
+        <div
+          className="relative w-full max-w-lg bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-6"
+          onClick={(e) => e.stopPropagation()}
         >
-          <CheckCircle className="w-4 h-4 mr-2" />
-          Submit Registration
-        </button>
-      </form>
+          <button
+            type="button"
+            onClick={handleCloseForm}
+            className="absolute top-3 right-3 p-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
+          >
+            <CloseIcon className="w-4 h-4" />
+          </button>
+
+          <div className="mb-4">
+            <p className="text-xs uppercase tracking-wide text-purple-400 font-semibold mb-1">
+              Registration • {category}
+            </p>
+            <h3 className="text-xl font-bold text-white mb-1">
+              {title}
+            </h3>
+            <p className="text-xs text-gray-400">
+              Please fill the details below to complete your registration.
+            </p>
+          </div>
+
+          <form
+            onSubmit={handleRegistrationSubmit}
+            className="space-y-4 max-h-[70vh] overflow-y-auto pr-1"
+          >
+            {customFields.map((field, index) => {
+              const value =
+                formData[field.name] ?? (field.type === "checkbox" ? false : "");
+              const error = formErrors[field.name];
+
+              let inputEl;
+
+              if (field.type === "checkbox") {
+                inputEl = (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <input
+                      type="checkbox"
+                      id={`field-${index}`}
+                      checked={!!value}
+                      onChange={(e) =>
+                        handleFormChange(
+                          field.name,
+                          field.type,
+                          e.target.value,
+                          e.target.checked
+                        )
+                      }
+                      className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                    />
+                    <label
+                      htmlFor={`field-${index}`}
+                      className="text-sm text-gray-200"
+                    >
+                      {field.name}{" "}
+                      {field.required && <span className="text-red-500">*</span>}
+                    </label>
+                  </div>
+                );
+              } else {
+                inputEl = (
+                  <>
+                    <label className="text-xs font-medium text-gray-300 block mb-1">
+                      {field.name} {field.required && <span className="text-red-500">*</span>}
+                    </label>
+                    <input
+                      type={field.type || "text"}
+                      value={value}
+                      onChange={(e) =>
+                        handleFormChange(field.name, field.type, e.target.value, false)
+                      }
+                      className={`w-full px-3 py-2 rounded-lg bg-gray-800 border text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                        error ? "border-red-500" : "border-gray-700"
+                      }`}
+                      placeholder={field.name}
+                    />
+                  </>
+                );
+              }
+
+              return (
+                <div key={index} className="space-y-1">
+                  {inputEl}
+                  {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+                </div>
+              );
+            })}
+
+            <div className="flex items-center justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={handleCloseForm}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white flex items-center justify-center transition-colors"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Submit & Register
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     );
   };
 
@@ -484,7 +611,8 @@ const EventDetailsPage = ({
                       {" "}
                       When you click{" "}
                       <span className="font-semibold">Register Now</span>, a
-                      form will open where you must fill the required details.
+                      popup form will open where you must fill the required
+                      details.
                     </>
                   ) : (
                     <>
@@ -594,9 +722,7 @@ const EventDetailsPage = ({
                   <p className="flex justify-between">
                     Main Date:{" "}
                     <span className="font-medium text-white">
-                      {date
-                        ? new Date(date).toLocaleDateString()
-                        : "TBD"}
+                      {date ? new Date(date).toLocaleDateString() : "TBD"}
                     </span>
                   </p>
                   <p className="flex justify-between">
@@ -614,9 +740,7 @@ const EventDetailsPage = ({
                         isFree ? "text-green-400" : "text-yellow-400"
                       }`}
                     >
-                      {isFree
-                        ? "Free"
-                        : `${CURRENCY_SYMBOL}${paymentAmount || "TBD"}`}
+                      {isFree ? "Free" : `${CURRENCY_SYMBOL}${paymentAmount || "TBD"}`}
                     </span>
                   </p>
                   <p className="flex justify-between">
@@ -634,9 +758,7 @@ const EventDetailsPage = ({
                   {participationFormat.includes("Team") && (
                     <p className="flex justify-between">
                       Team Size:{" "}
-                      <span className="font-medium text-white">
-                        {teamSize} members
-                      </span>
+                      <span className="font-medium text-white">{teamSize} members</span>
                     </p>
                   )}
                 </div>
@@ -650,31 +772,19 @@ const EventDetailsPage = ({
                       className="w-20 h-20 object-contain rounded-md border border-purple-500"
                     />
                     <div className="text-xs text-gray-300">
-                      <p className="font-semibold text-white mb-1">
-                        Scan to Pay
-                      </p>
+                      <p className="font-semibold text-white mb-1">Scan to Pay</p>
                       <p>
-                        After payment, you may be asked for the last 4 digits of
-                        your transaction reference in the registration form.
+                        After payment, you may be asked for the last 4 digits of your transaction reference in the registration form.
                       </p>
                     </div>
                   </div>
                 )}
 
                 {/* Button */}
-                <button
-                  onClick={handleRegister}
-                  disabled={buttonProps.disabled}
-                  className={buttonProps.className}
-                >
-                  {buttonProps.Icon && (
-                    <buttonProps.Icon className="w-5 h-5 mr-2" />
-                  )}
+                <button onClick={handleRegister} disabled={buttonProps.disabled} className={buttonProps.className}>
+                  {buttonProps.Icon && <buttonProps.Icon className="w-5 h-5 mr-2" />}
                   {buttonProps.text}
                 </button>
-
-                {/* Registration form (only if host added fields) */}
-                {renderRegistrationForm()}
               </div>
 
               {/* Eligibility Card */}
@@ -684,8 +794,7 @@ const EventDetailsPage = ({
                 </div>
                 <p className="text-lg font-semibold text-white">Eligibility</p>
                 <p className="text-gray-300 text-sm">
-                  {eligibility ||
-                    "Please check the official event communication for details."}
+                  {eligibility || "Please check the official event communication for details."}
                 </p>
               </div>
 
@@ -693,13 +802,10 @@ const EventDetailsPage = ({
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl space-y-3">
                 <div className="flex items-center space-x-3">
                   <Gift className="w-5 h-5 text-yellow-400" />
-                  <p className="text-lg font-semibold text-white">
-                    Prizes for Winners
-                  </p>
+                  <p className="text-lg font-semibold text-white">Prizes for Winners</p>
                 </div>
                 <p className="text-gray-300 text-sm">
-                  {prizes ||
-                    "Prizes include cash rewards, goodies, and certificates for top performers."}
+                  {prizes || "Prizes include cash rewards, goodies, and certificates for top performers."}
                 </p>
               </div>
 
@@ -709,17 +815,11 @@ const EventDetailsPage = ({
                   <div className="flex items-center justify-between text-white font-bold text-xl">
                     <div className="flex items-center space-x-3">
                       <Eye className="w-6 h-6 text-purple-400" />
-                      <p className="text-lg font-semibold text-white">
-                        Impressions
-                      </p>
+                      <p className="text-lg font-semibold text-white">Impressions</p>
                     </div>
-                    <p className="text-2xl text-purple-400">
-                      {impressions?.toLocaleString() || "N/A"}
-                    </p>
+                    <p className="text-2xl text-purple-400">{impressions?.toLocaleString() || "N/A"}</p>
                   </div>
-                  <p className="text-gray-400 text-xs">
-                    This shows how many times this event page has been viewed.
-                  </p>
+                  <p className="text-gray-400 text-xs">This shows how many times this event page has been viewed.</p>
                 </div>
               )}
             </div>
@@ -728,17 +828,11 @@ const EventDetailsPage = ({
 
         {/* Related Events */}
         <div className="mt-16 pt-8 border-t border-gray-800">
-          <SectionTitle icon={List}>
-            Related Events You Might Like
-          </SectionTitle>
+          <SectionTitle icon={List}>Related Events You Might Like</SectionTitle>
           {relatedEvents.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedEvents.map((event, index) => (
-                <RelatedEventCard
-                  key={event.id || index}
-                  event={event}
-                  onDetailsClick={onDetailsClick}
-                />
+                <RelatedEventCard key={event.id || index} event={event} onDetailsClick={onDetailsClick} />
               ))}
             </div>
           ) : (
@@ -749,6 +843,9 @@ const EventDetailsPage = ({
           )}
         </div>
       </div>
+
+      {/* 🔥 POPUP REGISTRATION FORM */}
+      {renderRegistrationFormModal()}
     </div>
   );
 };

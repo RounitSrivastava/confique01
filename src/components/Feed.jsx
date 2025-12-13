@@ -1,146 +1,471 @@
 // components/Feed.jsx
 "use client";
 
-import Image from "next/image";
-import { Heart, MessageCircle, Eye } from "lucide-react";
+import React from "react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 
-const posts = [
-  {
-    id: 1,
-    user: "Kina Rally",
-    avatar: "/avatar-2.png",
-    time: "Today 08:02 AM",
-    content:
-      "Hello from Bali! I’m a traveling content creator and excited to join the community.",
-    media: "/post-1.jpg",
-    likes: 128,
-    comments: 24,
-    views: "3.1k",
-  },
-  {
-    id: 2,
-    user: "Alex Jordan",
-    avatar: "/avatar-3.png",
-    time: "Yesterday",
-    content:
-      "Shipped a new micro-animations library for React. Feedback welcome!",
-    media: "/post-2.jpg",
-    likes: 342,
-    comments: 57,
-    views: "8.4k",
-  },
-  {
-    id: 3,
-    user: "Maya Chen",
-    avatar: "/avatar-4.png",
-    time: "2 days ago",
-    content:
-      "Sneak peek of the community studio we’re building together.",
-    media: "/post-3.jpg",
-    likes: 221,
-    comments: 31,
-    views: "5.7k",
-  },
-];
+/* -------------------------
+   Category → gradient map
+------------------------- */
+const CATEGORY_GRADIENTS = {
+  Tech: "linear-gradient(180deg,#6d28d9 0%, #7c3aed 40%, #2b1f4a 100%)",
+  Entrepreneurship: "linear-gradient(180deg,#f59e0b 0%, #d97706 40%, #7a2e00 100%)",
+  Gaming: "linear-gradient(180deg,#059669 0%, #10b981 40%, #053017 100%)",
+  Sports: "linear-gradient(180deg,#ef4444 0%, #b91c1c 40%, #0b0b0b 100%)",
+  Music: "linear-gradient(180deg,#ec4899 0%, #db2777 40%, #3b0b2a 100%)",
+  Art: "linear-gradient(180deg,#334155 0%, #475569 40%, #0b0b0b 100%)",
+  Food: "linear-gradient(180deg,#ef4444 0%, #f97316 40%, #3b0b00 100%)",
+  Book: "linear-gradient(180deg,#334155 0%, #2b3642 40%, #09101a 100%)",
+  default: "linear-gradient(180deg,#111827 0%, #0b1220 100%)",
+};
 
-const events = [
-  {
-    id: "e1",
-    title: "Beginner Session: Content Strategy",
-    banner: "/event-1.jpg",
-    category: "Workshop",
-    datetime: "Jun 03, 10:45 AM",
-    location: "Online",
-  },
-  {
-    id: "e2",
-    title: "Design Meetup for Creators",
-    banner: "/event-2.jpg",
-    category: "Meetup",
-    datetime: "Jun 12, 06:00 PM",
-    location: "San Francisco",
-  },
-  {
-    id: "e3",
-    title: "AI Tools for Video Editing",
-    banner: "/event-3.jpg",
-    category: "Webinar",
-    datetime: "Jun 18, 02:00 PM",
-    location: "Online",
-  },
-];
+/* -------------------------
+   Helpers
+------------------------- */
+const readJsonLocal = (key) => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
 
-function PostCard({ post }) {
+const readCommunitiesFromStorage = () => {
+  const keys = ["confique:allCommunities", "confique:communities", "recommendedCommunities"];
+  for (const k of keys) {
+    const v = readJsonLocal(k);
+    if (Array.isArray(v) && v.length) return v;
+  }
+  return null;
+};
+
+const slugify = (s = "") =>
+  String(s)
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/-+/g, "-");
+
+/* normalize/convert incoming community objects to the shape Feed expects */
+const normalizeCommunities = (arr = []) =>
+  (arr || []).map((c, idx) => {
+    const id = String(c.id ?? c._id ?? `tmp-${idx}`);
+    const name = c.name || c.title || `Community ${id}`;
+    const membersCount = Number(c.membersCount ?? c.members_count ?? 0);
+    const members = c.members || (membersCount ? `${membersCount.toLocaleString()} members` : c.members || "0 members");
+    const bannerUrl = c.bannerUrl || c.hero || c.image || c.banner || null;
+    const iconUrl = c.iconUrl || c.icon || null;
+    const description = c.description || c.shortDescription || c.desc || "";
+    const category = c.category || c.gradientKey || "default";
+    return {
+      ...c,
+      id,
+      name,
+      slug: c.slug || slugify(name),
+      membersCount,
+      members,
+      bannerUrl,
+      iconUrl,
+      description,
+      category,
+      gradientKey: category,
+    };
+  });
+
+/* -------------------------
+   Card component
+------------------------- */
+const DEFAULT_BANNER = "https://placehold.co/800x240/111827/ffffff?text=Community+Banner";
+
+function CommunityCard({ c, onOpen, className = "" }) {
+  const bannerImg = c.bannerUrl || c.hero || c.image || null;
+  const gradientKey = c.gradientKey || c.category || "default";
+  const gradientStyle = CATEGORY_GRADIENTS[gradientKey] || CATEGORY_GRADIENTS.default;
+  const description = c.description || "";
+
+  const clampStyle = {
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+  };
+
   return (
-    <article className="rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3">
-        <Image src={post.avatar} alt={post.user} width={36} height={36} className="rounded-md" />
-        <div>
-          <p className="text-sm font-medium">{post.user}</p>
-          <p className="text-xs text-gray-400">{post.time}</p>
+    <article
+      onClick={() => onOpen && onOpen(c)}
+      className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-[#151515] cursor-pointer hover:shadow-3xl transition-shadow flex flex-col h-full ${className}`}
+    >
+      {bannerImg ? (
+        <div className="h-36 w-full overflow-hidden flex-shrink-0 rounded-t-2xl">
+          <img
+            src={bannerImg}
+            alt={c.name}
+            className="object-cover w-full h-full"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = DEFAULT_BANNER;
+            }}
+          />
+        </div>
+      ) : (
+        <div
+          className="h-36 w-full flex-shrink-0 rounded-t-2xl"
+          style={{ background: gradientStyle }}
+        />
+      )}
+
+      <div className="p-5 flex flex-col flex-grow">
+        <h3 className="text-lg font-bold text-white">{c.name}</h3>
+
+        <p className="mt-2 text-sm text-gray-300 flex-grow" style={clampStyle}>
+          {description}
+        </p>
+
+        <p className="mt-4 text-sm text-gray-400 font-semibold">
+          {c.members || (typeof c.membersCount === "number" ? `${c.membersCount.toLocaleString()} members` : "0 members")}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+/* -------------------------
+   Featured event components (unchanged)
+------------------------- */
+function FeaturedEventSingle({ event, onViewDetails }) {
+  const dateText = event.datetime || event.date || "";
+  const locationText = event.location || event.venue || "";
+
+  return (
+    <div className="relative w-full">
+      <div className="rounded-2xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] bg-black">
+        <div className="relative w-full h-[320px] sm:h-[380px] md:h-[420px] lg:h-[460px]">
+          <img
+            src={event.poster}
+            alt={event.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "https://placehold.co/1600x900/111827/ffffff?text=No+Image";
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
+
+          <div className="absolute left-6 top-6">
+            <span className="inline-block bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold text-sm px-3 py-1 rounded-full">
+              Featured Event
+            </span>
+          </div>
+
+          <div className="absolute left-1/2 transform -translate-x-1/2 bottom-6 w-[90%] sm:w-[78%] md:w-[70%] lg:w-[64%]">
+            <div className="bg-gradient-to-r from-[#0b0b0b]/80 to-[#0b0b0b]/70 border border-gray-800 rounded-xl p-5 shadow-xl">
+              <h3 className="text-xl md:text-2xl font-extrabold text-white leading-tight mb-2">{event.title}</h3>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-sm text-gray-300 mb-4">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-gray-300" />
+                  <span>{dateText}</span>
+                </div>
+                {locationText ? <div className="text-sm text-gray-400">• {locationText}</div> : null}
+              </div>
+
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewDetails && onViewDetails(event.id);
+                  }}
+                  className="inline-flex items-center bg-gradient-to-r from-purple-600 to-violet-600 text-white font-semibold px-5 py-3 rounded-full"
+                >
+                  View Details →
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      {post.media && (
-        <div className="relative aspect-video">
-          <Image src={post.media} alt="" fill className="object-cover" />
+    </div>
+  );
+}
+
+const FeaturedCarousel = ({ events = [], interval = 6000, onViewDetails }) => {
+  const [index, setIndex] = React.useState(0);
+  const eventsCount = events.length;
+  const autoRef = React.useRef(null);
+  const containerRef = React.useRef(null);
+
+  const next = React.useCallback(() => setIndex((i) => (eventsCount ? (i + 1) % eventsCount : 0)), [eventsCount]);
+  const prev = React.useCallback(() => setIndex((i) => (eventsCount ? (i - 1 + eventsCount) % eventsCount : 0)), [eventsCount]);
+
+  React.useEffect(() => {
+    if (!eventsCount) return;
+    autoRef.current = setInterval(() => setIndex((i) => (i + 1) % eventsCount), interval);
+    return () => { if (autoRef.current) clearInterval(autoRef.current); };
+  }, [eventsCount, interval]);
+
+  React.useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const pause = () => { if (autoRef.current) { clearInterval(autoRef.current); autoRef.current = null; } };
+    const resume = () => { if (!autoRef.current && eventsCount) autoRef.current = setInterval(() => setIndex((i) => (i + 1) % eventsCount), interval); };
+
+    el.addEventListener("mouseenter", pause);
+    el.addEventListener("mouseleave", resume);
+    el.addEventListener("touchstart", pause);
+    el.addEventListener("touchend", resume);
+    return () => {
+      el.removeEventListener("mouseenter", pause);
+      el.removeEventListener("mouseleave", resume);
+      el.removeEventListener("touchstart", pause);
+      el.removeEventListener("touchend", resume);
+    };
+  }, [eventsCount, interval]);
+
+  if (!eventsCount) return null;
+  const currentEvent = events[index];
+
+  return (
+    <div className="relative overflow-visible" ref={containerRef}>
+      <button aria-label="Previous" onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+      <button aria-label="Next" onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+        <ChevronRight className="w-5 h-5" />
+      </button>
+
+      <div onClick={() => onViewDetails && onViewDetails(currentEvent.id)}>
+        <FeaturedEventSingle event={currentEvent} onViewDetails={onViewDetails} />
+      </div>
+
+      {eventsCount > 1 && (
+        <div className="mt-6 flex justify-center space-x-3">
+          {events.map((_, i) => (
+            <button key={i} onClick={(e) => { e.stopPropagation(); setIndex(i); }} className={`w-3.5 h-3.5 rounded-full ${i === index ? "bg-white scale-110" : "bg-white/40"}`} />
+          ))}
         </div>
       )}
-      <div className="px-4 py-3">
-        <p className="text-sm text-gray-200">{post.content}</p>
-        <div className="mt-3 flex items-center gap-4 text-sm text-gray-400">
-          <span className="inline-flex items-center gap-1"><Heart className="h-4 w-4" /> {post.likes}</span>
-          <span className="inline-flex items-center gap-1"><MessageCircle className="h-4 w-4" /> {post.comments}</span>
-          <span className="inline-flex items-center gap-1"><Eye className="h-4 w-4" /> {post.views}</span>
+    </div>
+  );
+};
+
+/* -------------------------
+   MAIN Feed
+------------------------- */
+export default function Feed({ communitiesProp = null, eventsProp = null }) {
+  const router = useRouter();
+
+  const [communitiesState, setCommunitiesState] = React.useState(() => {
+    if (communitiesProp && Array.isArray(communitiesProp) && communitiesProp.length) {
+      return normalizeCommunities(communitiesProp);
+    }
+    return [];
+  });
+
+  const [featuredEventsState, setFeaturedEventsState] = React.useState(() =>
+    eventsProp && Array.isArray(eventsProp) && eventsProp.length ? eventsProp.filter((e) => e.isFeatured) : []
+  );
+
+  // initial load: prefer confique:allCommunities or other snapshots
+  React.useEffect(() => {
+    if (communitiesState && communitiesState.length) return;
+    const stored = readCommunitiesFromStorage();
+    if (Array.isArray(stored) && stored.length) {
+      setCommunitiesState(normalizeCommunities(stored));
+    } else {
+      // fallback minimal defaults (I added 4 so there are extras to hide)
+      setCommunitiesState(normalizeCommunities([
+        { id: "c1", name: "Fitness Fanatics", description: "Workouts and nutrition advice.", membersCount: 55000, hero: "/community-1.jpg", category: "Sports" },
+        { id: "c2", name: "Crypto Hub", description: "News, trading strategies and research.", membersCount: 32000, hero: null, category: "Tech" },
+        { id: "c3", name: "Tech Innovators", description: "Discussions on next-gen tech.", membersCount: 23700, hero: "/community-3.jpg", category: "Tech" },
+        { id: "c4", name: "Web Dev", description: "webde is a key of success", membersCount: 1, hero: null, category: "Tech" },
+      ]));
+    }
+
+    if (!(eventsProp && Array.isArray(eventsProp) && eventsProp.length)) {
+      const storedEvents = readJsonLocal("EVENTS_SNAPSHOT") || readJsonLocal("confique:events") || null;
+      if (Array.isArray(storedEvents) && storedEvents.length) {
+        const featured = storedEvents.filter((ev) => ev.isFeatured);
+        setFeaturedEventsState(featured.length ? featured : storedEvents.slice(0, 3));
+      } else {
+        setFeaturedEventsState([
+          { id: 101, title: "Featured: Raiders Reckoning", poster: "https://placehold.co/1600x900/111827/ffffff?text=Raiders+Reckoning", isFeatured: true, datetime: "Thu, 15 Dec 2025", location: "KIIT Auditorium" },
+          { id: 102, title: "Featured: Hackify Battle", poster: "https://placehold.co/1600x900/0D47A1/ffffff?text=Hackify+Battle", isFeatured: true, datetime: "Thu, 15 Dec 2025", location: "Online" },
+        ]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // listen to storage & custom events to update (so ExplorePage changes reflect here)
+  React.useEffect(() => {
+    const onStorage = (e) => {
+      if (!e) return;
+      try {
+        if (e.key === "confique:allCommunities" || e.key === "confique:communities" || e.key === "recommendedCommunities") {
+          const parsed = JSON.parse(e.newValue || "[]");
+          if (Array.isArray(parsed)) {
+            setCommunitiesState(normalizeCommunities(parsed));
+          }
+        }
+        if (e.key === "confique:events" || e.key === "EVENTS_SNAPSHOT") {
+          const parsed = JSON.parse(e.newValue || "[]");
+          if (Array.isArray(parsed)) {
+            const featured = parsed.filter((ev) => ev.isFeatured);
+            setFeaturedEventsState(featured.length ? featured : parsed.slice(0, 3));
+          }
+        }
+      } catch {
+        // ignore parse errors
+      }
+    };
+
+    const onCustomCommunities = (evt) => {
+      const payload = evt?.detail;
+      if (!payload) return;
+      const arr = Array.isArray(payload) ? payload : [payload];
+      setCommunitiesState((prev) => {
+        const merged = normalizeCommunities([...prev, ...arr]);
+        // dedupe by slug or id
+        const map = new Map();
+        merged.forEach((c) => map.set(c.slug || c.id, c));
+        return Array.from(map.values());
+      });
+    };
+
+    const onCustomEvents = (evt) => {
+      const payload = evt?.detail;
+      if (!payload) return;
+      if (Array.isArray(payload)) {
+        const featured = payload.filter((ev) => ev.isFeatured);
+        setFeaturedEventsState(featured.length ? featured : payload.slice(0, 3));
+      } else if (payload.isFeatured) {
+        setFeaturedEventsState((prev) => [payload, ...prev]);
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("confique:communities-updated", onCustomCommunities);
+    window.addEventListener("confique:events-updated", onCustomEvents);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("confique:communities-updated", onCustomCommunities);
+      window.removeEventListener("confique:events-updated", onCustomEvents);
+    };
+  }, []);
+
+  // POLL: periodically check localStorage for updates (only when tab visible).
+  React.useEffect(() => {
+    let intervalId = null;
+    const POLL_MS = 5000;
+
+    const pollFn = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      const stored = readCommunitiesFromStorage();
+      if (!Array.isArray(stored)) return;
+      const normalized = normalizeCommunities(stored);
+
+      // quick shallow compare by length + lastUpdated-like heuristic (ids + descriptions)
+      const cur = communitiesState || [];
+      const sameLength = normalized.length === cur.length;
+      const quickEqual =
+        sameLength &&
+        normalized.every((n, i) => {
+          const c = cur[i];
+          if (!c) return false;
+          return n.id === c.id && (n.description || "") === (c.description || "") && (n.membersCount || 0) === (c.membersCount || 0);
+        });
+
+      if (!quickEqual) {
+        setCommunitiesState(normalized);
+      }
+    };
+
+    intervalId = setInterval(pollFn, POLL_MS);
+    // run once immediately
+    pollFn();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [communitiesState]);
+
+  const goToCommunity = (community) => {
+    const slug = community?.slug || slugify(community?.name || "");
+    router.push(`/groups?invited=${encodeURIComponent(slug)}`);
+  };
+
+  const viewEventDetails = (eventId) => {
+    if (!eventId) return;
+    router.push(`/events?event=${encodeURIComponent(eventId)}`);
+  };
+
+  // <-- IMPORTANT: show only first 3 communities (one row)
+  const visibleCommunities = (communitiesState || []).slice(0, 3);
+
+  return (
+    /* container width kept wide so 3 cols fit nicely */
+    <div className="mx-auto max-w-[1300px] px-4">
+      {/* Communities */}
+      <section className="py-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-extrabold text-white">Communities</h2>
+          <p className="text-sm text-gray-400">Discover communities you may like</p>
         </div>
-      </div>
-    </article>
-  );
-}
 
-function EventCard({ event }) {
-  return (
-    <article className="rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm overflow-hidden">
-      <div className="relative h-36">
-        <Image src={event.banner} alt={event.title} fill className="object-cover" />
-        <span className="absolute left-3 top-3 rounded-full bg-blue-600/90 px-2.5 py-1 text-xs font-medium">
-          {event.category}
-        </span>
-      </div>
-      <div className="px-4 py-3">
-        <h3 className="font-medium">{event.title}</h3>
-        <p className="mt-1 text-sm text-gray-400">{event.datetime} • {event.location}</p>
-        <button className="mt-3 inline-flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-500 px-3.5 py-2 text-sm font-medium transition">
-          Register
-        </button>
-      </div>
-    </article>
-  );
-}
+        {/* Single-row layout with exactly 3 cards on large screens */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {visibleCommunities.map((c) => (
+            <CommunityCard
+              key={c.id || c.slug || c.name}
+              c={{
+                ...c,
+                slug: c.slug || slugify(c.name),
+                members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
+                description: c.description || "",
+              }}
+              onOpen={goToCommunity}
+            />
+          ))}
+        </div>
 
-export default function Feed() {
-  return (
-    <div className="mx-auto max-w-[900px]">
-      {/* Composer placeholder */}
-      <div className="mb-4 rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm p-4">
-        <input
-          placeholder="What's on your mind?"
-          className="w-full rounded-lg bg-[#111] border border-[#262626] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-600"
-        />
-      </div>
-
-      {/* Posts */}
-      <section className="space-y-4">
-        {posts.map((p) => (
-          <PostCard key={p.id} post={p} />
-        ))}
+        {/* On small screens keep the horizontal scroll version, but also limit to first 3 */}
+        <div className="sm:hidden mt-2">
+          <div className="grid grid-flow-col auto-cols-[minmax(240px,1fr)] gap-6 overflow-x-auto pb-4 snap-x snap-mandatory -mx-4 px-4">
+            {visibleCommunities.map((c) => (
+              <div key={`mobile-${c.id || c.slug || c.name}`} className="snap-start">
+                <CommunityCard
+                  c={{
+                    ...c,
+                    slug: c.slug || slugify(c.name),
+                    members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
+                    description: c.description || "",
+                  }}
+                  onOpen={goToCommunity}
+                  className="min-h-[300px]"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* Events grid */}
-      <h2 className="mt-8 mb-3 text-sm font-medium text-gray-300">Upcoming events</h2>
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {events.map((e) => (
-          <EventCard key={e.id} event={e} />
-        ))}
+      {/* Featured events */}
+      <div className="flex items-center justify-between mt-10 mb-3">
+        <h2 className="text-2xl font-extrabold text-white">Featured Events</h2>
+        <button onClick={() => router.push("/events")} className="text-sm text-purple-400 hover:text-purple-300">See all events</button>
+      </div>
+
+      <section className="mb-12">
+        {featuredEventsState && featuredEventsState.length > 0 ? (
+          <FeaturedCarousel events={featuredEventsState} interval={6000} onViewDetails={viewEventDetails} />
+        ) : (
+          <div className="p-6 bg-gray-900 rounded-lg text-center text-gray-400">No featured events right now.</div>
+        )}
       </section>
     </div>
   );

@@ -18,6 +18,7 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+   
   }
 }
 
@@ -42,12 +43,12 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
+  background: linear-gradient(180deg, #2a0640, #6a0dad);
   border-radius: 20px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #1a1919;
+  background:linear-gradient(180deg, #3b0a5a, #8f28ff);
 }
 
 /* Firefox scrollbar */

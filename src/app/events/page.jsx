@@ -1108,7 +1108,7 @@ const EventsPage = () => {
     : "list";
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white font-sans antialiased relative">
+    <div className="min-h-screen text-white font-sans antialiased relative bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000]">
       {/* Dark overlay */}
       <div
         onClick={() => setSidebarOpen(false)}

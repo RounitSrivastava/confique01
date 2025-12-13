@@ -1,86 +1,28 @@
 // components/Feed.jsx
 "use client";
 
-import Image from "next/image";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 
-/* -----------------------------------
-   Default fallback communities/events
--------------------------------------- */
-const defaultCommunities = [
-  {
-    id: "c1",
-    name: "Fitness Fanatics",
-    description: "Workouts and nutrition advice.",
-    members: "55.0k members",
-    hero: "/community-1.jpg",
-    gradient: "linear-gradient(180deg,#0f1720,#071018)",
-    slug: "fitness-fanatics",
-    category: "Sports",
-  },
-  {
-    id: "c2",
-    name: "Crypto Hub",
-    description: "News, trading strategies and research.",
-    members: "32.0k",
-    hero: null,
-    gradient: "linear-gradient(180deg,#f59e0b,#c2410c)",
-    slug: "crypto-hub",
-    category: "Tech",
-  },
-  {
-    id: "c3",
-    name: "Tech Innovators",
-    description: "Discussions on next-gen tech.",
-    members: "23.7k",
-    hero: "/community-3.jpg",
-    gradient: "linear-gradient(180deg,#0f1720,#0b1220)",
-    slug: "tech-innovators",
-    category: "Tech",
-  },
-];
+/* -------------------------
+   Category → gradient map
+------------------------- */
+const CATEGORY_GRADIENTS = {
+  Tech: "linear-gradient(180deg,#6d28d9 0%, #7c3aed 40%, #2b1f4a 100%)",
+  Entrepreneurship: "linear-gradient(180deg,#f59e0b 0%, #d97706 40%, #7a2e00 100%)",
+  Gaming: "linear-gradient(180deg,#059669 0%, #10b981 40%, #053017 100%)",
+  Sports: "linear-gradient(180deg,#ef4444 0%, #b91c1c 40%, #0b0b0b 100%)",
+  Music: "linear-gradient(180deg,#ec4899 0%, #db2777 40%, #3b0b2a 100%)",
+  Art: "linear-gradient(180deg,#334155 0%, #475569 40%, #0b0b0b 100%)",
+  Food: "linear-gradient(180deg,#ef4444 0%, #f97316 40%, #3b0b00 100%)",
+  Book: "linear-gradient(180deg,#334155 0%, #2b3642 40%, #09101a 100%)",
+  default: "linear-gradient(180deg,#111827 0%, #0b1220 100%)",
+};
 
-const defaultFeaturedEvents = [
-  {
-    id: 101,
-    title: "Featured: Raiders Reckoning",
-    poster: "https://placehold.co/1600x900/111827/ffffff?text=Raiders+Reckoning",
-    category: "Competition",
-    date: "Thu, 15 Dec 2025",
-    venue: "KIIT Auditorium",
-    datetime: "Thu, 15 Dec 2025",
-    location: "KIIT Auditorium",
-    isFeatured: true,
-  },
-  {
-    id: 102,
-    title: "Featured: Hackify Battle",
-    poster: "https://placehold.co/1600x900/0D47A1/ffffff?text=Hackify+Battle",
-    category: "Tech",
-    date: "Thu, 15 Dec 2025",
-    venue: "Online",
-    datetime: "Thu, 15 Dec 2025",
-    location: "Online",
-    isFeatured: true,
-  },
-  {
-    id: 999,
-    title: "Global Tech Summit 2026",
-    poster: "https://placehold.co/1600x900/004D40/ffffff?text=Global+Tech+Summit",
-    category: "Seminar",
-    date: "May 10-12 2026",
-    venue: "Virtual Event",
-    datetime: "May 10-12 2026",
-    location: "Virtual Event",
-    isFeatured: true,
-  },
-];
-
-/* -----------------------------------
+/* -------------------------
    Helpers
--------------------------------------- */
+------------------------- */
 const readJsonLocal = (key) => {
   if (typeof window === "undefined") return null;
   try {
@@ -92,6 +34,15 @@ const readJsonLocal = (key) => {
   }
 };
 
+const readCommunitiesFromStorage = () => {
+  const keys = ["confique:allCommunities", "confique:communities", "recommendedCommunities"];
+  for (const k of keys) {
+    const v = readJsonLocal(k);
+    if (Array.isArray(v) && v.length) return v;
+  }
+  return null;
+};
+
 const slugify = (s = "") =>
   String(s)
     .toLowerCase()
@@ -100,35 +51,92 @@ const slugify = (s = "") =>
     .replace(/[^\w-]+/g, "")
     .replace(/-+/g, "-");
 
-/* -----------------------------------
-   COMMUNITY CARD — equal heights + responsive behaviour
--------------------------------------- */
+/* normalize/convert incoming community objects to the shape Feed expects */
+const normalizeCommunities = (arr = []) =>
+  (arr || []).map((c, idx) => {
+    const id = String(c.id ?? c._id ?? `tmp-${idx}`);
+    const name = c.name || c.title || `Community ${id}`;
+    const membersCount = Number(c.membersCount ?? c.members_count ?? 0);
+    const members = c.members || (membersCount ? `${membersCount.toLocaleString()} members` : c.members || "0 members");
+    const bannerUrl = c.bannerUrl || c.hero || c.image || c.banner || null;
+    const iconUrl = c.iconUrl || c.icon || null;
+    const description = c.description || c.shortDescription || c.desc || "";
+    const category = c.category || c.gradientKey || "default";
+    return {
+      ...c,
+      id,
+      name,
+      slug: c.slug || slugify(name),
+      membersCount,
+      members,
+      bannerUrl,
+      iconUrl,
+      description,
+      category,
+      gradientKey: category,
+    };
+  });
+
+/* -------------------------
+   Card component
+------------------------- */
+const DEFAULT_BANNER = "https://placehold.co/800x240/111827/ffffff?text=Community+Banner";
+
 function CommunityCard({ c, onOpen, className = "" }) {
+  const bannerImg = c.bannerUrl || c.hero || c.image || null;
+  const gradientKey = c.gradientKey || c.category || "default";
+  const gradientStyle = CATEGORY_GRADIENTS[gradientKey] || CATEGORY_GRADIENTS.default;
+  const description = c.description || "";
+
+  const clampStyle = {
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+  };
+
   return (
     <article
       onClick={() => onOpen && onOpen(c)}
       className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-[#151515] cursor-pointer hover:shadow-3xl transition-shadow flex flex-col h-full ${className}`}
     >
-      {c.hero ? (
-        <div className="h-36 w-full overflow-hidden flex-shrink-0">
-          <Image src={c.hero} alt={c.name} width={800} height={240} className="object-cover w-full h-full" />
+      {bannerImg ? (
+        <div className="h-36 w-full overflow-hidden flex-shrink-0 rounded-t-2xl">
+          <img
+            src={bannerImg}
+            alt={c.name}
+            className="object-cover w-full h-full"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = DEFAULT_BANNER;
+            }}
+          />
         </div>
       ) : (
-        <div className="h-36 w-full flex-shrink-0" style={{ background: c.gradient }} />
+        <div
+          className="h-36 w-full flex-shrink-0 rounded-t-2xl"
+          style={{ background: gradientStyle }}
+        />
       )}
 
       <div className="p-5 flex flex-col flex-grow">
         <h3 className="text-lg font-bold text-white">{c.name}</h3>
-        <p className="mt-2 text-sm text-gray-300 flex-grow">{c.description}</p>
-        <p className="mt-4 text-sm text-gray-400 font-semibold">{c.members}</p>
+
+        <p className="mt-2 text-sm text-gray-300 flex-grow" style={clampStyle}>
+          {description}
+        </p>
+
+        <p className="mt-4 text-sm text-gray-400 font-semibold">
+          {c.members || (typeof c.membersCount === "number" ? `${c.membersCount.toLocaleString()} members` : "0 members")}
+        </p>
       </div>
     </article>
   );
 }
 
-/* -----------------------------------
-   FEATURED EVENT SINGLE (clean layout, no tags, preserves date/location & CTA)
--------------------------------------- */
+/* -------------------------
+   Featured event components (unchanged)
+------------------------- */
 function FeaturedEventSingle({ event, onViewDetails }) {
   const dateText = event.datetime || event.date || "";
   const locationText = event.location || event.venue || "";
@@ -137,7 +145,6 @@ function FeaturedEventSingle({ event, onViewDetails }) {
     <div className="relative w-full">
       <div className="rounded-2xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] bg-black">
         <div className="relative w-full h-[320px] sm:h-[380px] md:h-[420px] lg:h-[460px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={event.poster}
             alt={event.title}
@@ -150,25 +157,20 @@ function FeaturedEventSingle({ event, onViewDetails }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
 
           <div className="absolute left-6 top-6">
-            <span className="inline-block bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold text-sm px-3 py-1 rounded-full shadow-[0_8px_30px_rgba(99,102,241,0.12)]">
+            <span className="inline-block bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold text-sm px-3 py-1 rounded-full">
               Featured Event
             </span>
           </div>
 
           <div className="absolute left-1/2 transform -translate-x-1/2 bottom-6 w-[90%] sm:w-[78%] md:w-[70%] lg:w-[64%]">
-            <div className="bg-gradient-to-r from-[#0b0b0b]/80 to-[#0b0b0b]/70 border border-gray-800 rounded-xl p-5 shadow-xl backdrop-blur-md">
-              <h3 className="text-xl md:text-2xl font-extrabold text-white leading-tight mb-2">
-                {event.title}
-              </h3>
-
+            <div className="bg-gradient-to-r from-[#0b0b0b]/80 to-[#0b0b0b]/70 border border-gray-800 rounded-xl p-5 shadow-xl">
+              <h3 className="text-xl md:text-2xl font-extrabold text-white leading-tight mb-2">{event.title}</h3>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-sm text-gray-300 mb-4">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-gray-300" />
                   <span>{dateText}</span>
                 </div>
-                {locationText ? (
-                  <div className="text-sm text-gray-400">• {locationText}</div>
-                ) : null}
+                {locationText ? <div className="text-sm text-gray-400">• {locationText}</div> : null}
               </div>
 
               <div className="flex items-center gap-6">
@@ -177,7 +179,7 @@ function FeaturedEventSingle({ event, onViewDetails }) {
                     e.stopPropagation();
                     onViewDetails && onViewDetails(event.id);
                   }}
-                  className="inline-flex items-center bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-semibold px-5 py-3 rounded-full transition-colors shadow-md"
+                  className="inline-flex items-center bg-gradient-to-r from-purple-600 to-violet-600 text-white font-semibold px-5 py-3 rounded-full"
                 >
                   View Details →
                 </button>
@@ -190,51 +192,27 @@ function FeaturedEventSingle({ event, onViewDetails }) {
   );
 }
 
-/* -----------------------------------
-   Featured carousel (auto-advance with responsive arrows & dots)
--------------------------------------- */
 const FeaturedCarousel = ({ events = [], interval = 6000, onViewDetails }) => {
   const [index, setIndex] = React.useState(0);
   const eventsCount = events.length;
   const autoRef = React.useRef(null);
   const containerRef = React.useRef(null);
 
-  const next = React.useCallback(() => {
-    setIndex((i) => (eventsCount ? (i + 1) % eventsCount : 0));
-  }, [eventsCount]);
+  const next = React.useCallback(() => setIndex((i) => (eventsCount ? (i + 1) % eventsCount : 0)), [eventsCount]);
+  const prev = React.useCallback(() => setIndex((i) => (eventsCount ? (i - 1 + eventsCount) % eventsCount : 0)), [eventsCount]);
 
-  const prev = React.useCallback(() => {
-    setIndex((i) => (eventsCount ? (i - 1 + eventsCount) % eventsCount : 0));
-  }, [eventsCount]);
-
-  // auto-advance
   React.useEffect(() => {
     if (!eventsCount) return;
-    autoRef.current = setInterval(() => {
-      setIndex((i) => (i + 1) % eventsCount);
-    }, interval);
-    return () => {
-      if (autoRef.current) clearInterval(autoRef.current);
-    };
+    autoRef.current = setInterval(() => setIndex((i) => (i + 1) % eventsCount), interval);
+    return () => { if (autoRef.current) clearInterval(autoRef.current); };
   }, [eventsCount, interval]);
 
-  // pause/resume on hover/touch
   React.useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const pause = () => {
-      if (autoRef.current) {
-        clearInterval(autoRef.current);
-        autoRef.current = null;
-      }
-    };
-    const resume = () => {
-      if (!autoRef.current && eventsCount) {
-        autoRef.current = setInterval(() => {
-          setIndex((i) => (i + 1) % eventsCount);
-        }, interval);
-      }
-    };
+    const pause = () => { if (autoRef.current) { clearInterval(autoRef.current); autoRef.current = null; } };
+    const resume = () => { if (!autoRef.current && eventsCount) autoRef.current = setInterval(() => setIndex((i) => (i + 1) % eventsCount), interval); };
+
     el.addEventListener("mouseenter", pause);
     el.addEventListener("mouseleave", resume);
     el.addEventListener("touchstart", pause);
@@ -251,29 +229,12 @@ const FeaturedCarousel = ({ events = [], interval = 6000, onViewDetails }) => {
   const currentEvent = events[index];
 
   return (
-    // overflow-visible so arrows are not clipped on small screens
     <div className="relative overflow-visible" ref={containerRef}>
-      {/* responsive arrow positions and sizes */}
-      <button
-        aria-label="Previous"
-        onClick={(e) => {
-          e.stopPropagation();
-          prev();
-        }}
-        className="absolute left-1 md:left-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-white shadow-lg backdrop-blur-sm hover:bg-black/60 transition-colors"
-      >
-        <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+      <button aria-label="Previous" onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+        <ChevronLeft className="w-5 h-5" />
       </button>
-
-      <button
-        aria-label="Next"
-        onClick={(e) => {
-          e.stopPropagation();
-          next();
-        }}
-        className="absolute right-1 md:right-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-white shadow-lg backdrop-blur-sm hover:bg-black/60 transition-colors"
-      >
-        <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+      <button aria-label="Next" onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+        <ChevronRight className="w-5 h-5" />
       </button>
 
       <div onClick={() => onViewDetails && onViewDetails(currentEvent.id)}>
@@ -283,15 +244,7 @@ const FeaturedCarousel = ({ events = [], interval = 6000, onViewDetails }) => {
       {eventsCount > 1 && (
         <div className="mt-6 flex justify-center space-x-3">
           {events.map((_, i) => (
-            <button
-              key={i}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIndex(i);
-              }}
-              className={`w-3.5 h-3.5 rounded-full transition-all duration-200 ${i === index ? "bg-white scale-110" : "bg-white/40 hover:bg-white/70"}`}
-              aria-label={`Go to slide ${i + 1}`}
-            />
+            <button key={i} onClick={(e) => { e.stopPropagation(); setIndex(i); }} className={`w-3.5 h-3.5 rounded-full ${i === index ? "bg-white scale-110" : "bg-white/40"}`} />
           ))}
         </div>
       )}
@@ -299,75 +252,64 @@ const FeaturedCarousel = ({ events = [], interval = 6000, onViewDetails }) => {
   );
 };
 
-/* -----------------------------------
-   MAIN FEED
--------------------------------------- */
+/* -------------------------
+   MAIN Feed
+------------------------- */
 export default function Feed({ communitiesProp = null, eventsProp = null }) {
   const router = useRouter();
 
-  const [communitiesState, setCommunitiesState] = React.useState(() =>
-    communitiesProp && Array.isArray(communitiesProp) && communitiesProp.length
-      ? communitiesProp.map((c) => ({ ...c, slug: c.slug || slugify(c.name) }))
-      : defaultCommunities
-  );
+  const [communitiesState, setCommunitiesState] = React.useState(() => {
+    if (communitiesProp && Array.isArray(communitiesProp) && communitiesProp.length) {
+      return normalizeCommunities(communitiesProp);
+    }
+    return [];
+  });
 
   const [featuredEventsState, setFeaturedEventsState] = React.useState(() =>
-    eventsProp && Array.isArray(eventsProp) && eventsProp.length
-      ? eventsProp.filter((e) => e.isFeatured)
-      : defaultFeaturedEvents
+    eventsProp && Array.isArray(eventsProp) && eventsProp.length ? eventsProp.filter((e) => e.isFeatured) : []
   );
 
-  const mergeCommunities = React.useCallback(
-    (incoming) => {
-      if (!Array.isArray(incoming)) return;
-      const map = new Map();
-      (communitiesState || []).forEach((c) => map.set(c.slug || c.id || slugify(c.name), c));
-      incoming.forEach((c) => {
-        const key = c.slug || c.id || slugify(c.name);
-        map.set(key, {
-          ...c,
-          slug: c.slug || slugify(c.name),
-          members: c.members || (typeof c.membersCount === "number" ? `${c.membersCount} members` : c.members || "0 members"),
-        });
-      });
-      setCommunitiesState(Array.from(map.values()));
-    },
-    [communitiesState]
-  );
-
+  // initial load: prefer confique:allCommunities or other snapshots
   React.useEffect(() => {
-    if (communitiesProp && Array.isArray(communitiesProp) && communitiesProp.length) {
-      setCommunitiesState(communitiesProp.map((c) => ({ ...c, slug: c.slug || slugify(c.name) })));
+    if (communitiesState && communitiesState.length) return;
+    const stored = readCommunitiesFromStorage();
+    if (Array.isArray(stored) && stored.length) {
+      setCommunitiesState(normalizeCommunities(stored));
     } else {
-      const storedCommunities = readJsonLocal("confique:communities") || readJsonLocal("recommendedCommunities") || null;
-      if (Array.isArray(storedCommunities) && storedCommunities.length) {
-        setCommunitiesState(storedCommunities.map((c) => ({ ...c, slug: c.slug || slugify(c.name), members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members") })));
-      } else {
-        setCommunitiesState(defaultCommunities);
-      }
+      // fallback minimal defaults (I added 4 so there are extras to hide)
+      setCommunitiesState(normalizeCommunities([
+        { id: "c1", name: "Fitness Fanatics", description: "Workouts and nutrition advice.", membersCount: 55000, hero: "/community-1.jpg", category: "Sports" },
+        { id: "c2", name: "Crypto Hub", description: "News, trading strategies and research.", membersCount: 32000, hero: null, category: "Tech" },
+        { id: "c3", name: "Tech Innovators", description: "Discussions on next-gen tech.", membersCount: 23700, hero: "/community-3.jpg", category: "Tech" },
+        { id: "c4", name: "Web Dev", description: "webde is a key of success", membersCount: 1, hero: null, category: "Tech" },
+      ]));
     }
 
-    if (eventsProp && Array.isArray(eventsProp) && eventsProp.length) {
-      setFeaturedEventsState(eventsProp.filter((e) => e.isFeatured));
-    } else {
+    if (!(eventsProp && Array.isArray(eventsProp) && eventsProp.length)) {
       const storedEvents = readJsonLocal("EVENTS_SNAPSHOT") || readJsonLocal("confique:events") || null;
       if (Array.isArray(storedEvents) && storedEvents.length) {
         const featured = storedEvents.filter((ev) => ev.isFeatured);
         setFeaturedEventsState(featured.length ? featured : storedEvents.slice(0, 3));
       } else {
-        setFeaturedEventsState(defaultFeaturedEvents);
+        setFeaturedEventsState([
+          { id: 101, title: "Featured: Raiders Reckoning", poster: "https://placehold.co/1600x900/111827/ffffff?text=Raiders+Reckoning", isFeatured: true, datetime: "Thu, 15 Dec 2025", location: "KIIT Auditorium" },
+          { id: 102, title: "Featured: Hackify Battle", poster: "https://placehold.co/1600x900/0D47A1/ffffff?text=Hackify+Battle", isFeatured: true, datetime: "Thu, 15 Dec 2025", location: "Online" },
+        ]);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // listen to storage & custom events to update (so ExplorePage changes reflect here)
   React.useEffect(() => {
     const onStorage = (e) => {
       if (!e) return;
       try {
-        if (e.key === "confique:communities" || e.key === "recommendedCommunities") {
+        if (e.key === "confique:allCommunities" || e.key === "confique:communities" || e.key === "recommendedCommunities") {
           const parsed = JSON.parse(e.newValue || "[]");
-          if (Array.isArray(parsed)) mergeCommunities(parsed);
+          if (Array.isArray(parsed)) {
+            setCommunitiesState(normalizeCommunities(parsed));
+          }
         }
         if (e.key === "confique:events" || e.key === "EVENTS_SNAPSHOT") {
           const parsed = JSON.parse(e.newValue || "[]");
@@ -377,15 +319,21 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
           }
         }
       } catch {
-        // ignore
+        // ignore parse errors
       }
     };
 
     const onCustomCommunities = (evt) => {
       const payload = evt?.detail;
       if (!payload) return;
-      if (Array.isArray(payload)) mergeCommunities(payload);
-      else if (payload && typeof payload === "object") mergeCommunities([payload]);
+      const arr = Array.isArray(payload) ? payload : [payload];
+      setCommunitiesState((prev) => {
+        const merged = normalizeCommunities([...prev, ...arr]);
+        // dedupe by slug or id
+        const map = new Map();
+        merged.forEach((c) => map.set(c.slug || c.id, c));
+        return Array.from(map.values());
+      });
     };
 
     const onCustomEvents = (evt) => {
@@ -394,8 +342,8 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
       if (Array.isArray(payload)) {
         const featured = payload.filter((ev) => ev.isFeatured);
         setFeaturedEventsState(featured.length ? featured : payload.slice(0, 3));
-      } else if (payload && typeof payload === "object") {
-        if (payload.isFeatured) setFeaturedEventsState((prev) => [payload, ...prev]);
+      } else if (payload.isFeatured) {
+        setFeaturedEventsState((prev) => [payload, ...prev]);
       }
     };
 
@@ -408,7 +356,43 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
       window.removeEventListener("confique:communities-updated", onCustomCommunities);
       window.removeEventListener("confique:events-updated", onCustomEvents);
     };
-  }, [mergeCommunities]);
+  }, []);
+
+  // POLL: periodically check localStorage for updates (only when tab visible).
+  React.useEffect(() => {
+    let intervalId = null;
+    const POLL_MS = 5000;
+
+    const pollFn = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      const stored = readCommunitiesFromStorage();
+      if (!Array.isArray(stored)) return;
+      const normalized = normalizeCommunities(stored);
+
+      // quick shallow compare by length + lastUpdated-like heuristic (ids + descriptions)
+      const cur = communitiesState || [];
+      const sameLength = normalized.length === cur.length;
+      const quickEqual =
+        sameLength &&
+        normalized.every((n, i) => {
+          const c = cur[i];
+          if (!c) return false;
+          return n.id === c.id && (n.description || "") === (c.description || "") && (n.membersCount || 0) === (c.membersCount || 0);
+        });
+
+      if (!quickEqual) {
+        setCommunitiesState(normalized);
+      }
+    };
+
+    intervalId = setInterval(pollFn, POLL_MS);
+    // run once immediately
+    pollFn();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [communitiesState]);
 
   const goToCommunity = (community) => {
     const slug = community?.slug || slugify(community?.name || "");
@@ -420,33 +404,47 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
     router.push(`/events?event=${encodeURIComponent(eventId)}`);
   };
 
+  // <-- IMPORTANT: show only first 3 communities (one row)
+  const visibleCommunities = (communitiesState || []).slice(0, 3);
+
   return (
-    <div className="mx-auto max-w-[1100px] px-4">
-      {/* COMMUNITIES */}
+    /* container width kept wide so 3 cols fit nicely */
+    <div className="mx-auto max-w-[1300px] px-4">
+      {/* Communities */}
       <section className="py-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-extrabold text-white">Communities</h2>
           <p className="text-sm text-gray-400">Discover communities you may like</p>
         </div>
 
-        {/* Desktop / larger screens: original grid layout */}
-        <div className="hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {communitiesState.map((c) => (
+        {/* Single-row layout with exactly 3 cards on large screens */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {visibleCommunities.map((c) => (
             <CommunityCard
               key={c.id || c.slug || c.name}
-              c={{ ...c, slug: c.slug || slugify(c.name), members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members") }}
+              c={{
+                ...c,
+                slug: c.slug || slugify(c.name),
+                members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
+                description: c.description || "",
+              }}
               onOpen={goToCommunity}
             />
           ))}
         </div>
 
-        {/* Mobile: horizontal scroll */}
+        {/* On small screens keep the horizontal scroll version, but also limit to first 3 */}
         <div className="sm:hidden mt-2">
           <div className="grid grid-flow-col auto-cols-[minmax(240px,1fr)] gap-6 overflow-x-auto pb-4 snap-x snap-mandatory -mx-4 px-4">
-            {communitiesState.map((c) => (
-              <div key={c.id || c.slug || c.name} className="snap-start">
+            {visibleCommunities.map((c) => (
+              <div key={`mobile-${c.id || c.slug || c.name}`} className="snap-start">
                 <CommunityCard
-                  c={{ ...c, slug: c.slug || slugify(c.name), members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members") }}
+                  c={{
+                    ...c,
+                    slug: c.slug || slugify(c.name),
+                    members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
+                    description: c.description || "",
+                  }}
                   onOpen={goToCommunity}
                   className="min-h-[300px]"
                 />
@@ -456,12 +454,10 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
         </div>
       </section>
 
-      {/* FEATURED EVENTS carousel */}
+      {/* Featured events */}
       <div className="flex items-center justify-between mt-10 mb-3">
         <h2 className="text-2xl font-extrabold text-white">Featured Events</h2>
-        <button onClick={() => router.push("/events")} className="text-sm text-purple-400 hover:text-purple-300">
-          See all events
-        </button>
+        <button onClick={() => router.push("/events")} className="text-sm text-purple-400 hover:text-purple-300">See all events</button>
       </div>
 
       <section className="mb-12">

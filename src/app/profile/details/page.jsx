@@ -1,105 +1,226 @@
-'use client';
+// components/TechProfilePage.jsx
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
-  Calendar,
-  Heart,
-  MessageSquare,
-  Users,
-  Edit2,
-  MapPin,
-  Clock,
-  Share2,
-  X,
-  Trash2,
-  Check, // 👈 for selected avatar tick
-} from 'lucide-react';
+  Calendar, Heart, MessageSquare, Users, Edit2, MapPin, Clock, Share2, X, Trash2, Check,
+} from "lucide-react";
 
+// ... (presetAvatars and DEFAULT_AVATAR definitions remain unchanged)
 const presetAvatars = [
-  'https://i.pravatar.cc/150?img=1',
-  'https://i.pravatar.cc/150?img=2',
-  'https://i.pravatar.cc/150?img=3',
-  'https://i.pravatar.cc/150?img=4',
-  'https://i.pravatar.cc/150?img=5',
-  'https://i.pravatar.cc/150?img=6',
-  'https://i.pravatar.cc/150?img=7',
-  'https://i.pravatar.cc/150?img=8',
+  "https://i.pravatar.cc/150?img=1",
+  "https://i.pravatar.cc/150?img=2",
+  "https://i.pravatar.cc/150?img=3",
+  "https://i.pravatar.cc/150?img=4",
+  "https://i.pravatar.cc/150?img=5",
+  "https://i.pravatar.cc/150?img=6",
+  "https://i.pravatar.cc/150?img=7",
+  "https://i.pravatar.cc/150?img=8",
 ];
 
+const DEFAULT_AVATAR =
+  "https://img.freepik.com/premium-photo/portrait-successful-business-woman-suit-gray-isolated-background-serious-office-female-worker-manager-employees-female-employee-young-secretary_545934-23090.jpg?w=200&h=200&fit=crop";
+
 export default function TechProfilePage() {
-  const [activeTab, setActiveTab] = useState('posts');
+  const router = useRouter();
+
+  const [activeTab, setActiveTab] = useState("posts");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // EVENT EDIT MODAL
   const [isEventEditModalOpen, setIsEventEditModalOpen] = useState(false);
   const [eventEditForm, setEventEditForm] = useState(null);
 
-  // PROFILE
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
   const [profile, setProfile] = useState({
-    name: 'Vaidehi Sharma',
-    email: 'vaidehi.sharma@example.com', // fixed email
-    bio: 'XYZ',
-    location: 'XYZ',
-    website: 'XYZ',
-    avatar:
-      'https://img.freepik.com/premium-photo/portrait-successful-business-woman-suit-gray-isolated-background-serious-office-female-worker-manager-employees-female-employee-young-secretary_545934-23090.jpg?w=200&h=200&fit=crop'
+    name: "",
+    email: "",
+    bio: "",
+    location: "",
+    website: "",
+    avatar: DEFAULT_AVATAR,
   });
 
-  const [editForm, setEditForm] = useState(profile);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    email: "",
+    bio: "",
+    location: "",
+    website: "",
+    avatar: DEFAULT_AVATAR,
+  });
 
-  // EVENTS HOSTED BY THIS PROFILE
   const [posts, setPosts] = useState([
+    // ... (posts data remains unchanged)
     {
       id: 1,
-      type: 'event',
-      title: 'Innovate & Create: Our Annual Hackathon',
+      type: "event",
+      title: "Innovate & Create: Our Annual Hackathon",
       image:
-        'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=400&h=300&fit=crop',
-      date: 'Dec 15, 2025',
-      time: '9:00 AM - 6:00 PM',
-      location: 'Tech Hub, Downtown',
+        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=400&h=300&fit=crop",
+      date: "Dec 15, 2025",
+      time: "9:00 AM - 6:00 PM",
+      location: "Tech Hub, Downtown",
       registrations: 87,
       likes: 234,
       comments: 45,
-      isRegistered: false
+      isRegistered: false,
     },
     {
       id: 2,
-      type: 'event',
-      title: 'College Career Fair: Meet Top Companies',
+      type: "event",
+      title: "College Career Fair: Meet Top Companies",
       image:
-        'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop',
-      date: 'Dec 20, 2025',
-      time: '10:00 AM - 4:00 PM',
-      location: 'Convention Center',
+        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop",
+      date: "Dec 20, 2025",
+      time: "10:00 AM - 4:00 PM",
+      location: "Convention Center",
       registrations: 156,
       likes: 189,
       comments: 32,
-      isRegistered: true
+      isRegistered: true,
     },
     {
       id: 3,
-      type: 'event',
-      title: 'Guest Lecture: The Future of AI',
+      type: "event",
+      title: "Guest Lecture: The Future of AI",
       image:
-        'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=300&fit=crop',
-      date: 'Dec 10, 2025',
-      time: '2:00 PM - 4:00 PM',
-      location: 'Virtual Event',
+        "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=300&fit=crop",
+      date: "Dec 10, 2025",
+      time: "2:00 PM - 4:00 PM",
+      location: "Virtual Event",
       registrations: 312,
       likes: 421,
       comments: 78,
-      isRegistered: true
-    }
+      isRegistered: true,
+    },
   ]);
 
-  // ==== DYNAMIC STATS ====
   const totalHostedEvents = posts.length;
   const totalRegisteredEvents = posts.filter((p) => p.isRegistered).length;
+  const totalRegistrations = posts.reduce(
+    (sum, p) => sum + (p.registrations || 0),
+    0
+  );
   const totalLikes = posts.reduce((sum, p) => sum + p.likes, 0);
   const totalComments = posts.reduce((sum, p) => sum + p.comments, 0);
 
-  // ==== HANDLERS ====
+  // ... (useEffect for profile load remains unchanged)
+  useEffect(() => {
+    let mounted = true;
+    const ac = new AbortController();
+
+    async function loadProfile() {
+      try {
+        const res = await fetch("/api/me", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: ac.signal,
+        });
+
+        if (!mounted) return;
+
+        if (res.status === 401 || res.status === 403) {
+          setLoading(false);
+          router.replace("/auth/login?from=profile");
+          return;
+        }
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.user) {
+            const user = data.user;
+
+            const name =
+              user.name || user.fullName || user.username || "";
+
+            const updatedProfile = {
+              name,
+              email: user.email || user.emailId || "",
+              bio: user.bio || "",
+              location: user.location || "",
+              website: user.website || "",
+              avatar: user.avatar || DEFAULT_AVATAR,
+            };
+
+            setProfile(updatedProfile);
+            setEditForm(updatedProfile);
+            setLoading(false);
+            return;
+          }
+        } else {
+          console.error("Profile /api/me status:", res.status);
+        }
+
+        // fallback localStorage
+        try {
+          if (typeof window !== "undefined") {
+            const lsName = localStorage.getItem("userName") || "";
+            const lsEmail = localStorage.getItem("userEmail") || "";
+            const lsAvatar = localStorage.getItem("userAvatar") || "";
+
+            if (lsName || lsEmail) {
+              const updatedProfile = {
+                name: lsName || "",
+                email: lsEmail || "",
+                bio: "",
+                location: "",
+                website: "",
+                avatar: lsAvatar || DEFAULT_AVATAR,
+              };
+              setProfile(updatedProfile);
+              setEditForm(updatedProfile);
+            }
+          }
+        } catch (e) {
+          console.warn("LocalStorage fallback failed:", e);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        console.error("Profile load error:", err);
+
+        // network error → still try localStorage
+        try {
+          if (typeof window !== "undefined") {
+            const lsName = localStorage.getItem("userName") || "";
+            const lsEmail = localStorage.getItem("userEmail") || "";
+            const lsAvatar = localStorage.getItem("userAvatar") || "";
+
+            if (lsName || lsEmail) {
+              const updatedProfile = {
+                name: lsName || "",
+                email: lsEmail || "",
+                bio: "",
+                location: "",
+                website: "",
+                avatar: lsAvatar || DEFAULT_AVATAR,
+              };
+              setProfile(updatedProfile);
+              setEditForm(updatedProfile);
+            }
+          }
+        } catch (e) {
+          console.warn("LocalStorage fallback failed:", e);
+        }
+
+        setLoading(false);
+      }
+    }
+
+    loadProfile();
+    return () => {
+      mounted = false;
+      ac.abort();
+    };
+  }, [router]);
+
+  // ... (handleRegister, handleLike, handleDeletePost, openEditModal, closeEditModal logic remains unchanged)
+
   const handleRegister = (postId) => {
     setPosts((prev) =>
       prev.map((post) =>
@@ -108,8 +229,8 @@ export default function TechProfilePage() {
               ...post,
               isRegistered: !post.isRegistered,
               registrations: post.isRegistered
-                ? post.registrations - 1
-                : post.registrations + 1
+                ? Math.max(0, (post.registrations || 0) - 1)
+                : (post.registrations || 0) + 1,
             }
           : post
       )
@@ -127,7 +248,7 @@ export default function TechProfilePage() {
   const handleDeletePost = (postId) => {
     if (
       !window.confirm(
-        'Are you sure you want to delete this event from your profile?'
+        "Are you sure you want to delete this event from your profile?"
       )
     ) {
       return;
@@ -143,32 +264,108 @@ export default function TechProfilePage() {
   const closeEditModal = () => {
     setIsEditModalOpen(false);
   };
+  
+  // ✅ SAVE to DB via /api/me (PATCH) - Updated to handle server validation errors
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/me", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: editForm.name,
+          bio: editForm.bio,
+          location: editForm.location,
+          website: editForm.website,
+          avatar: editForm.avatar, // can be preset URL or base64
+        }),
+      });
 
-  const handleSaveProfile = () => {
-    setProfile((prev) => ({
-      ...prev,
-      name: editForm.name,
-      bio: editForm.bio,
-      location: editForm.location,
-      website: editForm.website,
-      avatar: editForm.avatar
-      // email stays same
-    }));
-    setIsEditModalOpen(false);
+      if (!res.ok) {
+        console.error("Profile update failed with status", res.status);
+        
+        // Attempt to parse validation error from server for user display
+        const errorData = await res.json().catch(() => ({ error: 'Failed to save profile. Please try again.' }));
+        alert(errorData.error || `Failed to save profile (Status: ${res.status}).`);
+        
+        setSaving(false);
+        return;
+      }
+
+      const data = await res.json();
+      if (data?.user) {
+        const user = data.user;
+        const updatedProfile = {
+          name: user.name || "",
+          email: user.email || "",
+          bio: user.bio || "",
+          location: user.location || "",
+          website: user.website || "",
+          avatar: user.avatar || DEFAULT_AVATAR,
+        };
+
+        setProfile(updatedProfile);
+        setEditForm(updatedProfile);
+
+        // also cache to localStorage
+        try {
+          if (typeof window !== "undefined") {
+            if (editForm.email) {
+              localStorage.setItem("userEmail", editForm.email);
+            }
+            if (editForm.name) {
+              localStorage.setItem("userName", editForm.name);
+            }
+            if (editForm.avatar) {
+              localStorage.setItem("userAvatar", editForm.avatar);
+            }
+
+            // 🔑 FIX: Dispatch a CustomEvent with the user data for other components (e.g., Topbar)
+            window.dispatchEvent(
+              new CustomEvent("confique:user-updated", {
+                detail: { user: updatedProfile }, 
+              })
+            );
+          }
+        } catch {}
+
+        setIsEditModalOpen(false);
+      }
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      alert("Something went wrong while saving. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  // LOCAL DEVICE AVATAR CHANGE (upload)
+  // ✅ Use FileReader + base64 instead of createObjectURL + Added file size check
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const imageUrl = URL.createObjectURL(file);
-    setEditForm((prev) => ({
-      ...prev,
-      avatar: imageUrl
-    }));
+    
+    const MAX_FILE_SIZE_MB = 1; // Limit file size to 1MB
+    
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      alert(`File size exceeds the ${MAX_FILE_SIZE_MB}MB limit. Please choose a smaller image.`);
+      e.target.value = null; // Clear the input
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // reader.result is a data URL: "data:image/png;base64,...."
+      setEditForm((prev) => ({
+        ...prev,
+        avatar: reader.result,
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
-  // EVENT EDIT MODAL HANDLERS
   const openEventEditModal = (post) => {
     setEventEditForm({ ...post });
     setIsEventEditModalOpen(true);
@@ -182,18 +379,29 @@ export default function TechProfilePage() {
   const handleSaveEvent = () => {
     if (!eventEditForm) return;
     setPosts((prev) =>
-      prev.map((p) => (p.id === eventEditForm.id ? { ...p, ...eventEditForm } : p))
+      prev.map((p) =>
+        p.id === eventEditForm.id ? { ...p, ...eventEditForm } : p
+      )
     );
     closeEventEditModal();
   };
 
   const displayedPosts =
-    activeTab === 'registered'
-      ? posts.filter((p) => p.isRegistered)
-      : posts;
+    activeTab === "registered" ? posts.filter((p) => p.isRegistered) : posts;
+
+  if (loading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#0d0d0d" }}
+      >
+        <p className="text-slate-200 text-sm">Loading profile...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0d0d0d' }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#0d0d0d" }}>
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Profile Header */}
         <div className="bg-black-600 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-8 mb-6">
@@ -225,22 +433,24 @@ export default function TechProfilePage() {
             <div className="flex-1">
               <div className="mb-3">
                 <h2 className="text-3xl font-bold text-white mb-1">
-                  {profile.name}
+                  {profile.name || "Your Name"}
                 </h2>
                 <p className="text-slate-400 text-sm mb-3">{profile.email}</p>
-                <p className="text-slate-300 text-lg mb-3">{profile.bio}</p>
+                <p className="text-slate-300 text-lg mb-3">
+                  {profile.bio || "Add a short bio about yourself."}
+                </p>
                 <div className="flex flex-wrap gap-4 text-slate-400 text-sm">
                   <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
-                    <span>{profile.location}</span>
+                    <span>{profile.location || "Add your role/location"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <span>🌐</span>
                     <a
-                      href={profile.website || '#'}
+                      href={profile.website || "#"}
                       className="text-blue-400 hover:text-blue-300"
                     >
-                      {profile.website}
+                      {profile.website || "Add your website / portfolio"}
                     </a>
                   </div>
                 </div>
@@ -252,8 +462,14 @@ export default function TechProfilePage() {
                   <div className="text-3xl font-bold text-white mb-1">
                     {totalHostedEvents}
                   </div>
+                  <div className="text-slate-400 text-sm">Hosted Events</div>
+                </div>
+                <div className="bg-slate-700/30 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-white mb-1">
+                    {totalRegistrations}
+                  </div>
                   <div className="text-slate-400 text-sm">
-                    Hosted Events
+                    Total Registrations
                   </div>
                 </div>
                 <div className="bg-slate-700/30 rounded-xl p-4 text-center">
@@ -261,14 +477,6 @@ export default function TechProfilePage() {
                     {totalLikes}
                   </div>
                   <div className="text-slate-400 text-sm">Total Likes</div>
-                </div>
-                <div className="bg-slate-700/30 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">
-                    {totalComments}
-                  </div>
-                  <div className="text-slate-400 text-sm">
-                    Total Comments
-                  </div>
                 </div>
               </div>
             </div>
@@ -287,29 +495,29 @@ export default function TechProfilePage() {
         <div className="bg-black-600 backdrop-blur-sm rounded-2xl border border-slate-700/50 overflow-hidden">
           <div className="flex border-b border-slate-700/50">
             <button
-              onClick={() => setActiveTab('posts')}
+              onClick={() => setActiveTab("posts")}
               className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
-                activeTab === 'posts'
-                  ? 'text-purple-400'
-                  : 'text-slate-400 hover:text-slate-300'
+                activeTab === "posts"
+                  ? "text-purple-400"
+                  : "text-slate-400 hover:text-slate-300"
               }`}
             >
               Hosted Events ({totalHostedEvents})
-              {activeTab === 'posts' && (
+              {activeTab === "posts" && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
               )}
             </button>
 
             <button
-              onClick={() => setActiveTab('registered')}
+              onClick={() => setActiveTab("registered")}
               className={`flex-1 py-4 px-6 font-semibold transition-colors relative ${
-                activeTab === 'registered'
-                  ? 'text-purple-400'
-                  : 'text-slate-400 hover:text-slate-300'
+                activeTab === "registered"
+                  ? "text-purple-400"
+                  : "text-slate-400 hover:text-slate-300"
               }`}
             >
               Registered Events ({totalRegisteredEvents})
-              {activeTab === 'registered' && (
+              {activeTab === "registered" && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
               )}
             </button>
@@ -320,15 +528,15 @@ export default function TechProfilePage() {
             {displayedPosts.length > 0 ? (
               posts
                 .filter((p) =>
-                  activeTab === 'registered' ? p.isRegistered : true
+                  activeTab === "registered" ? p.isRegistered : true
                 )
                 .map((post) => (
                   <div
                     key={post.id}
                     className="relative bg-slate-700/30 rounded-xl overflow-hidden hover:bg-slate-700/40 transition-all border border-slate-600/30"
                   >
-                    {/* TOP RIGHT EDIT + DELETE (for host profile) */}
-                    {activeTab === 'posts' && (
+                    {/* TOP RIGHT EDIT + DELETE */}
+                    {activeTab === "posts" && (
                       <div className="absolute top-3 right-3 flex gap-2 z-10">
                         <button
                           onClick={() => openEventEditModal(post)}
@@ -384,21 +592,21 @@ export default function TechProfilePage() {
                             <Users className="w-4 h-4" />
                             <span className="font-semibold text-white">
                               {post.registrations}
-                            </span>{' '}
+                            </span>{" "}
                             registered
                           </div>
                           <div className="flex items-center gap-1 text-slate-400 text-sm">
                             <Heart className="w-4 h-4" />
                             <span className="font-semibold text-white">
                               {post.likes}
-                            </span>{' '}
+                            </span>{" "}
                             likes
                           </div>
                           <div className="flex items-center gap-1 text-slate-400 text-sm">
                             <MessageSquare className="w-4 h-4" />
                             <span className="font-semibold text-white">
                               {post.comments}
-                            </span>{' '}
+                            </span>{" "}
                             comments
                           </div>
                         </div>
@@ -408,11 +616,11 @@ export default function TechProfilePage() {
                             onClick={() => handleRegister(post.id)}
                             className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
                               post.isRegistered
-                                ? 'bg-slate-600 hover:bg-slate-500 text-white'
-                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                ? "bg-slate-600 hover:bg-slate-500 text-white"
+                                : "bg-purple-600 hover:bg-purple-700 text-white"
                             }`}
                           >
-                            {post.isRegistered ? 'Unregister' : 'Register'}
+                            {post.isRegistered ? "Unregister" : "Register"}
                           </button>
 
                           <button
@@ -433,9 +641,9 @@ export default function TechProfilePage() {
             ) : (
               <div className="text-center py-12">
                 <p className="text-slate-400 text-lg">
-                  {activeTab === 'registered'
-                    ? 'No registered events yet'
-                    : 'No posts yet'}
+                  {activeTab === "registered"
+                    ? "No registered events yet"
+                    : "No posts yet"}
                 </p>
                 <p className="text-slate-500 text-sm mt-2">
                   Engage to see items here
@@ -473,7 +681,7 @@ export default function TechProfilePage() {
                   />
                   <div className="space-y-2">
                     <p className="text-sm text-slate-300">
-                      Change profile photo
+                      Change profile photo (Max 1MB)
                     </p>
                     <input
                       type="file"
@@ -486,9 +694,7 @@ export default function TechProfilePage() {
 
                 {/* Preset avatar choices */}
                 <div className="space-y-2">
-                  <p className="text-sm text-slate-300">
-                    Or choose an avatar
-                  </p>
+                  <p className="text-sm text-slate-300">Or choose an avatar</p>
                   <div className="grid grid-cols-4 gap-3">
                     {presetAvatars.map((url) => {
                       const isSelected = editForm.avatar === url;
@@ -501,8 +707,8 @@ export default function TechProfilePage() {
                           }
                           className={`relative rounded-full p-1 border-2 transition-all ${
                             isSelected
-                              ? 'border-purple-500 ring-2 ring-purple-500/40'
-                              : 'border-transparent hover:border-slate-500'
+                              ? "border-purple-500 ring-2 ring-purple-500/40"
+                              : "border-transparent hover:border-slate-500"
                           }`}
                         >
                           <img
@@ -610,9 +816,10 @@ export default function TechProfilePage() {
               </button>
               <button
                 onClick={handleSaveProfile}
-                className="flex-1 px-6 py-3.5 bg-purple-500 hover:bg-purple-600 text-black rounded-xl font-medium transition-colors"
+                disabled={saving}
+                className="flex-1 px-6 py-3.5 bg-purple-500 hover:bg-purple-600 disabled:opacity-60 text-black rounded-xl font-medium transition-colors"
               >
-                Save
+                {saving ? "Saving..." : "Save"}
               </button>
             </div>
           </div>
@@ -647,7 +854,7 @@ export default function TechProfilePage() {
                   onChange={(e) =>
                     setEventEditForm({
                       ...eventEditForm,
-                      title: e.target.value
+                      title: e.target.value,
                     })
                   }
                   className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
@@ -666,7 +873,7 @@ export default function TechProfilePage() {
                   onChange={(e) =>
                     setEventEditForm({
                       ...eventEditForm,
-                      date: e.target.value
+                      date: e.target.value,
                     })
                   }
                   className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
@@ -685,7 +892,7 @@ export default function TechProfilePage() {
                   onChange={(e) =>
                     setEventEditForm({
                       ...eventEditForm,
-                      time: e.target.value
+                      time: e.target.value,
                     })
                   }
                   className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
@@ -704,7 +911,7 @@ export default function TechProfilePage() {
                   onChange={(e) =>
                     setEventEditForm({
                       ...eventEditForm,
-                      location: e.target.value
+                      location: e.target.value,
                     })
                   }
                   className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"
@@ -723,7 +930,7 @@ export default function TechProfilePage() {
                   onChange={(e) =>
                     setEventEditForm({
                       ...eventEditForm,
-                      image: e.target.value
+                      image: e.target.value,
                     })
                   }
                   className="w-full px-4 py-3.5 bg-[#0f172a] border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-slate-600 transition-colors"

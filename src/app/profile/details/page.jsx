@@ -959,7 +959,7 @@ export default function TechProfilePage() {
       )}
     </div>
   );
-<<<<<<< HEAD
+
 }
 
 
@@ -1081,6 +1081,5 @@ export default function TechProfilePage() {
 
 
 
-=======
-}
->>>>>>> 39af29c709d81c8c8c95d45056ab76b415314cd1
+
+

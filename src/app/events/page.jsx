@@ -44,6 +44,7 @@ import {
   Newspaper,
   Plus,
   Clipboard,
+  Settings,
 } from "lucide-react";
 
 // --- MOCK DATA ---
@@ -203,7 +204,7 @@ const MOCK_EVENTS = [
     title: "Blockchain Basics",
     venue: "Online",
     date: "Mon, 13 Mar 2026",
-    poster: "https://placehold.co/400x550/4FC3F7/ffffff?text=BLOCKCHAIN",
+    poster: "https://placehold.co/4FC3F7/ffffff?text=BLOCKCHAIN",
     tags: ["Solo", "Free"],
     category: "Tech",
   },
@@ -308,8 +309,8 @@ const MOBILE_NAV = [
   { label: "Home", href: "/", icon: Home },
   { label: "Groups", href: "/groups", icon: Users },
   { label: "Events", href: "/events", icon: CalendarDays },
-  { label: "Insights", href: "/insights", icon: BarChart3 },
-  { label: "News", href: "/news", icon: Newspaper },
+  // { label: "Insights", href: "/insights", icon: BarChart3 },
+  // { label: "News", href: "/news", icon: Newspaper },
 ];
 
 // --- Reusable Components ---
@@ -355,45 +356,76 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
   return (
     <div
       onClick={() => onDetailsClick(event.id)}
-      className="group flex flex-shrink-0 flex-col bg-gray-900 rounded-xl overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-[1.02] hover:shadow-purple-500/30 w-full max-w-sm sm:w-[300px] cursor-pointer"
+      className="group flex flex-shrink-0 flex-col bg-gray-900 rounded-xl overflow-hidden shadow-2xl
+transition-transform duration-300 hover:scale-[1.02]
+w-[72vw] max-w-[260px]
+sm:w-[300px] h-[320px]
+cursor-pointer"
     >
-      <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-xl">
-        <img
-          src={event.poster}
-          alt={event.title}
-          className="w-full h-full object-cover object-center transition-opacity duration-300 group-hover:opacity-90"
-          loading="lazy"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src =
-              "https://placehold.co/400x300/111827/ffffff?text=Image+Not+Found";
-          }}
-        />
+      {/* POSTER + OVERLAYS (Image area is now smaller to make space for title in the black box) */}
+      <div className="relative w-full overflow-hidden rounded-t-xl">
+        {/* Image takes up the top portion of the card */}
+        <div className="relative w-full h-[160px] bg-black">
 
-        <div className="absolute top-3 right-3 flex space-x-2">
-          {tagsToDisplay.map((tag, index) => (
-            <span
-              key={index}
-              className={`px-3 py-1 text-xs font-semibold rounded-full backdrop-blur-sm ${
-                tag.includes("Free")
-                  ? "bg-green-500/90 text-white"
-                  : "bg-gray-700/90 text-white"
-              }`}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
 
-        <div className="absolute bottom-3 left-3 bg-white text-gray-900 px-3 py-1 rounded-lg font-bold text-center shadow-lg">
-          <p className="text-sm leading-tight">
-            {String(event.date).split(",")[0]?.trim() || "TBD"}
-          </p>
+          <img
+            src={event.poster}
+            alt={event.title}
+            className="w-full h-full object-cover object-center opacity-80" // Slightly darker poster
+            loading="lazy"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src =
+                "https://placehold.co/400x300/111827/ffffff?text=Image+Not+Found";
+            }}
+          />
+
+          {/* Tag in Top Right (like "Free") */}
+          <div className="absolute top-3 right-3 flex space-x-2">
+            {tagsToDisplay.map((tag, index) => (
+              <span
+                key={index}
+                className={`px-3 py-1 text-xs font-semibold rounded-full backdrop-blur-sm ${
+                  tag.includes("Free")
+                    ? "bg-green-500/90 text-white"
+                    : "bg-gray-700/90 text-white"
+                }`}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          {/* Date Tag in White Box (left-aligned) */}
+          <div className="absolute bottom-3 left-3 bg-white text-gray-900 px-3 py-1 rounded-lg font-bold text-center shadow-lg">
+            <p className="text-sm leading-tight">
+              {String(event.date).split(",")[0]?.trim() || "TBD"}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="p-4 flex flex-col justify-between flex-grow">
-        <div className="flex items-center justify-between text-xs font-medium text-gray-400 mb-2">
+      {/* CONTENT AREA (Black Box Below Image) */}
+      <div className="p-3 flex flex-col justify-between flex-grow ">
+        
+        {/* Title, replicating the look of the image provided */}
+        <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-0 line-clamp-2">
+
+ {event.title}
+        </h3>
+        
+        {/* Venue/Location */}
+        <p className="text-sm text-gray-400 flex items-center mb-1">
+          <MapPin className="w-4 h-4 mr-2 text-purple-400" />
+          {event.venue?.includes("|")
+            ? event.venue.split("|").slice(-1).pop().trim()
+            : event.venue}
+        </p>
+        
+        {/* Meta Data (Online/Free, Impressions, Share/Like) */}
+        <div className="flex items-center justify-between text-xs font-medium text-gray-400 mb-2 pt-2">
+          
+          {/* Status/Cost/Venue */}
           <span className="flex items-center space-x-2">
             <span className="text-gray-400">
               {event.venue?.includes("Online") ? "Online" : "On-site"}
@@ -403,6 +435,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
             </span>
           </span>
 
+          {/* Impressions */}
           <span className="flex items-center space-x-3">
             {event.impressions !== undefined && (
               <div className="flex items-center text-purple-400 text-xs font-semibold">
@@ -413,58 +446,98 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
           </span>
         </div>
 
-        <div className="flex items-center justify-end text-xs font-medium text-gray-400 mb-2">
-          {shareFeedback ? (
-            <span className="flex items-center text-purple-400 text-xs font-semibold transition-all">
-              <shareFeedback.icon className="w-3 h-3 mr-1" />
-              {shareFeedback.text}
-            </span>
-          ) : (
-            <Share2
-              className="w-4 h-4 text-gray-500 cursor-pointer hover:text-purple-400 transition-colors"
-              onClick={localHandleShare}
+        {/* Share/Like/View Details */}
+        <div className="flex items-center justify-between text-xs font-medium text-gray-400 mt-2">
+          
+          <button className="mt-auto w-fit text-base font-semibold text-purple-400 hover:text-purple-300 transition-colors text-left">
+            View Details &rarr;
+          </button>
+          
+          <span className="flex items-center space-x-3">
+            {shareFeedback ? (
+              <span className="flex items-center text-purple-400 text-xs font-semibold transition-all">
+                <shareFeedback.icon className="w-3 h-3 mr-1" />
+                {shareFeedback.text}
+              </span>
+            ) : (
+              <Share2
+                className="w-4 h-4 text-gray-500 cursor-pointer hover:text-purple-400 transition-colors"
+                onClick={localHandleShare}
+              />
+            )}
+
+            <Heart
+              className={`w-4 h-4 cursor-pointer transition-colors ml-3 ${
+                isLiked
+                  ? "text-red-500 fill-red-500"
+                  : "text-gray-500 hover:text-red-500 hover:fill-gray-900"
+              }`}
+              onClick={handleLikeClick}
             />
-          )}
-
-          <Heart
-            className={`w-4 h-4 cursor-pointer transition-colors ml-3 ${
-              isLiked
-                ? "text-red-500 fill-red-500"
-                : "text-gray-500 hover:text-red-500 hover:fill-gray-900"
-            }`}
-            onClick={handleLikeClick}
-          />
+          </span>
         </div>
-
-        <h3 className="text-2xl font-bold text-white mb-2 line-clamp-3 h-20">
-          {event.title}
-        </h3>
-
-        <p className="text-sm text-gray-400 flex items-center mb-4">
-          <MapPin className="w-4 h-4 mr-2 text-purple-400" />
-          {event.venue?.includes("|")
-            ? event.venue.split("|").slice(-1).pop().trim()
-            : event.venue}
-        </p>
-
-        <button className="mt-auto w-fit text-base font-semibold text-purple-400 hover:text-purple-300 transition-colors text-left">
-          View Details &rarr;
-        </button>
       </div>
     </div>
   );
 };
 
+// --- NEW COMPONENT FOR POPULAR EVENTS MOBILE STYLE (Clean Image) ---
+const PopularEventCard = ({ event, onDetailsClick }) => {
+    // This card is used for Popular Events on mobile screens only.
+    return (
+        <div
+            className="flex flex-shrink-0 w-[80vw] max-w-sm mx-auto sm:w-[300px] sm:max-w-[300px]"
+        >
+            <div
+                className="relative w-full rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-black cursor-pointer group transition-transform duration-300 hover:scale-[1.02]"
+                onClick={() => onDetailsClick(event.id)}
+            >
+                {/* Fixed aspect ratio container for the image */}
+                <div className="relative w-full h-[260px] aspect-[4/3] sm:aspect-auto">
+                    <img
+                        src={event.poster}
+                        alt={event.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src =
+                                "https://placehold.co/400x550/111827/ffffff?text=Image+Not+Found";
+                        }}
+                    />
+
+                    {/* Gradient Overlay (kept for smooth edge blending, but reduced intensity) */}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+
+                    {/* Category Tag - remains visible at the top */}
+                    <div className="absolute top-4 left-4 flex items-center">
+                        <span className="px-3 py-1 rounded-full bg-purple-600 text-[11px] font-semibold text-white shadow-lg shadow-purple-800/70">
+                            Popular Pick
+                        </span>
+                    </div>
+
+                    {/* All other text/blur elements removed as requested. */}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Reusable Horizontal Scroll Section component ---
 const HorizontalScrollSection = ({
   events,
   onDetailsClick,
   onShareClick,
   title,
   onViewAllClick,
+  isPopular = false, // New prop to determine if it's the Popular Events section
 }) => {
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // The standard EventCard is used for Upcoming and Tech Events
+  const CardComponent = EventCard;
 
   const showScrollButtons = events.length > 3;
 
@@ -494,9 +567,11 @@ const HorizontalScrollSection = ({
 
   const scroll = (direction) => {
     if (scrollContainerRef.current) {
-      const cardWidth = 300;
-      const gap = 24;
-      const scrollDistance = cardWidth * 2 + gap;
+      // Use the mobile card width for scrolling logic if it's the popular section on small screens
+      const isMobilePopular = isPopular && window.innerWidth < 640;
+      const cardWidth = isMobilePopular ? 320 : 300; 
+      const gap = 24; 
+      const scrollDistance = isMobilePopular ? cardWidth + gap : cardWidth * 2 + gap; 
       const scrollAmount =
         direction === "left" ? -scrollDistance : scrollDistance;
 
@@ -527,44 +602,94 @@ const HorizontalScrollSection = ({
       </div>
 
       <div className="relative">
-        {showScrollButtons && canScrollLeft && (
-          <button
-            onClick={() => scroll("left")}
-            className="absolute -left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-gray-800/80 text-white z-10 hover:bg-purple-600/90 transition-all shadow-xl hidden lg:block"
-            aria-label="Scroll events left"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-        )}
+       {showScrollButtons && canScrollLeft && (
+  <button
+    onClick={() => scroll("left")}
+    aria-label="Scroll events left"
+    className="
+      absolute left-2 sm:-left-4 top-1/2 -translate-y-1/2
+      w-10 h-10
+      flex items-center justify-center
+      bg-transparent
+      text-white
+      hover:text-purple-400
+      transition-colors
+      z-20
+    "
+  >
+    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+  </button>
+)}
+
+
 
         <div
           ref={scrollContainerRef}
           className="flex space-x-6 overflow-x-auto scrollbar-hide py-4 snap-x snap-mandatory pr-6"
         >
           {events.map((event) => (
-            <div key={event.id} className="snap-start">
-              <EventCard
-                event={event}
-                onDetailsClick={onDetailsClick}
-                onShareClick={onShareClick}
-              />
+            <div 
+                key={event.id} 
+                // Hide mobile-style card on desktop/tablet, and desktop-style card on mobile
+                className={`snap-start ${isPopular ? "hidden sm:block" : ""}`}
+            >
+              {isPopular ? (
+                  // Desktop/Tablet view uses the standard card
+                  <EventCard
+                      event={event}
+                      onDetailsClick={onDetailsClick}
+                      onShareClick={onShareClick}
+                  />
+              ) : (
+                  // All other sections use the standard card for both mobile and desktop
+                  <CardComponent
+                      event={event}
+                      onDetailsClick={onDetailsClick}
+                      onShareClick={onShareClick}
+                  />
+              )}
             </div>
+          ))}
+
+          {/* RENDER POPULAR CARD ON MOBILE (uses the clean image style) */}
+          {isPopular && events.map((event) => (
+                <div 
+                    key={`mobile-${event.id}`} 
+                    className="snap-start sm:hidden flex flex-shrink-0"
+                >
+                    <PopularEventCard
+                        event={event}
+                        onDetailsClick={onDetailsClick}
+                    />
+                </div>
           ))}
         </div>
 
         {showScrollButtons && canScrollRight && (
-          <button
-            onClick={() => scroll("right")}
-            className="absolute -right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-gray-800/80 text-white z-10 hover:bg-purple-600/90 transition-all shadow-xl hidden lg:block"
-            aria-label="Scroll events right"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        )}
+  <button
+    onClick={() => scroll("right")}
+    aria-label="Scroll events right"
+    className="
+      absolute right-2 sm:-right-4 top-1/2 -translate-y-1/2
+      w-10 h-10
+      flex items-center justify-center
+      bg-transparent
+      text-white
+      hover:text-purple-400
+      transition-colors
+      z-20
+    "
+  >
+    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+  </button>
+)}
+
+
       </div>
     </section>
   );
 };
+
 
 // ===== FEATURED CAROUSEL =====
 const FeaturedCarousel = ({
@@ -694,31 +819,51 @@ const FeaturedCarousel = ({
       </div>
 
       {/* ARROWS OUTSIDE CARD */}
-      {/* ARROWS OUTSIDE CARD */}
-{events.length > 1 && (
-  <>
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        prevEvent();
-      }}
-      className="absolute -left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center border border-white/30 shadow-lg shadow-black/60 backdrop-blur-md hover:bg-white/40 transition-colors z-30"
-      aria-label="Previous event"
-    >
-      <ChevronLeft className="w-6 h-6" />
-    </button>
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        nextEvent();
-      }}
-      className="absolute -right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center border border-white/30 shadow-lg shadow-black/60 backdrop-blur-md hover:bg-white/40 transition-colors z-30"
-      aria-label="Next event"
-    >
-      <ChevronRight className="w-6 h-6" />
-    </button>
-  </>
-)}
+      {events.length > 1 && (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              prevEvent();
+            }}
+         className="
+  absolute -left-[38px] sm:-left-4
+  top-1/2 -translate-y-1/2
+  w-10 h-10
+  flex items-center justify-center
+  bg-transparent
+  text-white
+  hover:text-purple-400
+  transition-colors
+  z-20
+" aria-label="Previous event"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              nextEvent();
+            }}
+          className="
+  absolute -right-[38px] sm:-right-4
+  top-1/2 -translate-y-1/2
+  w-10 h-10
+  flex items-center justify-center
+  bg-transparent
+  text-white
+  hover:text-purple-400
+  transition-colors
+  z-20
+"
+
+
+            aria-label="Next event"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </>
+      )}
 
       <MobileDots />
     </div>
@@ -996,9 +1141,10 @@ const EventsPage = () => {
   const eventDetailData = useMemo(() => {
     const idNum = eventIdParam ? parseInt(eventIdParam, 10) : null;
     const data =
-      idNum != null
-        ? ALL_EVENTS.find((e) => e.id === idNum) || EVENT_DETAIL_DATA
-        : null;
+  idNum != null
+    ? ALL_EVENTS.find((e) => e.id === idNum) ?? null
+    : null;
+
     return data;
   }, [eventIdParam, ALL_EVENTS]);
 
@@ -1012,7 +1158,8 @@ const EventsPage = () => {
     ).slice(0, 3);
   }, [eventDetailData, ALL_EVENTS]);
 
-  const renderDetailsView = eventDetailData !== null;
+  const renderDetailsView = Boolean(eventIdParam && eventDetailData);
+
   const renderHostView = viewParam === "host";
   const renderAllEventsView = viewParam === "all";
 
@@ -1142,7 +1289,8 @@ const EventsPage = () => {
     const popular = ALL_EVENTS.filter(
       (e) => !carouselIds.includes(e.id)
     );
-    return popular.slice(0, 3);
+    // Slice only 5 events to keep the list short for the homepage
+    return popular.slice(0, 5); 
   }, [ALL_EVENTS]);
 
   useEffect(() => {
@@ -1175,6 +1323,7 @@ const EventsPage = () => {
 
       const normalizedEvent = {
         ...newHostedEvent,
+        id: Date.now(),
         title: newHostedEvent.title || "Untitled Event",
         venue:
           newHostedEvent.venue ||
@@ -1193,6 +1342,10 @@ const EventsPage = () => {
 
       const updated = [normalizedEvent, ...prevEvents];
       saveImpressionsToLocalStorage(updated);
+      localStorage.setItem(
+  EVENTS_SNAPSHOT_KEY,
+  JSON.stringify(updated)
+);
       return updated.sort((a, b) => b.impressions - a.impressions);
     });
 
@@ -1200,7 +1353,8 @@ const EventsPage = () => {
       if (typeof window !== "undefined") {
         const saved = localStorage.getItem(HOSTED_EVENTS_KEY);
         const existing = saved ? JSON.parse(saved) : [];
-        const updatedHosted = [...existing, newHostedEvent];
+        const updatedHosted = [...existing, normalizedEvent];
+
         localStorage.setItem(
           HOSTED_EVENTS_KEY,
           JSON.stringify(updatedHosted)
@@ -1268,14 +1422,7 @@ const EventsPage = () => {
         </nav>
 
         <div className="mt-2 border-t border-gray-800 px-3 py-4 space-y-1 text-sm">
-          <Link
-            href="/create-post"
-            onClick={() => isMobile() && setSidebarOpen(false)}
-            className="block px-3 py-2 rounded-lg text-gray-300 hover:bg-[#111827] hover:text-white"
-          >
-            Create Post
-          </Link>
-
+          
           <button
             onClick={(e) => {
               handleHostClick(e);
@@ -1293,6 +1440,15 @@ const EventsPage = () => {
           >
             Saved Items
           </Link>
+          <Link
+            href="/settings"
+            onClick={() => isMobile() && setSidebarOpen(false)}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-[#111827] hover:text-white"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Settings</span>
+          </Link>
+
         </div>
       </aside>
 
@@ -1487,33 +1643,15 @@ const EventsPage = () => {
               onViewAllClick={handleViewAllTech}
             />
 
-            <section className="py-10">
-              <div className="flex flex-col items-center mb-10">
-                <h2 className="text-4xl font-extrabold text-white text-center mb-6">
-                  Popular Events
-                </h2>
-                <div className="w-full flex justify-end">
-                  <button
-                    onClick={handleViewAllPopular}
-                    className="inline-flex items-center text-base font-semibold text-purple-400 hover:text-purple-300 transition-colors px-0 py-0 group"
-                  >
-                    View All
-                    <ChevronRight className="w-5 h-5 ml-2 transition-transform duration-300" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
-                {popularEventsSlice.map((event) => (
-                  <EventCard
-                    key={`popular-${event.id}`}
-                    event={event}
-                    onDetailsClick={handleDetailsClick}
-                    onShareClick={handleShareClick}
-                  />
-                ))}
-              </div>
-            </section>
+            {/* MODIFIED: Use HorizontalScrollSection for Popular Events and pass isPopular=true */}
+            <HorizontalScrollSection
+              events={popularEventsSlice}
+              onDetailsClick={handleDetailsClick}
+              onShareClick={handleShareClick}
+              title="Popular Events"
+              onViewAllClick={handleViewAllPopular}
+              isPopular={true} 
+            />
           </div>
         )}
       </main>

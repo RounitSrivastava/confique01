@@ -5,7 +5,9 @@ import { hashPassword, createToken } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { getAuthCookieOptions } from "@/lib/cookie-options";
 
-export const dynamic = "force-dynamic"; // ✅ REQUIRED in Next.js 15
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 
 export async function POST(req) {
   try {

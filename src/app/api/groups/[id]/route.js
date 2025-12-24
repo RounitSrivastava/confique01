@@ -1,4 +1,6 @@
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
 
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
@@ -9,6 +11,7 @@ import User from "@/models/User";
 import Vote from "@/models/Vote"; 
 import cloudinary from "@/lib/cloudinary";
 import { getCurrentUser } from "@/lib/auth";
+
 
 /* ===========================
     GET SINGLE GROUP BY ID

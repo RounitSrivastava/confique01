@@ -3,7 +3,10 @@ import dbConnect from "@/lib/mongoose"; // Changed from { connectDB } to default
 import Event from "@/models/Event";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
+
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
 
 
 export async function POST(req, { params }) {

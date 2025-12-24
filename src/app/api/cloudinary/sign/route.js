@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { getUploadSignature } from "@/lib/cloudinary";
 import { getCurrentUser } from "@/lib/auth";
 
-export const dynamic = "force-dynamic"; // ✅ REQUIRED in Next.js 15
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+ // ✅ REQUIRED in Next.js 15
 
 /**
  * GET /api/cloudinary/sign?folder=some/folder

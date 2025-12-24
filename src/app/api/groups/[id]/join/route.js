@@ -5,7 +5,9 @@ import Group from "@/models/Group";
 import User from "@/models/User";
 import { getCurrentUser } from "@/lib/auth";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
 
 export async function POST(req, context) {
   await dbConnect();

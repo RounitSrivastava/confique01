@@ -5,7 +5,9 @@ import Group from "@/models/Group";
 import { getCurrentUser, extractTokenFromRequest } from "@/lib/auth";
 import mongoose from "mongoose";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
 
 /* ===================================================
     CONSTANTS & HELPERS

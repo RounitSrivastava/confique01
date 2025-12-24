@@ -5,7 +5,9 @@ import Post from "@/models/Post";
 import Vote from "@/models/Vote";
 import { getCurrentUser } from "@/lib/auth";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
 
 /* ==========================================
    POST /api/groups/[id]/posts/[postId]/vote

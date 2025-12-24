@@ -5,7 +5,9 @@ import User from "@/models/User";
 import cloudinary from "@/lib/cloudinary";
 import { getCurrentUser } from "@/lib/auth";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
 
 /* ==========================================
     GET → Fetch all groups + user state

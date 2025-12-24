@@ -6,7 +6,9 @@ import Post from "@/models/Post";
 import User from "@/models/User";
 import { getCurrentUser } from "@/lib/auth";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
 
 /* ==========================================
    GET COMMENTS

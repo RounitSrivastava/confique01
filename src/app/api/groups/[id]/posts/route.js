@@ -8,7 +8,9 @@ import Vote from "@/models/Vote";
 import cloudinary from "@/lib/cloudinary";
 import { getCurrentUser } from "@/lib/auth";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
 
 /* ---------------------------------
    HELPER: Look up user's vote status

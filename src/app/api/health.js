@@ -1,6 +1,9 @@
 // pages/api/health.js
 import dbConnect from "@/lib/mongoose";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export default async function handler(req, res) {
   try {
     await dbConnect();

@@ -1374,7 +1374,12 @@ const EventsPage = () => {
     : "list";
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d]/80 text-white font-sans antialiased relative">
+
+    <div className="min-h-screen text-white font-sans antialiased relative bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000]">
+      {/* Dark overlay */}
+
+    {/* <div className="min-h-screen bg-[#0d0d0d]/80 text-white font-sans antialiased relative"> */}
+
       <div
         onClick={() => setSidebarOpen(false)}
         className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 ${
@@ -1660,6 +1665,7 @@ const EventsPage = () => {
         &copy; {new Date().getFullYear()} All rights reserved.
       </footer>
     </div>
+           /*</div> */
   );
 };
 

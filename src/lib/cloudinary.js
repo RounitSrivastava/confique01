@@ -2,61 +2,76 @@
 import { v2 as cloudinary } from "cloudinary";
 import crypto from "crypto";
 
-const {
-    CLOUDINARY_CLOUD_NAME,
-    CLOUDINARY_API_KEY,
-    CLOUDINARY_API_SECRET,
-} = process.env;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
-// Configure cloudinary client when env is present
-if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
-    cloudinary.config({
-        cloud_name: CLOUDINARY_CLOUD_NAME,
-        api_key: CLOUDINARY_API_KEY,
-        api_secret: CLOUDINARY_API_SECRET,
-        secure: true,
-    });
+/* ---------------------------------
+   CONFIGURE CLOUDINARY (SAFE)
+---------------------------------- */
+if (
+  CLOUDINARY_CLOUD_NAME &&
+  CLOUDINARY_API_KEY &&
+  CLOUDINARY_API_SECRET
+) {
+  cloudinary.config({
+    cloud_name: CLOUDINARY_CLOUD_NAME,
+    api_key: CLOUDINARY_API_KEY,
+    api_secret: CLOUDINARY_API_SECRET,
+    secure: true,
+  });
 } else {
-    // Not throwing here — routes that actually need Cloudinary should check and raise a helpful error.
-    // eslint-disable-next-line no-console
-    console.warn(
-        "Cloudinary envs not fully configured. CLOUDINARY_CLOUD_NAME/CLOUDINARY_API_KEY/CLOUDINARY_API_SECRET are required for server-side Cloudinary operations."
-    );
+  // DO NOT throw at import time — causes Next.js build to fail
+  // eslint-disable-next-line no-console
+  console.warn(
+    "⚠️ Cloudinary envs missing. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET to enable uploads."
+  );
 }
 
+/* ---------------------------------
+   SIGNED UPLOAD SIGNATURE
+---------------------------------- */
 /**
- * getUploadSignature(params)
- * Returns an object with timestamp, signature, apiKey, cloudName.
- * Throws if server envs missing (only when actual signature is needed).
- *
- * Example:
- * const sig = getUploadSignature({ eager: 'w_400,h_300,c_fill' });
- * // { timestamp: 163..., signature: 'abc...', apiKey: '...', cloudName: '...' }
- * * 
+ * Generates a signed Cloudinary upload signature
+ * @param {Object} params - Parameters to be signed (e.g. { folder })
+ * @returns {Object} { timestamp, signature, apiKey, cloudName }
  */
 export function getUploadSignature(params = {}) {
-    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-        throw new Error(
-            "Cloudinary server envs not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET."
-        );
-    }
+  if (
+    !CLOUDINARY_CLOUD_NAME ||
+    !CLOUDINARY_API_KEY ||
+    !CLOUDINARY_API_SECRET
+  ) {
+    throw new Error(
+      "Cloudinary envs not configured. Required: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET."
+    );
+  }
 
-    const timestamp = Math.floor(Date.now() / 1000);
-    const toSignObj = { ...params, timestamp };
+  const timestamp = Math.floor(Date.now() / 1000);
 
-    // include only defined values and sort keys lexicographically
-    const keys = Object.keys(toSignObj).filter((k) => toSignObj[k] !== undefined && toSignObj[k] !== null);
-    keys.sort();
+  // Merge params + timestamp
+  const toSignObj = { ...params, timestamp };
 
-    const toSign = keys.map((k) => `${k}=${toSignObj[k]}`).join("&");
-    const signature = crypto.createHash("sha1").update(toSign + CLOUDINARY_API_SECRET).digest("hex");
+  // Filter undefined/null & sort keys (Cloudinary requirement)
+  const sortedKeys = Object.keys(toSignObj)
+    .filter((k) => toSignObj[k] !== undefined && toSignObj[k] !== null)
+    .sort();
 
-    return {
-        timestamp,
-        signature,
-        apiKey: CLOUDINARY_API_KEY,
-        cloudName: CLOUDINARY_CLOUD_NAME,
-    };
+  const toSign = sortedKeys
+    .map((k) => `${k}=${toSignObj[k]}`)
+    .join("&");
+
+  const signature = crypto
+    .createHash("sha1")
+    .update(toSign + CLOUDINARY_API_SECRET)
+    .digest("hex");
+
+  return {
+    timestamp,
+    signature,
+    apiKey: CLOUDINARY_API_KEY,
+    cloudName: CLOUDINARY_CLOUD_NAME,
+  };
 }
 
 export default cloudinary;

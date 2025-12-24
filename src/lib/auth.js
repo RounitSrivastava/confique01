@@ -4,155 +4,164 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies as nextCookies } from "next/headers";
 
-// ------------------------------
-// ENV CHECKS (safe & explicit)
-// ------------------------------
-const isProd = process.env.NODE_ENV === "production";
-if (!process.env.JWT_SECRET) {
-    if (isProd) {
-        throw new Error("❌ JWT_SECRET is not defined in environment variables (production).");
-    } else {
-        // eslint-disable-next-line no-console
-        console.warn(
-            "⚠️ JWT_SECRET is not defined — using development fallback. " +
-            "Set JWT_SECRET in .env.local to avoid this message."
-        );
-    }
-}
-const JWT_SECRET = process.env.JWT_SECRET || "dev_fallback_change_me";
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+/* ===================================================
+   INTERNAL JWT CONFIG (SAFE FOR APP ROUTER)
+=================================================== */
+function getJwtConfig() {
+  const secret = process.env.JWT_SECRET;
+  const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
 
-// ------------------------------
-// PASSWORD HELPERS
-// ------------------------------
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      // ❗ throw ONLY at runtime, never at import time
+      throw new Error("JWT_SECRET is not defined");
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "⚠️ JWT_SECRET is not defined — using dev fallback. " +
+        "Set JWT_SECRET in .env.local to remove this warning."
+      );
+      return {
+        secret: "dev_fallback_change_me",
+        expiresIn,
+      };
+    }
+  }
+
+  return { secret, expiresIn };
+}
+
+/* ===================================================
+   PASSWORD HELPERS
+=================================================== */
 export const hashPassword = async (password) => {
-    const salt = await bcrypt.genSalt(10);
-    return bcrypt.hash(password, salt);
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
 };
 
 export const verifyPassword = async (password, hash) => {
-    return bcrypt.compare(password, hash);
+  return bcrypt.compare(password, hash);
 };
 
-// ------------------------------
-// TOKEN CREATION
-// ------------------------------
+/* ===================================================
+   TOKEN CREATION
+=================================================== */
 export const createToken = ({ userId, email }) => {
-    return jwt.sign(
-        {
-            sub: userId,
-            userId,
-            email,
-        },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-    );
+  const { secret, expiresIn } = getJwtConfig();
+
+  return jwt.sign(
+    {
+      sub: userId,
+      userId,
+      email,
+    },
+    secret,
+    { expiresIn }
+  );
 };
 
-// ------------------------------
-// TOKEN VERIFY UTILITIES
-// ------------------------------
+/* ===================================================
+   TOKEN VERIFY
+=================================================== */
 export const verifyTokenStrict = (token) => {
-    return jwt.verify(token, JWT_SECRET);
+  const { secret } = getJwtConfig();
+  return jwt.verify(token, secret);
 };
 
 export const verifyToken = (token) => {
-    try {
-        return jwt.verify(token, JWT_SECRET);
-    } catch {
-        return null;
-    }
+  try {
+    const { secret } = getJwtConfig();
+    return jwt.verify(token, secret);
+  } catch {
+    return null;
+  }
 };
 
-// ------------------------------
-// REQUEST HELPERS
-// ------------------------------
+/* ===================================================
+   REQUEST HELPERS
+=================================================== */
+const PRIMARY_COOKIE_NAME = "confique_token";
+
 const getHeaderValue = (req, name) => {
-    try {
-        if (!req || !req.headers) return "";
+  try {
+    if (!req || !req.headers) return "";
 
-        // Next Request-like (Headers)
-        if (typeof req.headers.get === "function") {
-            const v = req.headers.get(name);
-            return typeof v === "string" ? v : "";
-        }
-
-        // Node-like headers object (values may be string or array)
-        const raw = req.headers[name] ?? req.headers[name.toLowerCase()] ?? "";
-        if (Array.isArray(raw)) return String(raw[0] || "");
-        return typeof raw === "string" ? raw : "";
-    } catch {
-        return "";
+    // Next.js Request headers
+    if (typeof req.headers.get === "function") {
+      const v = req.headers.get(name);
+      return typeof v === "string" ? v : "";
     }
+
+    // Node-style headers
+    const raw = req.headers[name] ?? req.headers[name.toLowerCase()];
+    if (Array.isArray(raw)) return String(raw[0] || "");
+    return typeof raw === "string" ? raw : "";
+  } catch {
+    return "";
+  }
 };
 
 /**
- * Extract JWT token from multiple possible sources:
- * 1) next/headers cookies() (server App Router)
- * 2) cookie header on req
- * 3) Authorization: Bearer <token>
+ * Extract token from:
+ * 1) next/headers cookies()  ✅ App Router
+ * 2) Cookie header
+ * 3) Authorization: Bearer
  */
 export async function extractTokenFromRequest(req) {
-    const PRIMARY_COOKIE_NAME = "confique_token";
-    
-    // 1) next/headers cookies() (Preferred method in App Router)
-    try {
-        if (typeof nextCookies === "function") {
-            // FIX APPLIED: Access cookies directly for Next.js sync context
-            const cookieStore = nextCookies();
-            const token = cookieStore.get(PRIMARY_COOKIE_NAME)?.value || null;
-            if (token) return String(token).trim();
-        }
-    } catch (e) {
-        // This catch handles errors when cookies() is called outside a Request/Server Component lifecycle
-        if (!isProd) {
-            console.warn(`extractTokenFromRequest: reading nextCookies() failed (This is common in edge functions or certain contexts): ${e?.message || e}`);
-        }
+  // 1️⃣ App Router cookies()
+  try {
+    const cookieStore = nextCookies();
+    const token = cookieStore.get(PRIMARY_COOKIE_NAME)?.value;
+    if (token) return token.trim();
+  } catch {
+    // Safe to ignore — happens in edge/static contexts
+  }
+
+  // 2️⃣ Cookie header fallback
+  try {
+    const cookieHeader = getHeaderValue(req, "cookie");
+    if (cookieHeader) {
+      const match = cookieHeader.match(
+        new RegExp(`(?:^|;\\s*)${PRIMARY_COOKIE_NAME}=([^;]+)`)
+      );
+      if (match) return decodeURIComponent(match[1]);
     }
+  } catch {}
 
-    // 2) cookie header (Fallback for Node environment or when nextCookies fails)
-    try {
-        const cookieHeader = getHeaderValue(req, "cookie") || "";
-        if (cookieHeader) {
-            // Regex to find the primary token
-            const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${PRIMARY_COOKIE_NAME}=([^;]+)`));
-            if (match) return decodeURIComponent(String(match[1]).trim());
-        }
-    } catch {}
+  // 3️⃣ Authorization header
+  try {
+    const authHeader = getHeaderValue(req, "authorization");
+    if (authHeader?.toLowerCase().startsWith("bearer ")) {
+      return authHeader.slice(7).trim();
+    }
+  } catch {}
 
-    // 3) Authorization header (Bearer)
-    try {
-        const authHeader = getHeaderValue(req, "authorization") || "";
-        if (typeof authHeader === "string" && authHeader.toLowerCase().startsWith("bearer ")) {
-            return authHeader.slice(7).trim();
-        }
-    } catch {}
-
-    return null;
+  return null;
 }
 
-// ------------------------------
-// MAIN AUTH FUNCTION
-// ------------------------------
+/* ===================================================
+   CURRENT USER
+=================================================== */
 export async function getCurrentUser(req) {
-    try {
-        const token = await extractTokenFromRequest(req);
-        if (!token) return null;
+  try {
+    const token = await extractTokenFromRequest(req);
+    if (!token) return null;
 
-        const decoded = verifyToken(token);
-        if (!decoded) return null;
+    const decoded = verifyToken(token);
+    if (!decoded) return null;
 
-        const id = decoded.sub || decoded.userId || decoded.id;
-        if (!id) return null;
+    const id = decoded.sub || decoded.userId || decoded.id;
+    if (!id) return null;
 
-        return {
-            id: String(id),
-            email: decoded.email || null,
-        };
-    } catch (err) {
-        console.error("❌ getCurrentUser failed:", err?.message || String(err));
-        return null;
-    }
+    return {
+      id: String(id),
+      email: decoded.email || null,
+    };
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("❌ getCurrentUser failed:", err?.message || err);
+    return null;
+  }
 }
 
 export default getCurrentUser;

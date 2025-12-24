@@ -5,7 +5,7 @@ import User from "@/models/User";
 import { verifyPassword, createToken } from "@/lib/auth";
 import { getAuthCookieOptions } from "@/lib/cookie-options";
 
-export const dynamic = "force-dynamic"; // ✅ REQUIRED
+export const dynamic = "force-dynamic"; // ✅ REQUIRED IN NEXT 15
 
 export async function POST(req) {
   try {
@@ -13,22 +13,33 @@ export async function POST(req) {
     const { email, password } = body || {};
 
     if (!email || !password) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing fields" },
+        { status: 400 }
+      );
     }
 
     await connectToDatabase();
 
     const user = await User.findOne({
       email: String(email).trim().toLowerCase(),
-    }).select("+passwordHash");
+    })
+      .select("+passwordHash")
+      .lean();
 
     if (!user) {
-      return NextResponse.json({ error: "No user found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "No user found" },
+        { status: 404 }
+      );
     }
 
     const ok = await verifyPassword(password, user.passwordHash);
     if (!ok) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 }
+      );
     }
 
     const token = createToken({
@@ -36,14 +47,15 @@ export async function POST(req) {
       email: user.email,
     });
 
-    const publicUser = {
-      id: String(user._id),
-      email: user.email,
-      name: user.name || "",
-    };
-
     const res = NextResponse.json(
-      { ok: true, user: publicUser },
+      {
+        ok: true,
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.name || "",
+        },
+      },
       { status: 200 }
     );
 

@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongoose";
 import User from "@/models/User";
 import { verifyPassword, createToken } from "@/lib/auth";
-import { getAuthCookieOptions } from "@/lib/cookie-options";   // ✅ USE HELPER
+import { getAuthCookieOptions } from "@/lib/cookie-options";
+
+export const dynamic = "force-dynamic"; // ✅ REQUIRED
 
 export async function POST(req) {
   try {
@@ -16,12 +18,9 @@ export async function POST(req) {
 
     await connectToDatabase();
 
-    // ensure passwordHash is included
     const user = await User.findOne({
       email: String(email).trim().toLowerCase(),
-    })
-      .select("+passwordHash")
-      .lean();
+    }).select("+passwordHash");
 
     if (!user) {
       return NextResponse.json({ error: "No user found" }, { status: 404 });
@@ -32,30 +31,30 @@ export async function POST(req) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // JWT creation
     const token = createToken({
       userId: String(user._id),
       email: user.email,
     });
 
     const publicUser = {
-      id: user._id,
+      id: String(user._id),
       email: user.email,
       name: user.name || "",
     };
 
-    const res = NextResponse.json({ ok: true, user: publicUser }, { status: 200 });
+    const res = NextResponse.json(
+      { ok: true, user: publicUser },
+      { status: 200 }
+    );
 
-    // ✅ Use shared cookie config
     const { name: cookieName, cookieOptions } = getAuthCookieOptions();
-
     res.cookies.set(cookieName, token, cookieOptions);
 
     return res;
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     return NextResponse.json(
-      { error: process.env.NODE_ENV !== "production" ? String(err) : "Server error" },
+      { error: "Server error" },
       { status: 500 }
     );
   }

@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongoose";
 import Group from "@/models/Group";
@@ -7,65 +5,84 @@ import User from "@/models/User";
 import cloudinary from "@/lib/cloudinary";
 import { getCurrentUser } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 /* ==========================================
     GET → Fetch all groups + user state
 ========================================== */
-export async function GET(req) {
-    await dbConnect();
+export async function GET() {
+  await dbConnect();
 
-    // 1. Authenticate user to determine membership status
-    const actor = await getCurrentUser(req); // { id, email } or null
+  try {
+    const actor = await getCurrentUser(); // ✅ FIXED
+
     let joinedGroupIds = [];
     let createdGroupIds = [];
 
     if (actor?.id) {
-        // 2. Load user's membership data
-        const user = await User.findById(actor.id)
-            .select("joinedCommunities createdGroups") // Note: Using joinedCommunities if that is your latest User schema name
-            .lean();
+      const user = await User.findById(actor.id)
+        .select("joinedCommunities createdGroups")
+        .lean();
 
-        if (user) {
-            // Note: Use 'joinedCommunities' if that is your final User schema field name.
-            joinedGroupIds = (user.joinedCommunities || []).map((id) => id.toString());
-            createdGroupIds = (user.createdGroups || []).map((id) => id.toString());
-        }
+      if (user) {
+        joinedGroupIds = (user.joinedCommunities || []).map((id) =>
+          id.toString()
+        );
+        createdGroupIds = (user.createdGroups || []).map((id) =>
+          id.toString()
+        );
+      }
     }
 
-    // 3. Fetch all groups
-    const groups = await Group.find().sort({ membersCount: -1 }).lean();
+    const groups = await Group.find()
+      .sort({ membersCount: -1 })
+      .lean();
 
-    // 4. Map and clean up group data
     const responseGroups = groups.map((g) => ({
-        ...g,
-        membersCount: g.members?.length || 0, // Ensure count is from 'members' array
-        members: undefined, // Hide the sensitive members array
+      ...g,
+      id: g._id.toString(),
+      membersCount: g.members?.length || 0,
+      members: undefined,
     }));
 
-    // 5. Return all groups along with the current user's membership state
     return NextResponse.json({
-        groups: responseGroups,
-        joinedGroupIds,
-        createdGroupIds,
+      groups: responseGroups,
+      joinedGroupIds,
+      createdGroupIds,
     });
+  } catch (error) {
+    console.error("GET ALL GROUPS ERROR:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch groups" },
+      { status: 500 }
+    );
+  }
 }
 
 /* ==========================================
-    POST → Create a new group (SECURE)
+    POST → Create a new group
 ========================================== */
 export async function POST(req) {
-    await dbConnect();
+  await dbConnect();
 
-    const actor = await getCurrentUser(req);
-    // 1. Security Check
+  try {
+    const actor = await getCurrentUser(); // ✅ FIXED
+
     if (!actor?.id || !actor?.email) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();
     const { name, description, category, iconBase64, bannerBase64 } = body;
 
-    if (!name) {
-        return NextResponse.json({ error: "Group name required" }, { status: 400 });
+    if (!name || !name.trim()) {
+      return NextResponse.json(
+        { error: "Group name required" },
+        { status: 400 }
+      );
     }
 
     const slug = name.toLowerCase().trim().replace(/\s+/g, "-");
@@ -75,56 +92,58 @@ export async function POST(req) {
     let iconPublicId = null;
     let bannerPublicId = null;
 
-    // 2. Cloudinary Uploads
-    try {
-        if (iconBase64) {
-            const upload = await cloudinary.uploader.upload(iconBase64, {
-                folder: `confique/groups/${slug}`,
-                public_id: "icon",
-            });
-            iconUrl = upload.secure_url;
-            iconPublicId = upload.public_id;
-        }
-
-        if (bannerBase64) {
-            const upload = await cloudinary.uploader.upload(bannerBase64, {
-                folder: `confique/groups/${slug}`,
-                public_id: "banner",
-            });
-            bannerUrl = upload.secure_url;
-            bannerPublicId = upload.public_id;
-        }
-    } catch (e) {
-        console.error("Cloudinary upload failed:", e);
-        return NextResponse.json({ error: "Image upload failed." }, { status: 500 });
+    if (iconBase64) {
+      const upload = await cloudinary.uploader.upload(iconBase64, {
+        folder: `confique/groups/${slug}`,
+        public_id: "icon",
+      });
+      iconUrl = upload.secure_url;
+      iconPublicId = upload.public_id;
     }
 
-    // 3. Create Group
+    if (bannerBase64) {
+      const upload = await cloudinary.uploader.upload(bannerBase64, {
+        folder: `confique/groups/${slug}`,
+        public_id: "banner",
+      });
+      bannerUrl = upload.secure_url;
+      bannerPublicId = upload.public_id;
+    }
+
     const group = await Group.create({
-        name,
-        description,
-        slug,
-        category,
-        ownerEmail: actor.email.toLowerCase(),
-        iconUrl,
-        iconPublicId,
-        bannerUrl,
-        bannerPublicId,
-        members: [actor.id], // Initialize with the User ID
-        membersCount: 1,
+      name,
+      description,
+      slug,
+      category,
+      ownerEmail: actor.email.toLowerCase(),
+      iconUrl,
+      iconPublicId,
+      bannerUrl,
+      bannerPublicId,
+      members: [actor.id],
+      membersCount: 1,
     });
 
-    // 4. Update User's membership lists (Atomic Sync)
     await User.findByIdAndUpdate(actor.id, {
-        $addToSet: {
-            createdGroups: group._id, // Add to created list
-            joinedCommunities: group._id, // Add to joined list
-        },
+      $addToSet: {
+        createdGroups: group._id,
+        joinedCommunities: group._id,
+      },
     });
 
-    // 5. Response
     const groupResponse = group.toObject();
+    groupResponse.id = group._id.toString();
     groupResponse.members = undefined;
 
-    return NextResponse.json({ group: groupResponse }, { status: 201 });
+    return NextResponse.json(
+      { group: groupResponse },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("POST CREATE GROUP ERROR:", error);
+    return NextResponse.json(
+      { error: "Internal server error creating group" },
+      { status: 500 }
+    );
+  }
 }

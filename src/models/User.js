@@ -20,21 +20,21 @@ const UserSchema = new Schema(
             required: true,
             select: false,
         },
-        
+
         // Custom unique username field
         username: {
-             type: String,
-             trim: true,
-             unique: true,
-             sparse: true, // Allows null/undefined values to not violate the unique constraint
-             lowercase: true,
-             index: true,
+            type: String,
+            trim: true,
+            unique: true,
+            sparse: true, // Allows null/undefined values to not violate the unique constraint
+            lowercase: true,
+            index: true,
         },
 
         // ----------------------------
         // Avatar Fields
         // ----------------------------
-        avatar: { type: String, default: "" },
+        avatar: { type: String, default: null }, // ✅ FIXED (was "")
         avatarUrl: { type: String, default: null },
         avatarPublicId: { type: String, default: null },
         avatarMeta: { type: Schema.Types.Mixed, default: null },
@@ -47,14 +47,14 @@ const UserSchema = new Schema(
         website: { type: String, trim: true, default: "" },
 
         // =====================================================
-        // ⭐ ADDED FIELD — Communities the user has created (Admin/Owner list)
+        // Communities created by user (Admin/Owner)
         // =====================================================
         createdGroups: [
             { type: mongoose.Schema.Types.ObjectId, ref: "Group" }
         ],
-        
+
         // =====================================================
-        // ⭐ NEW FIELD — Communities the user has joined (Member list)
+        // Communities joined by user (Member)
         // =====================================================
         joinedCommunities: [
             { type: mongoose.Schema.Types.ObjectId, ref: "Group" }
@@ -87,11 +87,10 @@ UserSchema.pre("save", function () {
     if (this.username) {
         this.username = this.username.trim().toLowerCase();
     }
-    
-    // Ensure array fields are initialized correctly if they are empty
+
+    // Ensure array fields are initialized correctly
     if (!this.joinedCommunities) this.joinedCommunities = [];
     if (!this.createdGroups) this.createdGroups = [];
-
 
     if (this.avatarUrl === "") this.avatarUrl = null;
     if (this.avatarPublicId === "") this.avatarPublicId = null;
@@ -102,15 +101,19 @@ UserSchema.pre("save", function () {
 });
 
 // ----------------------------------------------------
+// INSTANCE METHOD: Get avatar safely
+// ----------------------------------------------------
 UserSchema.methods.getAvatar = function () {
     return (
         this.avatarUrl ||
         this.avatar ||
         "https://ui-avatars.com/api/?background=333&color=fff&name=" +
-        encodeURIComponent(this.name || this.username || "User")
+            encodeURIComponent(this.name || this.username || "User")
     );
 };
 
+// ----------------------------------------------------
+// STATIC METHOD: Update avatar (Cloudinary-safe)
 // ----------------------------------------------------
 UserSchema.statics.updateAvatar = async function (userId, { url, publicId, meta }) {
     return this.findByIdAndUpdate(

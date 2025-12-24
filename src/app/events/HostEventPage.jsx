@@ -1,11 +1,10 @@
-// components/HostEventPage.jsx 
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Zap, Code, Shirt, Medal, Compass, BookOpen, Clock, MapPin,
   Calendar, User, Plus, X, ClipboardList, Gift, ChevronDown, ChevronUp,
-  CheckCircle, ArrowLeft, MessageSquare, Menu, Upload, ExternalLink, QrCode
+  CheckCircle, ArrowLeft, MessageSquare, Menu, Upload, ExternalLink, QrCode, Trash2
 } from "lucide-react";
 
 // Re-using the categories
@@ -21,6 +20,36 @@ const categories = [
 
 const TagOptions = ["Team (4)", "Team (3)", "Team (2)", "Solo", "Free", "Paid"];
 
+// --- CLOUDINARY UPLOAD HELPER ---
+const uploadToCloudinary = async (file, folder = "events") => {
+  if (!file) return null;
+  // ✅ If file is already a URL string (from editing), don't re-upload
+  if (typeof file === "string" && file.startsWith("http")) return file;
+
+  try {
+    const sigRes = await fetch(`/api/cloudinary/sign?folder=${folder}`);
+    const sigData = await sigRes.json();
+    if (!sigData.ok) throw new Error("Failed to get upload signature");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("api_key", sigData.apiKey);
+    formData.append("timestamp", sigData.timestamp);
+    formData.append("signature", sigData.signature);
+    formData.append("folder", folder);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
+      { method: "POST", body: formData }
+    );
+    const data = await res.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error("Cloudinary Upload Error:", error);
+    throw error;
+  }
+};
+
 const SectionTitle = ({ children, icon: Icon, className = "" }) => (
   <h2 className={`text-2xl font-bold text-white mb-6 border-b border-gray-800 pb-3 flex items-center ${className}`}>
     {Icon && <Icon className="w-6 h-6 mr-3 text-purple-400" />}
@@ -28,7 +57,6 @@ const SectionTitle = ({ children, icon: Icon, className = "" }) => (
   </h2>
 );
 
-// ✅ with `name`
 const InputField = ({
   label,
   name,
@@ -52,12 +80,11 @@ const InputField = ({
       placeholder={placeholder}
       required={required}
       disabled={disabled}
-      className={`w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+      className={`w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${disabled ? "opacity-50 cursor-not-allowed bg-gray-900" : ""}`}
     />
   </div>
 );
 
-// ✅ with `name`
 const SelectField = ({
   label,
   name,
@@ -119,7 +146,6 @@ const TagSelector = ({ selectedTags, onTagToggle }) => (
   </div>
 );
 
-// Reusable Image Upload Component
 const ImageUploader = ({
   label,
   ratioTip,
@@ -160,7 +186,7 @@ const ImageUploader = ({
         className="w-full py-3 bg-gray-800 border border-gray-700 rounded-lg text-white hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
       >
         <Upload className="w-5 h-5 text-purple-400" />
-        <span>{file ? file.name : "Click to Upload Image"}</span>
+        <span>{file instanceof File ? file.name : (file ? "Image Uploaded" : "Click to Upload Image")}</span>
       </button>
 
       {previewUrl && (
@@ -171,8 +197,8 @@ const ImageUploader = ({
             className="w-20 h-28 object-cover rounded-md border border-purple-500"
           />
           <div className="text-sm text-gray-400">
-            <p className="text-white font-medium">{file?.name}</p>
-            <p>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            <p className="text-white font-medium line-clamp-1">{file instanceof File ? file.name : "Current Event Image"}</p>
+            {file instanceof File && <p>{(file.size / 1024 / 1024).toFixed(2)} MB</p>}
             <button
               type="button"
               onClick={onRemove}
@@ -187,69 +213,115 @@ const ImageUploader = ({
   );
 };
 
-// 🔑 now accepts onEventHosted and works standalone (localStorage)
-const HostEventPage = ({ parentPathname = "/events", onEventHosted }) => {
+const HostEventPage = ({ parentPathname = "/events", onEventHosted, initialData }) => {
   const router = useRouter();
   const PAYMENT_REF_FIELD_NAME = "Payment Ref (Last 4 digits)";
   const CURRENCY_SYMBOL = "₹";
   const CURRENCY_CODE = "INR";
+  const isEditMode = !!initialData;
+
+  // ✅ Pre-fill Helper: Convert database ISO dates to YYYY-MM-DD for HTML inputs
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      return new Date(dateStr).toISOString().split('T')[0];
+    } catch {
+      return "";
+    }
+  };
 
   const [eventData, setEventData] = useState({
-    title: "",
-    venue: "",
-    date: "",
-    posterPreviewUrl: "",
-    posterFile: null,
-    bannerPreviewUrl: "",
-    bannerFile: null,
-    tags: ["Free"], // Default to free event
-    category: "",
-    tagline: "",
-    hostedBy: "",
-    eligibility: "",
-    isOnline: false,
-    isFree: true, // Default to true
-    registrationStart: "",
-    registrationEnd: "",
-    prizes: "",
-    rounds: [
-      {
-        title: "Registration Opens",
-        description: "Sign up and form your teams.",
-        date: "",
-      },
+    title: initialData?.title || "",
+    venue: initialData?.venue || "",
+    date: formatDate(initialData?.date),
+    posterPreviewUrl: initialData?.poster || "",
+    posterFile: initialData?.poster || null,
+    bannerPreviewUrl: initialData?.banner || "",
+    bannerFile: initialData?.banner || null,
+    tags: initialData?.tags || ["Free"], 
+    category: initialData?.category || "",
+    tagline: initialData?.tagline || "",
+    hostedBy: initialData?.hostedBy || "", 
+    eligibility: initialData?.eligibility || "",
+    isOnline: initialData?.isOnline || false,
+    isFree: initialData?.isFree ?? true,
+    registrationStart: formatDate(initialData?.registrationStart),
+    registrationEnd: formatDate(initialData?.registrationEnd),
+    prizes: initialData?.prizes || "",
+    rounds: initialData?.rounds || [
+      { title: "Registration Opens", description: "Sign up and form your teams.", date: "" },
     ],
-    // --- PAYMENT/QR CODE STATE ---
-    isPaymentRequired: false,
-    paymentAmount: "",
+    isPaymentRequired: initialData?.isPaymentRequired || false,
+    paymentAmount: initialData?.paymentAmount || "",
     paymentCurrency: CURRENCY_CODE,
-    qrCodePreviewUrl: "",
-    qrCodeFile: null,
-    // -----------------------------
-    isExternalRegistration: false,
-    registrationUrl: "",
-    customFields: [
+    qrCodePreviewUrl: initialData?.qrCode || "",
+    qrCodeFile: initialData?.qrCode || null,
+    isExternalRegistration: initialData?.isExternalRegistration || false,
+    registrationUrl: initialData?.registrationUrl || "",
+    customFields: initialData?.customFields || [
       { name: "Team Leader Name", type: "text", required: true },
       { name: "Team Leader Email", type: "email", required: true },
     ],
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
 
+  // ✅ CRITICAL FIX: Update state if initialData changes (ensures form fills after data fetch)
+  useEffect(() => {
+    if (initialData) {
+      setEventData({
+        title: initialData.title || "",
+        venue: initialData.venue || "",
+        date: formatDate(initialData.date),
+        posterPreviewUrl: initialData.poster || "",
+        posterFile: initialData.poster || null,
+        bannerPreviewUrl: initialData.banner || "",
+        bannerFile: initialData.banner || null,
+        tags: initialData.tags || ["Free"],
+        category: initialData.category || "",
+        tagline: initialData.tagline || "",
+        hostedBy: initialData.hostedBy || "",
+        eligibility: initialData.eligibility || "",
+        isOnline: initialData.isOnline || false,
+        isFree: initialData.isFree ?? true,
+        registrationStart: formatDate(initialData.registrationStart),
+        registrationEnd: formatDate(initialData.registrationEnd),
+        prizes: initialData.prizes || "",
+        rounds: initialData.rounds || [],
+        isPaymentRequired: initialData.isPaymentRequired || false,
+        paymentAmount: initialData.paymentAmount || "",
+        paymentCurrency: CURRENCY_CODE,
+        qrCodePreviewUrl: initialData.qrCode || "",
+        qrCodeFile: initialData.qrCode || null,
+        isExternalRegistration: initialData.isExternalRegistration || false,
+        registrationUrl: initialData.registrationUrl || "",
+        customFields: initialData.customFields || [],
+      });
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    if (!eventData.hostedBy) {
+        const fetchProfile = async () => {
+          try {
+            const res = await fetch("/api/me");
+            if (res.ok) {
+              const data = await res.json();
+              if (data?.user?.name) {
+                setEventData(prev => ({ ...prev, hostedBy: data.user.name }));
+              }
+            }
+          } catch (err) {
+            console.error("Profile sync error:", err);
+          }
+        };
+        fetchProfile();
+    }
+  }, []);
+
   const isPaidEvent = !eventData.isFree;
   const showQrCodeFields = isPaidEvent && !eventData.isExternalRegistration;
-
-  React.useEffect(() => {
-    return () => {
-      if (eventData.posterPreviewUrl)
-        URL.revokeObjectURL(eventData.posterPreviewUrl);
-      if (eventData.bannerPreviewUrl)
-        URL.revokeObjectURL(eventData.bannerPreviewUrl);
-      if (eventData.qrCodePreviewUrl)
-        URL.revokeObjectURL(eventData.qrCodePreviewUrl);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -260,11 +332,9 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted }) => {
   };
 
   const handleFileChange = (e, fileKey, previewKey) => {
-    const file = e.target.files[0];
+    const file = e.target?.files ? e.target.files[0] : null;
     if (file) {
-      if (eventData[previewKey]) {
-        URL.revokeObjectURL(eventData[previewKey]);
-      }
+      if (eventData[previewKey] && !eventData[previewKey].startsWith('http')) URL.revokeObjectURL(eventData[previewKey]);
       const previewUrl = URL.createObjectURL(file);
       setEventData((prev) => ({
         ...prev,
@@ -272,9 +342,7 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted }) => {
         [previewKey]: previewUrl,
       }));
     } else {
-      if (eventData[previewKey]) {
-        URL.revokeObjectURL(eventData[previewKey]);
-      }
+      if (eventData[previewKey] && !eventData[previewKey].startsWith('http')) URL.revokeObjectURL(eventData[previewKey]);
       setEventData((prev) => ({
         ...prev,
         [fileKey]: null,
@@ -294,23 +362,11 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted }) => {
 
   const handleIsFreeToggle = (e) => {
     const checked = e.target.checked;
-    const tagsWithoutPricing = eventData.tags.filter(
-      (t) => t !== "Free" && t !== "Paid"
-    );
+    const tagsWithoutPricing = eventData.tags.filter((t) => t !== "Free" && t !== "Paid");
     const newTag = checked ? "Free" : "Paid";
-
-    const filteredCustomFields = checked
-      ? eventData.customFields.filter((f) => f.name !== PAYMENT_REF_FIELD_NAME)
-      : eventData.customFields;
-
-    const updatedCustomFields =
-      !checked &&
-      !eventData.isExternalRegistration &&
-      !filteredCustomFields.some((f) => f.name === PAYMENT_REF_FIELD_NAME)
-        ? [
-            ...filteredCustomFields,
-            { name: PAYMENT_REF_FIELD_NAME, type: "number", required: true },
-          ]
+    const filteredCustomFields = checked ? eventData.customFields.filter((f) => f.name !== PAYMENT_REF_FIELD_NAME) : eventData.customFields;
+    const updatedCustomFields = !checked && !eventData.isExternalRegistration && !filteredCustomFields.some((f) => f.name === PAYMENT_REF_FIELD_NAME)
+        ? [...filteredCustomFields, { name: PAYMENT_REF_FIELD_NAME, type: "number", required: true }]
         : filteredCustomFields;
 
     setEventData((prev) => ({
@@ -326,19 +382,9 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted }) => {
 
   const handleIsExternalRegistrationToggle = (e) => {
     const checked = e.target.checked;
-
-    const fieldsWithoutPaymentRef = eventData.customFields.filter(
-      (f) => f.name !== PAYMENT_REF_FIELD_NAME
-    );
-
-    const fieldsWithPaymentRef =
-      isPaidEvent &&
-      !checked &&
-      !fieldsWithoutPaymentRef.some((f) => f.name === PAYMENT_REF_FIELD_NAME)
-        ? [
-            ...fieldsWithoutPaymentRef,
-            { name: PAYMENT_REF_FIELD_NAME, type: "number", required: true },
-          ]
+    const fieldsWithoutPaymentRef = eventData.customFields.filter((f) => f.name !== PAYMENT_REF_FIELD_NAME);
+    const fieldsWithPaymentRef = isPaidEvent && !checked && !fieldsWithoutPaymentRef.some((f) => f.name === PAYMENT_REF_FIELD_NAME)
+        ? [...fieldsWithoutPaymentRef, { name: PAYMENT_REF_FIELD_NAME, type: "number", required: true }]
         : fieldsWithoutPaymentRef;
 
     setEventData((prev) => ({
@@ -382,10 +428,7 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted }) => {
   const addCustomField = () => {
     setEventData((prev) => ({
       ...prev,
-      customFields: [
-        ...prev.customFields,
-        { name: "", type: "text", required: false },
-      ],
+      customFields: [...prev.customFields, { name: "", type: "text", required: false }],
     }));
   };
 
@@ -397,152 +440,78 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted }) => {
   };
 
   const handleCancelHost = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to cancel hosting this event? All unsaved data will be lost."
-      )
-    ) {
+    if (window.confirm(`Are you sure you want to cancel ${isEditMode ? "editing" : "hosting"}? All unsaved data will be lost.`)) {
       router.replace(parentPathname, { scroll: true });
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmissionStatus(null);
 
-    // --- Core Validation ---
-    if (
-      !eventData.title ||
-      !eventData.venue ||
-      !eventData.date ||
-      !eventData.category ||
-      eventData.tags.length === 0 ||
-      !eventData.posterFile ||
-      !eventData.bannerFile
-    ) {
-      console.error(
-        "Form validation failed. Please fill all required core fields and upload BOTH images."
-      );
+    // Validation
+    if (!eventData.title || !eventData.venue || !eventData.date || !eventData.category || eventData.tags.length === 0 || !eventData.posterFile || !eventData.bannerFile || !eventData.hostedBy) {
       setSubmissionStatus("error");
       setIsSubmitting(false);
       return;
     }
 
-    // --- Paid validation ---
-    if (isPaidEvent) {
-      if (!eventData.paymentAmount) {
-        console.error(
-          "Form validation failed. Payment Amount is required for all Paid events."
-        );
-        setSubmissionStatus("error_paid_amount");
-        setIsSubmitting(false);
-        return;
+    try {
+      const posterUrl = await uploadToCloudinary(eventData.posterFile, "event-posters");
+      const bannerUrl = await uploadToCloudinary(eventData.bannerFile, "event-banners");
+      
+      let qrCodeUrl = eventData.qrCodePreviewUrl;
+      if (showQrCodeFields && eventData.qrCodeFile && eventData.qrCodeFile instanceof File) {
+        qrCodeUrl = await uploadToCloudinary(eventData.qrCodeFile, "event-qrcodes");
       }
 
-      if (showQrCodeFields && !eventData.qrCodeFile) {
-        console.error(
-          "Form validation failed. QR Code image is required for QR Code Payment."
-        );
-        setSubmissionStatus("error_qr_code");
-        setIsSubmitting(false);
-        return;
+      const eventPayload = {
+        title: eventData.title,
+        tagline: eventData.tagline,
+        category: eventData.category,
+        tags: eventData.tags,
+        date: eventData.date,
+        venue: eventData.venue,
+        isOnline: eventData.isOnline,
+        poster: posterUrl,
+        banner: bannerUrl,
+        hostedBy: eventData.hostedBy,
+        eligibility: eventData.eligibility,
+        isFree: eventData.isFree,
+        paymentAmount: eventData.paymentAmount || "",
+        qrCode: qrCodeUrl,
+        registrationStart: eventData.registrationStart,
+        registrationEnd: eventData.registrationEnd,
+        isExternalRegistration: eventData.isExternalRegistration,
+        registrationUrl: eventData.registrationUrl,
+        customFields: eventData.customFields,
+        rounds: eventData.rounds,
+        prizes: eventData.prizes,
+      };
+
+      if (typeof onEventHosted === "function") {
+        await onEventHosted(eventPayload);
       }
-    }
 
-    // --- External registration validation ---
-    if (eventData.isExternalRegistration && !eventData.registrationUrl) {
-      console.error(
-        "Form validation failed. External Registration is enabled but URL is missing."
-      );
-      setSubmissionStatus("error_url");
-      setIsSubmitting(false);
-      return;
-    }
-
-    console.log(
-      "Mock Uploading Files: Card Poster:",
-      eventData.posterFile?.name,
-      "Banner:",
-      eventData.bannerFile?.name
-    );
-    if (eventData.qrCodeFile) {
-      console.log(
-        "Mock Uploading File: QR Code:",
-        eventData.qrCodeFile.name
-      );
-    }
-
-    // ✅ Build clean event object for main events page
-    const newHostedEvent = {
-      id: Date.now(), // simple unique ID
-      title: eventData.title,
-      venue: eventData.venue,
-      date: eventData.date, // "YYYY-MM-DD"
-      poster: eventData.posterPreviewUrl,
-      banner: eventData.bannerPreviewUrl,
-      tags: eventData.tags,
-      category: eventData.category,
-      tagline: eventData.tagline,
-      hostedBy: eventData.hostedBy,
-      eligibility: eventData.eligibility,
-      isOnline: eventData.isOnline,
-      isFree: eventData.isFree,
-      registrationStart: eventData.registrationStart,
-      registrationEnd: eventData.registrationEnd,
-      prizes: eventData.prizes,
-      rounds: eventData.rounds,
-      isExternalRegistration: eventData.isExternalRegistration,
-      registrationUrl: eventData.registrationUrl,
-      paymentAmount: eventData.paymentAmount,
-      customFields: eventData.customFields,
-      qrCode: eventData.qrCodePreviewUrl,
-    };
-
-    // 🔔 send event up to EventsPage if provided
-    if (typeof onEventHosted === "function") {
-      onEventHosted(newHostedEvent);
-    } else if (typeof window !== "undefined") {
-      // 🌟 Standalone dynamic mode: persist to localStorage
-      try {
-        const existing = JSON.parse(localStorage.getItem("events") || "[]");
-        const updated = [...existing, newHostedEvent];
-        localStorage.setItem("events", JSON.stringify(updated));
-        console.log("Event saved to localStorage:", newHostedEvent);
-      } catch (err) {
-        console.error("Failed to save event to localStorage:", err);
-      }
-    }
-
-    console.log("Hosted event created:", newHostedEvent);
-
-    setTimeout(() => {
-      setIsSubmitting(false);
       setSubmissionStatus("success");
-    }, 500);
+    } catch (err) {
+      console.error("Hosting failed:", err);
+      setSubmissionStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submissionStatus === "success") {
     return (
       <div className="max-w-4xl mx-auto py-20 px-4 sm:px-6 lg:px-8 text-center min-h-screen bg-gray-950">
         <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
-        <h2 className="text-4xl font-extrabold text-white mb-4">
-          Event Hosted successfully!
-        </h2>
-        <p className="text-lg text-gray-300">
-          Your event <span className="font-bold">{eventData.title}</span> has
-          been submitted for review.
-        </p>
+        <h2 className="text-4xl font-extrabold text-white mb-4">Event {isEditMode ? "updated" : "hosted"} successfully!</h2>
+        <p className="text-lg text-gray-300">Your event <span className="font-bold">{eventData.title}</span> is now live.</p>
         <div className="mt-8">
-          <button
-            onClick={() => {
-              setSubmissionStatus(null);
-              router.replace(parentPathname, { scroll: true });
-            }}
-            className="inline-flex items-center bg-purple-600 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Go Back to Events
+          <button onClick={() => { setSubmissionStatus(null); router.replace(parentPathname, { scroll: true }); }} className="inline-flex items-center bg-purple-600 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
+            <ArrowLeft className="w-5 h-5 mr-2" /> Go Back to Events
           </button>
         </div>
       </div>
@@ -552,501 +521,126 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted }) => {
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans antialiased">
       <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8 relative">
-        <button
-          onClick={handleCancelHost}
-          className="absolute top-10 right-4 sm:right-6 lg:right-8 p-2 rounded-full bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors z-10"
-          title="Cancel Hosting and Go Back"
-        >
+        <button onClick={handleCancelHost} className="absolute top-10 right-4 sm:right-6 lg:right-8 p-2 rounded-full bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors z-10" title="Cancel Hosting and Go Back">
           <X className="w-6 h-6" />
         </button>
 
-        <SectionTitle className="justify-center">Host Your Event 🚀</SectionTitle>
-        <p className="text-center text-gray-400 mb-10">
-          Fill in the details below to list your event.
-        </p>
+        <SectionTitle className="justify-center">{isEditMode ? "Edit Your Event 📝" : "Host Your Event 🚀"}</SectionTitle>
+        <p className="text-center text-gray-400 mb-10">Linking this event to your profile: <span className="text-purple-400 font-bold">{eventData.hostedBy || "Syncing profile..."}</span></p>
 
         <form onSubmit={handleSubmit} className="space-y-10">
-          {/* Basic Details */}
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
             <SectionTitle icon={ClipboardList}>Basic Details</SectionTitle>
-
-            <InputField
-              label="Event Title"
-              name="title"
-              value={eventData.title}
-              onChange={handleInputChange}
-              placeholder="e.g., Global Tech Summit 2026"
-              required
-            />
-
-            <InputField
-              label="Tagline / Short Description"
-              name="tagline"
-              value={eventData.tagline}
-              onChange={handleInputChange}
-              placeholder="e.g., Where News Gets Twisted and AI Gets Awesome!"
-            />
-
+            <InputField label="Event Title" name="title" value={eventData.title} onChange={handleInputChange} placeholder="e.g., Global Tech Summit 2026" required />
+            <InputField label="Tagline / Short Description" name="tagline" value={eventData.tagline} onChange={handleInputChange} placeholder="e.g., Where News Gets Twisted and AI Gets Awesome!" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SelectField
-                label="Category"
-                name="category"
-                value={eventData.category}
-                onChange={handleInputChange}
-                options={categories}
-                required
-              />
-              <InputField
-                label="Main Event Date"
-                name="date"
-                type="date"
-                value={eventData.date}
-                onChange={handleInputChange}
-                required
-              />
+              <SelectField label="Category" name="category" value={eventData.category} onChange={handleInputChange} options={categories} required />
+              <InputField label="Main Event Date" name="date" type="date" value={eventData.date} onChange={handleInputChange} required />
             </div>
-
-            <TagSelector
-              selectedTags={eventData.tags}
-              onTagToggle={handleTagToggle}
-            />
+            <TagSelector selectedTags={eventData.tags} onTagToggle={handleTagToggle} />
           </div>
 
-          {/* Venue & Images */}
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
             <SectionTitle icon={MapPin}>Venue & Images</SectionTitle>
-
             <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
               <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="isOnline"
-                  id="isOnline"
-                  checked={eventData.isOnline}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-                />
-                <label
-                  htmlFor="isOnline"
-                  className="text-sm font-medium text-gray-300"
-                >
-                  Online Event
-                </label>
+                <input type="checkbox" name="isOnline" id="isOnline" checked={eventData.isOnline} onChange={handleInputChange} className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500" />
+                <label htmlFor="isOnline" className="text-sm font-medium text-gray-300">Online Event</label>
               </div>
-
               <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="isFree"
-                  id="isFree"
-                  checked={eventData.isFree}
-                  onChange={handleIsFreeToggle}
-                  className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-                />
-                <label
-                  htmlFor="isFree"
-                  className="text-sm font-medium text-gray-300"
-                >
-                  Free Event
-                </label>
+                <input type="checkbox" name="isFree" id="isFree" checked={eventData.isFree} onChange={handleIsFreeToggle} className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500" />
+                <label htmlFor="isFree" className="text-sm font-medium text-gray-300">Free Event</label>
               </div>
             </div>
-
-            <InputField
-              label="Venue (Location or URL)"
-              name="venue"
-              value={eventData.venue}
-              onChange={handleInputChange}
-              placeholder={
-                eventData.isOnline
-                  ? "e.g., Zoom Link | Discord Server"
-                  : "e.g., KIIT Auditorium | Rose Garden, Campus-18"
-              }
-              required
-            />
+            <InputField label="Venue (Location or URL)" name="venue" value={eventData.venue} onChange={handleInputChange} placeholder={eventData.isOnline ? "e.g., Zoom Link | Discord Server" : "e.g., KIIT Auditorium | Rose Garden, Campus-18"} required />
 
             {isPaidEvent && (
               <div className="space-y-2 border-l-4 border-yellow-500 pl-3 pt-2">
-                <label className="text-sm font-medium text-gray-400 block">
-                  Registration Fee / Amount (Currency: {CURRENCY_CODE}){" "}
-                  <span className="text-red-500">*</span>
-                </label>
+                <label className="text-sm font-medium text-gray-400 block">Registration Fee / Amount (Currency: {CURRENCY_CODE}) <span className="text-red-500">*</span></label>
                 <div className="flex items-center gap-4">
-                  <span className="text-xl text-yellow-300">
-                    {CURRENCY_SYMBOL}
-                  </span>
-                  <input
-                    type="text"
-                    name="paymentAmount"
-                    value={eventData.paymentAmount}
-                    onChange={handleInputChange}
-                    placeholder="e.g., 500"
-                    required
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
-                  />
+                  <span className="text-xl text-yellow-300">{CURRENCY_SYMBOL}</span>
+                  <input type="number" name="paymentAmount" value={eventData.paymentAmount} onChange={handleInputChange} placeholder="e.g., 500" required className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors" />
                 </div>
               </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-              <ImageUploader
-                label="1. Card Poster (Portrait)"
-                ratioTip="Used for event cards on the main listing page (e.g., 4:3 or 1:1 ratio preferred)."
-                name="posterFile"
-                file={eventData.posterFile}
-                previewUrl={eventData.posterPreviewUrl}
-                onFileChange={(e) =>
-                  handleFileChange(e, "posterFile", "posterPreviewUrl")
-                }
-                onRemove={() =>
-                  handleFileChange(
-                    { target: { files: [] } },
-                    "posterFile",
-                    "posterPreviewUrl"
-                  )
-                }
-              />
-              <ImageUploader
-                label="2. Header Banner (Landscape)"
-                ratioTip="Used for the large banner on the event details page (e.g., 4:1 or 5:2 wide ratio preferred)."
-                name="bannerFile"
-                file={eventData.bannerFile}
-                previewUrl={eventData.bannerPreviewUrl}
-                onFileChange={(e) =>
-                  handleFileChange(e, "bannerFile", "bannerPreviewUrl")
-                }
-                onRemove={() =>
-                  handleFileChange(
-                    { target: { files: [] } },
-                    "bannerFile",
-                    "bannerPreviewUrl"
-                  )
-                }
-              />
+              <ImageUploader label="1. Card Poster (Portrait)" ratioTip="Used for listing cards." name="posterFile" file={eventData.posterFile} previewUrl={eventData.posterPreviewUrl} onFileChange={(e) => handleFileChange(e, "posterFile", "posterPreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "posterFile", "posterPreviewUrl")} />
+              <ImageUploader label="2. Header Banner (Landscape)" ratioTip="Used for details header." name="bannerFile" file={eventData.bannerFile} previewUrl={eventData.bannerPreviewUrl} onFileChange={(e) => handleFileChange(e, "bannerFile", "bannerPreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "bannerFile", "bannerPreviewUrl")} />
             </div>
           </div>
 
-          {/* Organizer & Registration */}
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
             <SectionTitle icon={User}>Organizer & Registration</SectionTitle>
-
-            <InputField
-              label="Hosted By (Name of the Club/Organization)"
-              name="hostedBy"
-              value={eventData.hostedBy}
-              onChange={handleInputChange}
-              placeholder="e.g., IBS Hyderabad | KIIT E-Cell"
-              required
-            />
-
-            <InputField
-              label="Eligibility"
-              name="eligibility"
-              value={eventData.eligibility}
-              onChange={handleInputChange}
-              placeholder="e.g., Open to all students | Only 2nd & 3rd year B.Tech"
-              required
-            />
-
+            <InputField label="Hosted By" name="hostedBy" value={eventData.hostedBy} disabled required />
+            <InputField label="Eligibility" name="eligibility" value={eventData.eligibility} onChange={handleInputChange} placeholder="e.g., Open to all" required />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputField
-                label="Registration Start Date"
-                name="registrationStart"
-                type="date"
-                value={eventData.registrationStart}
-                onChange={handleInputChange}
-              />
-              <InputField
-                label="Registration End Date"
-                name="registrationEnd"
-                type="date"
-                value={eventData.registrationEnd}
-                onChange={handleInputChange}
-              />
+              <InputField label="Start Date" name="registrationStart" type="date" value={eventData.registrationStart} onChange={handleInputChange} />
+              <InputField label="End Date" name="registrationEnd" type="date" value={eventData.registrationEnd} onChange={handleInputChange} />
             </div>
-
-            <InputField
-              label="Prizes for Winners"
-              name="prizes"
-              value={eventData.prizes}
-              onChange={handleInputChange}
-              placeholder="e.g., Cash prizes up to ₹1,00,000, internship opportunities..."
-            />
+            <InputField label="Prizes" name="prizes" value={eventData.prizes} onChange={handleInputChange} placeholder="e.g., Cash" />
           </div>
 
-          {/* Event Stages & Timeline */}
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
             <SectionTitle icon={Clock}>Event Stages & Timeline</SectionTitle>
-
             {eventData.rounds.map((round, index) => (
-              <div
-                key={index}
-                className="bg-gray-800 p-4 rounded-lg border border-gray-700 space-y-4 relative"
-              >
-                <h3 className="text-lg font-bold text-purple-400">
-                  Round {index + 1}
-                </h3>
-                {eventData.rounds.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeRound(index)}
-                    className="absolute top-4 right-4 p-1 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors"
-                    title="Remove Round"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-                <InputField
-                  label="Round Title"
-                  value={round.title}
-                  onChange={(e) =>
-                    handleRoundChange(index, "title", e.target.value)
-                  }
-                  placeholder="e.g., Qualifier Round 1: Online Quiz"
-                  required
-                />
-                <InputField
-                  label="Round Date"
-                  type="date"
-                  value={round.date}
-                  onChange={(e) =>
-                    handleRoundChange(index, "date", e.target.value)
-                  }
-                  required
-                />
-                <InputField
-                  label="Description"
-                  value={round.description}
-                  onChange={(e) =>
-                    handleRoundChange(index, "description", e.target.value)
-                  }
-                  placeholder="e.g., Submit your brand strategy pitch."
-                />
+              <div key={index} className="bg-gray-800 p-4 rounded-lg border border-gray-700 space-y-4 relative">
+                <h3 className="text-lg font-bold text-purple-400">Round {index + 1}</h3>
+                {eventData.rounds.length > 1 && <button type="button" onClick={() => removeRound(index)} className="absolute top-4 right-4 p-1 rounded-full bg-red-600 text-white"><X className="w-4 h-4" /></button>}
+                <InputField label="Title" value={round.title} onChange={(e) => handleRoundChange(index, "title", e.target.value)} required />
+                <InputField label="Date" type="date" value={round.date} onChange={(e) => handleRoundChange(index, "date", e.target.value)} required />
+                <InputField label="Description" value={round.description} onChange={(e) => handleRoundChange(index, "description", e.target.value)} />
               </div>
             ))}
-
-            <button
-              type="button"
-              onClick={addRound}
-              className="w-full inline-flex items-center justify-center bg-gray-700 text-white font-medium py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors mt-4"
-            >
-              <Plus className="w-5 h-5 mr-2" /> Add Another Round
-            </button>
+            <button type="button" onClick={addRound} className="w-full bg-gray-700 text-white py-2 rounded-lg"><Plus className="w-5 h-5 mr-2 inline" /> Add Round</button>
           </div>
 
-          {/* Registration Form Customization */}
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
-            <SectionTitle icon={Menu}>
-              Registration Form Customization
-            </SectionTitle>
-
+            <SectionTitle icon={Menu}>Registration Customization</SectionTitle>
             <div className="space-y-4">
               <div className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg border border-purple-500/50">
-                <input
-                  type="checkbox"
-                  name="isExternalRegistration"
-                  id="isExternalRegistration"
-                  checked={eventData.isExternalRegistration}
-                  onChange={handleIsExternalRegistrationToggle}
-                  className="w-5 h-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-                />
-                <label
-                  htmlFor="isExternalRegistration"
-                  className="text-base font-bold text-purple-400 flex items-center"
-                >
-                  <ExternalLink className="w-5 h-5 mr-2" />
-                  Enable External Registration Link
-                </label>
+                <input type="checkbox" name="isExternalRegistration" id="isExternalRegistration" checked={eventData.isExternalRegistration} onChange={handleIsExternalRegistrationToggle} className="w-5 h-5" />
+                <label htmlFor="isExternalRegistration" className="text-purple-400 font-bold"><ExternalLink className="w-5 h-5 mr-2 inline" /> External Registration</label>
               </div>
-
               {eventData.isExternalRegistration ? (
-                <>
-                  <p className="text-red-400 text-sm">
-                    ⚠️ Note: When this is enabled, the Custom Fields section
-                    below is ignored. Users will be redirected to the URL
-                    provided here.
-                  </p>
-                  <InputField
-                    label="External Registration URL"
-                    name="registrationUrl"
-                    value={eventData.registrationUrl}
-                    onChange={handleInputChange}
-                    placeholder="e.g., https://eventbrite.com/your-event-link"
-                    type="url"
-                    required
-                  />
-                </>
+                <InputField label="URL" name="registrationUrl" value={eventData.registrationUrl} onChange={handleInputChange} type="url" required />
               ) : (
                 <>
                   {showQrCodeFields && (
-                    <div className="p-4 bg-yellow-900/30 rounded-lg border border-yellow-500/50 space-y-4">
-                      <div className="flex items-center space-x-3 text-yellow-300 font-bold">
-                        <QrCode className="w-5 h-5" />
-                        <span>QR Code Payment (Internal)</span>
-                      </div>
-                      <p className="text-sm text-gray-300">
-                        Since this is a Paid event and internal registration is
-                        selected, users will see the amount ({CURRENCY_SYMBOL}{" "}
-                        {eventData.paymentAmount}) and scan this QR code to pay.
-                      </p>
-
-                      <ImageUploader
-                        label="Upload Payment QR Code Image"
-                        ratioTip="The image users will scan to pay for the event."
-                        name="qrCodeFile"
-                        file={eventData.qrCodeFile}
-                        previewUrl={eventData.qrCodePreviewUrl}
-                        onFileChange={(e) =>
-                          handleFileChange(e, "qrCodeFile", "qrCodePreviewUrl")
-                        }
-                        onRemove={() =>
-                          handleFileChange(
-                            { target: { files: [] } },
-                            "qrCodeFile",
-                            "qrCodePreviewUrl"
-                          )
-                        }
-                        required={true}
-                      />
-                      <p className="text-sm text-gray-300 bg-gray-800 p-2 rounded-lg">
-                        A required system field "{PAYMENT_REF_FIELD_NAME}" has
-                        been automatically added to the registration form below.
-                      </p>
+                    <div className="p-4 bg-yellow-900/30 border border-yellow-500/50 space-y-4 rounded-lg">
+                      <SectionTitle icon={QrCode}>QR Code Payment</SectionTitle>
+                      <ImageUploader label="Upload QR" name="qrCodeFile" file={eventData.qrCodeFile} previewUrl={eventData.qrCodePreviewUrl} onFileChange={(e) => handleFileChange(e, "qrCodeFile", "qrCodePreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "qrCodeFile", "qrCodePreviewUrl")} />
                     </div>
                   )}
-
-                  <p className="text-gray-400 text-sm mb-4">
-                    Define additional fields you want to collect from users when
-                    they register for your event (e.g., College ID, T-Shirt
-                    Size).
-                  </p>
-
                   {eventData.customFields.map((field, index) => (
-                    <div
-                      key={index}
-                      className={`p-4 rounded-lg border space-y-3 relative ${
-                        field.name === PAYMENT_REF_FIELD_NAME
-                          ? "bg-red-900/30 border-red-500/50"
-                          : "bg-gray-800 border-gray-700"
-                      }`}
-                    >
-                      <h3 className="text-lg font-bold text-yellow-400">
-                        {field.name === PAYMENT_REF_FIELD_NAME
-                          ? "SYSTEM FIELD: PAYMENT VERIFICATION"
-                          : `Custom Field ${index + 1}`}
-                      </h3>
-
-                      {field.name !== PAYMENT_REF_FIELD_NAME && (
-                        <button
-                          type="button"
-                          onClick={() => removeCustomField(index)}
-                          className="absolute top-4 right-4 p-1 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors"
-                          title="Remove Field"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      <InputField
-                        label="Field Label (What the user sees)"
-                        value={field.name}
-                        onChange={(e) =>
-                          handleCustomFieldChange(index, "name", e.target.value)
-                        }
-                        placeholder="e.g., T-Shirt Size"
-                        required
-                        disabled={field.name === PAYMENT_REF_FIELD_NAME}
-                      />
-
+                    <div key={index} className="p-4 rounded-lg border bg-gray-800 border-gray-700 space-y-3 relative">
+                      {field.name !== PAYMENT_REF_FIELD_NAME && <button type="button" onClick={() => removeCustomField(index)} className="absolute top-4 right-4 p-1 rounded-full bg-red-600 text-white"><X className="w-4 h-4" /></button>}
+                      <InputField label="Field Label" value={field.name} onChange={(e) => handleCustomFieldChange(index, "name", e.target.value)} required disabled={field.name === PAYMENT_REF_FIELD_NAME} />
                       <div className="grid grid-cols-2 gap-4">
-                        <SelectField
-                          label="Input Type"
-                          value={field.type}
-                          onChange={(e) =>
-                            handleCustomFieldChange(
-                              index,
-                              "type",
-                              e.target.value
-                            )
-                          }
-                          options={[
-                            { name: "text" },
-                            { name: "number" },
-                            { name: "email" },
-                            { name: "date" },
-                            { name: "checkbox" },
-                          ]}
-                          required
-                          disabled={field.name === PAYMENT_REF_FIELD_NAME}
-                        />
-                        <div className="flex items-center space-x-2 pt-8">
-                          <input
-                            type="checkbox"
-                            id={`required-${index}`}
-                            checked={field.required}
-                            onChange={(e) =>
-                              handleCustomFieldChange(
-                                index,
-                                "required",
-                                e.target.checked
-                              )
-                            }
-                            className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-                            disabled={field.name === PAYMENT_REF_FIELD_NAME}
-                          />
-                          <label
-                            htmlFor={`required-${index}`}
-                            className="text-sm font-medium text-gray-300"
-                          >
-                            Required Field
-                          </label>
+                        <SelectField label="Type" value={field.type} onChange={(e) => handleCustomFieldChange(index, "type", e.target.value)} options={[{name:"text"},{name:"number"},{name:"email"},{name:"date"},{name:"checkbox"}]} required disabled={field.name === PAYMENT_REF_FIELD_NAME} />
+                        <div className="pt-8 flex items-center space-x-2">
+                          <input type="checkbox" checked={field.required} onChange={(e) => handleCustomFieldChange(index, "required", e.target.checked)} disabled={field.name === PAYMENT_REF_FIELD_NAME} />
+                          <label>Required</label>
                         </div>
                       </div>
                     </div>
                   ))}
-
-                  <button
-                    type="button"
-                    onClick={addCustomField}
-                    className="w-full inline-flex items-center justify-center bg-gray-700 text-white font-medium py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors mt-4"
-                  >
-                    <Plus className="w-5 h-5 mr-2" /> Add Custom Field
-                  </button>
+                  <button type="button" onClick={addCustomField} className="w-full bg-gray-700 text-white py-2 rounded-lg"><Plus className="w-5 h-5 mr-2 inline" /> Add Field</button>
                 </>
               )}
             </div>
           </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-4 bg-purple-600 text-white font-extrabold text-lg rounded-xl hover:bg-purple-700 transition-colors shadow-2xl shadow-purple-500/30 disabled:bg-gray-600 disabled:shadow-none"
-          >
-            {isSubmitting ? "Submitting Event..." : "Host Event"}
+          <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-purple-600 text-white font-extrabold text-lg rounded-xl disabled:bg-gray-600 shadow-xl shadow-purple-500/20 transition-all hover:bg-purple-500">
+            {isSubmitting ? "Finalizing Event..." : (isEditMode ? "Save Changes" : "Host Event")}
           </button>
-
-          {submissionStatus === "error" && (
-            <p className="text-red-500 text-center mt-4">
-              Please correct the form errors and fill out all required fields,
-              including both Poster and Banner images.
-            </p>
-          )}
-          {submissionStatus === "error_url" && (
-            <p className="text-red-500 text-center mt-4">
-              External Registration is enabled, please provide a valid
-              Registration URL.
-            </p>
-          )}
-          {submissionStatus === "error_paid_amount" && (
-            <p className="text-red-500 text-center mt-4">
-              Payment Amount is required for all Paid events.
-            </p>
-          )}
-          {submissionStatus === "error_qr_code" && (
-            <p className="text-red-500 text-center mt-4">
-              QR Code Image is required for Paid events with internal QR Code
-              payment.
+          
+          {(submissionStatus && submissionStatus !== "success") && (
+            <p className="text-red-500 text-center mt-4 font-bold">
+              {submissionStatus === "error" ? "Please fill all required fields and upload images." :
+               submissionStatus === "error_url" ? "Please provide a valid Registration URL." :
+               submissionStatus === "error_paid_amount" ? "Payment Amount is required." :
+               "QR Code Image is required."}
             </p>
           )}
         </form>

@@ -1,4 +1,3 @@
-// EventsPage.jsx
 "use client";
 import React, {
   useState,
@@ -45,7 +44,12 @@ import {
   Plus,
   Clipboard,
   Settings,
+  LogOut,
 } from "lucide-react";
+
+// --- CONSTANTS ---
+const DEFAULT_AVATAR =
+  "https://img.freepik.com/premium-photo/portrait-successful-business-woman-suit-gray-isolated-background-serious-office-female-worker-manager-employees-female-employee-young-secretary_545934-23090.jpg?w=200&h=200&fit=crop";
 
 // --- MOCK DATA ---
 const MOCK_EVENTS = [
@@ -54,27 +58,14 @@ const MOCK_EVENTS = [
     title: "L'Oréal Brandstorm",
     venue: "Online | Rose Garden, Campus-18",
     date: "Wed, 29 Apr 2025",
-    poster:
-      "https://placehold.co/400x550/4A148C/ffffff?text=L'OREAL+BRANDSTORM",
+    poster: "https://placehold.co/400x550/4A148C/ffffff?text=L'OREAL+BRANDSTORM",
     tags: ["Team (4)", "Free"],
     isFeatured: true,
     category: "Competition",
     rounds: [
-      {
-        title: "Registration Opens",
-        description: "Sign up and form your teams.",
-        date: "15 Mar",
-      },
-      {
-        title: "Concept Submission Deadline",
-        description: "Submit your brand strategy pitch.",
-        date: "30 Mar",
-      },
-      {
-        title: "National Finals",
-        description: "Top teams compete for the global spot.",
-        date: "29 Apr",
-      },
+      { title: "Registration Opens", description: "Sign up and form your teams.", date: "15 Mar" },
+      { title: "Concept Submission Deadline", description: "Submit your brand strategy pitch.", date: "30 Mar" },
+      { title: "National Finals", description: "Top teams compete for the global spot.", date: "29 Apr" },
     ],
   },
   {
@@ -82,26 +73,13 @@ const MOCK_EVENTS = [
     title: "Raiders Reckoning",
     venue: "KIIT Auditorium",
     date: "Sun, 7 Nov 2025",
-    poster:
-      "https://placehold.co/400x550/212121/ffffff?text=RAIDERS+RECKONING",
+    poster: "https://placehold.co/400x550/212121/ffffff?text=RAIDERS+RECKONING",
     tags: ["Solo", "Free"],
     category: "Competition",
     rounds: [
-      {
-        title: "Qualifier Round 1",
-        description: "Online quiz challenge.",
-        date: "20 Oct",
-      },
-      {
-        title: "Main Event Registration",
-        description: "Final check-in for competitors.",
-        date: "01 Nov",
-      },
-      {
-        title: "Final Battle Stage",
-        description: "Live competitive gaming event.",
-        date: "07 Nov",
-      },
+      { title: "Qualifier Round 1", description: "Online quiz challenge.", date: "20 Oct" },
+      { title: "Main Event Registration", description: "Final check-in for competitors.", date: "01 Nov" },
+      { title: "Final Battle Stage", description: "Live competitive gaming event.", date: "07 Nov" },
     ],
   },
   {
@@ -109,8 +87,7 @@ const MOCK_EVENTS = [
     title: "RaagRang – Inter-College Cultural Fest",
     venue: "Multiple Venues",
     date: "Sat, 6 Jun 2026",
-    poster:
-      "https://placehold.co/400x550/FF5722/ffffff?text=STAND+UP+COMEDY+SHOW",
+    poster: "https://placehold.co/400x550/FF5722/ffffff?text=STAND+UP+COMEDY+SHOW",
     tags: ["Team (3)"],
     category: "Cultural",
   },
@@ -119,8 +96,7 @@ const MOCK_EVENTS = [
     title: "KIIT International Model United Nations",
     venue: "KIIT Campus",
     date: "Jan 29 2026",
-    poster:
-      "https://placehold.co/400x550/3F51B5/ffffff?text=KIIT+MUN+2025",
+    poster: "https://placehold.co/400x550/3F51B5/ffffff?text=KIIT+MUN+2025",
     tags: ["Team (4)", "Free"],
     category: "Competition",
   },
@@ -129,8 +105,7 @@ const MOCK_EVENTS = [
     title: "Hackify Battle on TryHackMe",
     venue: "Online",
     date: "Thu, 1 Dec 2025",
-    poster:
-      "https://placehold.co/400x550/0D47A1/ffffff?text=CYBER+SECURITY+CONFERENCE",
+    poster: "https://placehold.co/400x550/0D47A1/ffffff?text=CYBER+SECURITY+CONFERENCE",
     tags: ["Solo", "Free"],
     category: "Tech",
   },
@@ -166,8 +141,7 @@ const MOCK_EVENTS = [
     title: "Photography Exhibition",
     venue: "Art Gallery",
     date: "Sat, 15 Jan 2026",
-    poster:
-      "https://placehold.co/400x550/795548/ffffff?text=PHOTO+EXHIBIT",
+    poster: "https://placehold.co/400x550/795548/ffffff?text=PHOTO+EXHIBIT",
     tags: ["Solo", "Free"],
     category: "Cultural",
   },
@@ -194,8 +168,7 @@ const MOCK_EVENTS = [
     title: "Creative Writing Retreat",
     venue: "Campus Library",
     date: "Sun, 20 Feb 2026",
-    poster:
-      "https://placehold.co/400x550/D81B60/ffffff?text=WRITING+RETREAT",
+    poster: "https://placehold.co/400x550/D81B60/ffffff?text=WRITING+RETREAT",
     tags: ["Solo", "Free"],
     category: "Seminar",
   },
@@ -213,8 +186,7 @@ const MOCK_EVENTS = [
     title: "Annual Sports Meet",
     venue: "Stadium",
     date: "Sat, 5 Apr 2026",
-    poster:
-      "https://placehold.co/400x550/E53935/ffffff?text=SPORTS+MEET",
+    poster: "https://placehold.co/400x550/E53935/ffffff?text=SPORTS+MEET",
     tags: ["Team (5)", "Free"],
     category: "Competition",
   },
@@ -223,8 +195,7 @@ const MOCK_EVENTS = [
     title: "Art of Public Speaking",
     venue: "Auditorium",
     date: "Wed, 25 May 2026",
-    poster:
-      "https://placehold.co/400x550/9C27B0/ffffff?text=PUBLIC+SPEAKING",
+    poster: "https://placehold.co/400x550/9C27B0/ffffff?text=PUBLIC+SPEAKING",
     tags: ["Solo", "Paid"],
     category: "Workshop",
   },
@@ -245,8 +216,7 @@ export const EVENT_DETAIL_DATA = {
   id: 99,
   title: "Bottline Bulletin - The Ultimate Media Challenge",
   tagline: "Where News Gets Twisted and AI Gets Awesome!",
-  poster:
-    "https://placehold.co/1200x300/1D1D2C/ffffff?text=BOTTLINE+BULLETIN+BANNER",
+  poster: "https://placehold.co/1200x300/1D1D2C/ffffff?text=BOTTLINE+BULLETIN+BANNER",
   category: "Competition",
   hostedBy: "IBS Hyderabad",
   eligibility: "Everyone can apply",
@@ -291,8 +261,7 @@ const FEATURED_CAROUSEL_EVENTS = [
     title: "Global Tech Summit 2026",
     venue: "Virtual Event",
     date: "May 10-12 2026",
-    poster:
-      "https://placehold.co/400x550/004D40/ffffff?text=GLOBAL+TECH+SUMMIT",
+    poster: "https://placehold.co/400x550/004D40/ffffff?text=GLOBAL+TECH+SUMMIT",
     tags: ["Team (1)", "Paid"],
     isFeatured: true,
     category: "Seminar",
@@ -309,9 +278,26 @@ const MOBILE_NAV = [
   { label: "Home", href: "/", icon: Home },
   { label: "Groups", href: "/groups", icon: Users },
   { label: "Events", href: "/events", icon: CalendarDays },
-  // { label: "Insights", href: "/insights", icon: BarChart3 },
-  // { label: "News", href: "/news", icon: Newspaper },
 ];
+
+// --- API Helpers ---
+const fetchEventsFromAPI = async () => {
+  try {
+    const res = await fetch("/api/events", { method: "GET", cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch events");
+    const data = await res.json();
+    return data.map((ev) => ({
+      ...ev,
+      id: ev._id,
+      tags: ev.tags || [],
+      category: ev.category || "Others",
+      impressions: ev.impressions ?? 0,
+    }));
+  } catch (err) {
+    console.error("❌ API Fetch Error:", err);
+    return [];
+  }
+};
 
 // --- Reusable Components ---
 
@@ -336,7 +322,6 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
   const localHandleShare = (e) => {
     e.stopPropagation();
     onShareClick(event.id);
-
     if (navigator.clipboard) {
       setShareFeedback({ icon: Clipboard, text: "Link Copied!" });
       setTimeout(() => setShareFeedback(null), 1500);
@@ -348,94 +333,53 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
     setIsLiked((prev) => !prev);
   };
 
-  const tagsToDisplay =
-    event.tags?.filter(
-      (tag) => !tag.includes("Team") && !tag.includes("Solo")
-    ) || [];
+  const tagsToDisplay = event.tags?.filter((tag) => !tag.includes("Team") && !tag.includes("Solo")) || [];
 
   return (
     <div
       onClick={() => onDetailsClick(event.id)}
-      className="group flex flex-shrink-0 flex-col bg-gray-900 rounded-xl overflow-hidden shadow-2xl
-transition-transform duration-300 hover:scale-[1.02]
-w-[72vw] max-w-[260px]
-sm:w-[300px] h-[320px]
-cursor-pointer"
+      className="group flex flex-shrink-0 flex-col bg-gray-900 rounded-xl overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-[1.02] w-[72vw] max-w-[260px] sm:w-[300px] h-[320px] cursor-pointer"
     >
-      {/* POSTER + OVERLAYS (Image area is now smaller to make space for title in the black box) */}
       <div className="relative w-full overflow-hidden rounded-t-xl">
-        {/* Image takes up the top portion of the card */}
         <div className="relative w-full h-[160px] bg-black">
-
-
           <img
             src={event.poster}
             alt={event.title}
-            className="w-full h-full object-cover object-center opacity-80" // Slightly darker poster
+            className="w-full h-full object-cover object-center opacity-80"
             loading="lazy"
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src =
-                "https://placehold.co/400x300/111827/ffffff?text=Image+Not+Found";
+              e.target.src = "https://placehold.co/400x300/111827/ffffff?text=Image+Not+Found";
             }}
           />
-
-          {/* Tag in Top Right (like "Free") */}
           <div className="absolute top-3 right-3 flex space-x-2">
             {tagsToDisplay.map((tag, index) => (
               <span
                 key={index}
                 className={`px-3 py-1 text-xs font-semibold rounded-full backdrop-blur-sm ${
-                  tag.includes("Free")
-                    ? "bg-green-500/90 text-white"
-                    : "bg-gray-700/90 text-white"
+                  tag.includes("Free") ? "bg-green-500/90 text-white" : "bg-gray-700/90 text-white"
                 }`}
               >
                 {tag}
               </span>
             ))}
           </div>
-
-          {/* Date Tag in White Box (left-aligned) */}
           <div className="absolute bottom-3 left-3 bg-white text-gray-900 px-3 py-1 rounded-lg font-bold text-center shadow-lg">
-            <p className="text-sm leading-tight">
-              {String(event.date).split(",")[0]?.trim() || "TBD"}
-            </p>
+            <p className="text-sm leading-tight">{String(event.date).split(",")[0]?.trim() || "TBD"}</p>
           </div>
         </div>
       </div>
-
-      {/* CONTENT AREA (Black Box Below Image) */}
       <div className="p-3 flex flex-col justify-between flex-grow ">
-        
-        {/* Title, replicating the look of the image provided */}
-        <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-0 line-clamp-2">
-
- {event.title}
-        </h3>
-        
-        {/* Venue/Location */}
+        <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-0 line-clamp-2">{event.title}</h3>
         <p className="text-sm text-gray-400 flex items-center mb-1">
           <MapPin className="w-4 h-4 mr-2 text-purple-400" />
-          {event.venue?.includes("|")
-            ? event.venue.split("|").slice(-1).pop().trim()
-            : event.venue}
+          {event.venue?.includes("|") ? event.venue.split("|").slice(-1).pop().trim() : event.venue}
         </p>
-        
-        {/* Meta Data (Online/Free, Impressions, Share/Like) */}
         <div className="flex items-center justify-between text-xs font-medium text-gray-400 mb-2 pt-2">
-          
-          {/* Status/Cost/Venue */}
           <span className="flex items-center space-x-2">
-            <span className="text-gray-400">
-              {event.venue?.includes("Online") ? "Online" : "On-site"}
-            </span>
-            <span className="font-semibold text-green-400">
-              {event.tags?.includes("Free") ? "Free" : "Paid"}
-            </span>
+            <span className="text-gray-400">{event.venue?.includes("Online") ? "Online" : "On-site"}</span>
+            <span className="font-semibold text-green-400">{event.tags?.includes("Free") ? "Free" : "Paid"}</span>
           </span>
-
-          {/* Impressions */}
           <span className="flex items-center space-x-3">
             {event.impressions !== undefined && (
               <div className="flex items-center text-purple-400 text-xs font-semibold">
@@ -445,14 +389,10 @@ cursor-pointer"
             )}
           </span>
         </div>
-
-        {/* Share/Like/View Details */}
         <div className="flex items-center justify-between text-xs font-medium text-gray-400 mt-2">
-          
           <button className="mt-auto w-fit text-base font-semibold text-purple-400 hover:text-purple-300 transition-colors text-left">
             View Details &rarr;
           </button>
-          
           <span className="flex items-center space-x-3">
             {shareFeedback ? (
               <span className="flex items-center text-purple-400 text-xs font-semibold transition-all">
@@ -465,12 +405,9 @@ cursor-pointer"
                 onClick={localHandleShare}
               />
             )}
-
             <Heart
               className={`w-4 h-4 cursor-pointer transition-colors ml-3 ${
-                isLiked
-                  ? "text-red-500 fill-red-500"
-                  : "text-gray-500 hover:text-red-500 hover:fill-gray-900"
+                isLiked ? "text-red-500 fill-red-500" : "text-gray-500 hover:text-red-500 hover:fill-gray-900"
               }`}
               onClick={handleLikeClick}
             />
@@ -481,70 +418,44 @@ cursor-pointer"
   );
 };
 
-// --- NEW COMPONENT FOR POPULAR EVENTS MOBILE STYLE (Clean Image) ---
 const PopularEventCard = ({ event, onDetailsClick }) => {
-    // This card is used for Popular Events on mobile screens only.
-    return (
-        <div
-            className="flex flex-shrink-0 w-[80vw] max-w-sm mx-auto sm:w-[300px] sm:max-w-[300px]"
-        >
-            <div
-                className="relative w-full rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-black cursor-pointer group transition-transform duration-300 hover:scale-[1.02]"
-                onClick={() => onDetailsClick(event.id)}
-            >
-                {/* Fixed aspect ratio container for the image */}
-                <div className="relative w-full h-[260px] aspect-[4/3] sm:aspect-auto">
-                    <img
-                        src={event.poster}
-                        alt={event.title}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src =
-                                "https://placehold.co/400x550/111827/ffffff?text=Image+Not+Found";
-                        }}
-                    />
-
-                    {/* Gradient Overlay (kept for smooth edge blending, but reduced intensity) */}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-
-                    {/* Category Tag - remains visible at the top */}
-                    <div className="absolute top-4 left-4 flex items-center">
-                        <span className="px-3 py-1 rounded-full bg-purple-600 text-[11px] font-semibold text-white shadow-lg shadow-purple-800/70">
-                            Popular Pick
-                        </span>
-                    </div>
-
-                    {/* All other text/blur elements removed as requested. */}
-                </div>
-            </div>
+  return (
+    <div className="flex flex-shrink-0 w-[80vw] max-w-sm mx-auto sm:w-[300px] sm:max-w-[300px]">
+      <div
+        className="relative w-full rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-black cursor-pointer group transition-transform duration-300 hover:scale-[1.02]"
+        onClick={() => onDetailsClick(event.id)}
+      >
+        <div className="relative w-full h-[260px] aspect-[4/3] sm:aspect-auto">
+          <img
+            src={event.poster}
+            alt={event.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "https://placehold.co/400x550/111827/ffffff?text=Image+Not+Found";
+            }}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          <div className="absolute top-4 left-4 flex items-center">
+            <span className="px-3 py-1 rounded-full bg-purple-600 text-[11px] font-semibold text-white shadow-lg shadow-purple-800/70">
+              Popular Pick
+            </span>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
-// --- Reusable Horizontal Scroll Section component ---
-const HorizontalScrollSection = ({
-  events,
-  onDetailsClick,
-  onShareClick,
-  title,
-  onViewAllClick,
-  isPopular = false, // New prop to determine if it's the Popular Events section
-}) => {
+const HorizontalScrollSection = ({ events, onDetailsClick, onShareClick, title, onViewAllClick, isPopular = false }) => {
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  // The standard EventCard is used for Upcoming and Tech Events
-  const CardComponent = EventCard;
-
-  const showScrollButtons = events.length > 3;
-
   const checkScroll = useCallback(() => {
     if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } =
-        scrollContainerRef.current;
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
       setCanScrollLeft(scrollLeft > 5);
       setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
     }
@@ -567,18 +478,12 @@ const HorizontalScrollSection = ({
 
   const scroll = (direction) => {
     if (scrollContainerRef.current) {
-      // Use the mobile card width for scrolling logic if it's the popular section on small screens
       const isMobilePopular = isPopular && window.innerWidth < 640;
-      const cardWidth = isMobilePopular ? 320 : 300; 
-      const gap = 24; 
-      const scrollDistance = isMobilePopular ? cardWidth + gap : cardWidth * 2 + gap; 
-      const scrollAmount =
-        direction === "left" ? -scrollDistance : scrollDistance;
-
-      scrollContainerRef.current.scrollBy({
-        left: scrollAmount,
-        behavior: "smooth",
-      });
+      const cardWidth = isMobilePopular ? 320 : 300;
+      const gap = 24;
+      const scrollDistance = isMobilePopular ? cardWidth + gap : cardWidth * 2 + gap;
+      const scrollAmount = direction === "left" ? -scrollDistance : scrollDistance;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     }
   };
 
@@ -587,9 +492,7 @@ const HorizontalScrollSection = ({
   return (
     <section className="py-10 relative">
       <div className="flex flex-col items-center mb-10">
-        <h2 className="text-4xl font-extrabold text-white text-center mb-6">
-          {title}
-        </h2>
+        <h2 className="text-4xl font-extrabold text-white text-center mb-6">{title}</h2>
         <div className="w-full flex justify-end">
           <button
             onClick={onViewAllClick}
@@ -600,124 +503,57 @@ const HorizontalScrollSection = ({
           </button>
         </div>
       </div>
-
       <div className="relative">
-       {showScrollButtons && canScrollLeft && (
-  <button
-    onClick={() => scroll("left")}
-    aria-label="Scroll events left"
-    className="
-      absolute left-2 sm:-left-4 top-1/2 -translate-y-1/2
-      w-10 h-10
-      flex items-center justify-center
-      bg-transparent
-      text-white
-      hover:text-purple-400
-      transition-colors
-      z-20
-    "
-  >
-    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-  </button>
-)}
-
-
-
-        <div
-          ref={scrollContainerRef}
-          className="flex space-x-6 overflow-x-auto scrollbar-hide py-4 snap-x snap-mandatory pr-6"
-        >
+        {events.length > 3 && canScrollLeft && (
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-2 sm:-left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-transparent text-white hover:text-purple-400 transition-colors z-20"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        )}
+        <div ref={scrollContainerRef} className="flex space-x-6 overflow-x-auto scrollbar-hide py-4 snap-x snap-mandatory pr-6">
           {events.map((event) => (
-            <div 
-                key={event.id} 
-                // Hide mobile-style card on desktop/tablet, and desktop-style card on mobile
-                className={`snap-start ${isPopular ? "hidden sm:block" : ""}`}
-            >
-              {isPopular ? (
-                  // Desktop/Tablet view uses the standard card
-                  <EventCard
-                      event={event}
-                      onDetailsClick={onDetailsClick}
-                      onShareClick={onShareClick}
-                  />
-              ) : (
-                  // All other sections use the standard card for both mobile and desktop
-                  <CardComponent
-                      event={event}
-                      onDetailsClick={onDetailsClick}
-                      onShareClick={onShareClick}
-                  />
-              )}
+            <div key={event.id} className={`snap-start ${isPopular ? "hidden sm:block" : ""}`}>
+              <EventCard event={event} onDetailsClick={onDetailsClick} onShareClick={onShareClick} />
             </div>
           ))}
-
-          {/* RENDER POPULAR CARD ON MOBILE (uses the clean image style) */}
           {isPopular && events.map((event) => (
-                <div 
-                    key={`mobile-${event.id}`} 
-                    className="snap-start sm:hidden flex flex-shrink-0"
-                >
-                    <PopularEventCard
-                        event={event}
-                        onDetailsClick={onDetailsClick}
-                    />
-                </div>
+            <div key={`mobile-${event.id}`} className="snap-start sm:hidden flex flex-shrink-0">
+              <PopularEventCard event={event} onDetailsClick={onDetailsClick} />
+            </div>
           ))}
         </div>
-
-        {showScrollButtons && canScrollRight && (
-  <button
-    onClick={() => scroll("right")}
-    aria-label="Scroll events right"
-    className="
-      absolute right-2 sm:-right-4 top-1/2 -translate-y-1/2
-      w-10 h-10
-      flex items-center justify-center
-      bg-transparent
-      text-white
-      hover:text-purple-400
-      transition-colors
-      z-20
-    "
-  >
-    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-  </button>
-)}
-
-
+        {events.length > 3 && canScrollRight && (
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-2 sm:-right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-transparent text-white hover:text-purple-400 transition-colors z-20"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        )}
       </div>
     </section>
   );
 };
 
-
-// ===== FEATURED CAROUSEL =====
-const FeaturedCarousel = ({
-  events,
-  onDetailsClick,
-  onShareClick,
-  interval = 5000,
-}) => {
+const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 5000 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-
   const nextEvent = useCallback(() => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % events.length);
   }, [events.length]);
-
   const prevEvent = () => {
-    setCurrentIndex(
-      (prevIndex) => (prevIndex - 1 + events.length) % events.length
-    );
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + events.length) % events.length);
   };
 
   useEffect(() => {
     if (events.length <= 1) return;
-
     const timer = setInterval(nextEvent, interval);
     return () => clearInterval(timer);
   }, [events.length, interval, nextEvent]);
 
   const event = events[currentIndex];
+  if (!event) return null;
 
   const localHandleShare = (e) => {
     e.stopPropagation();
@@ -730,16 +566,8 @@ const FeaturedCarousel = ({
         {events.map((_, index) => (
           <button
             key={index}
-            onClick={(e) => {
-              e.stopPropagation();
-              setCurrentIndex(index);
-            }}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-              index === currentIndex
-                ? "bg-white scale-110"
-                : "bg-white/40 hover:bg-white/70"
-            }`}
-            aria-label={`Go to event ${index + 1}`}
+            onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
+            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${index === currentIndex ? "bg-white scale-110" : "bg-white/40 hover:bg-white/70"}`}
           />
         ))}
       </div>
@@ -748,337 +576,77 @@ const FeaturedCarousel = ({
   const DesktopDots = () =>
     events.length > 1 ? (
       <div className="mt-6 hidden sm:flex justify-center z-20 relative space-x-3">
-        {events.map((_, index) => {
-          const isActive = index === currentIndex;
-          return (
-            <button
-              key={index}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentIndex(index);
-              }}
-              className={`transition-all duration-300 ${
-                isActive
-                  ? "w-6 h-3 rounded-full bg-white"
-                  : "w-3 h-3 rounded-full bg-white/60 hover:bg-white/80"
-              }`}
-              aria-label={`Go to event ${index + 1}`}
-            />
-          );
-        })}
+        {events.map((_, index) => (
+          <button
+            key={index}
+            onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
+            className={`transition-all duration-300 ${index === currentIndex ? "w-6 h-3 rounded-full bg-white" : "w-3 h-3 rounded-full bg-white/60 hover:bg-white/80"}`}
+          />
+        ))}
       </div>
     ) : null;
 
-  // ===== MOBILE CARD (updated arrows outside) =====
-  const MobileCard = () => (
-    <div className="relative mt-8 mb-10 sm:hidden">
-      <div
-        className="relative max-w-sm mx-auto rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-black cursor-pointer"
-        onClick={() => onDetailsClick(event.id)}
-        key={event.id}
-      >
-        <div className="relative w-full h-[260px]">
-          <img
-            src={event.poster}
-            alt={event.title}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src =
-                "https://placehold.co/400x550/111827/ffffff?text=Image+Not+Found";
-            }}
-          />
-
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
-
-          <div className="absolute top-3 left-4 flex items-center">
-            <span className="px-3 py-1 rounded-full bg-[#5B3FFF] text-[11px] font-semibold text-white shadow-lg shadow-purple-800/70">
-              Featured Event
-            </span>
-          </div>
-
-          <div className="absolute left-4 right-4 bottom-5">
-            <div className="backdrop-blur-2xl bg-black/40 border border-white/10 rounded-2xl px-4 py-4">
-              <h2 className="text-lg font-bold text-white mb-2">
-                {event.title}
-              </h2>
-
-              <div className="flex items-center text-sm text-gray-200 mb-2">
-                <Calendar className="w-4 h-4 mr-2" />
-                <span>{event.date}</span>
+  return (
+    <>
+      <div className="relative mt-8 mb-10 sm:hidden">
+        <div className="relative max-w-sm mx-auto rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-black cursor-pointer" onClick={() => onDetailsClick(event.id)}>
+          <div className="relative w-full h-[260px]">
+            <img src={event.poster} alt={event.title} className="w-full h-full object-cover" onError={(e) => { e.target.src = "https://placehold.co/400x550/111827/ffffff?text=Not+Found"; }} />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
+            <div className="absolute top-3 left-4 flex items-center">
+              <span className="px-3 py-1 rounded-full bg-[#5B3FFF] text-[11px] font-semibold text-white">Featured Event</span>
+            </div>
+            <div className="absolute left-4 right-4 bottom-5">
+              <div className="backdrop-blur-2xl bg-black/40 border border-white/10 rounded-2xl px-4 py-4">
+                <h2 className="text-lg font-bold text-white mb-2">{event.title}</h2>
+                <div className="flex items-center text-sm text-gray-200 mb-2">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  <span>{event.date}</span>
+                </div>
+                <button className="mt-1 text-[13px] font-semibold text-white/90 underline-offset-2 hover:underline flex items-center">
+                  Click to view event details <span className="ml-1">&rarr;</span>
+                </button>
               </div>
-
-              <button className="mt-1 text-[13px] font-semibold text-white/90 underline-offset-2 hover:underline flex items-center">
-                Click to view event details
-                <span className="ml-1">&rarr;</span>
-              </button>
             </div>
           </div>
         </div>
+        {events.length > 1 && (
+          <>
+            <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute -left-[38px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white hover:text-purple-400 z-20"><ChevronLeft className="w-6 h-6" /></button>
+            <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute -right-[38px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white hover:text-purple-400 z-20"><ChevronRight className="w-6 h-6" /></button>
+          </>
+        )}
+        <MobileDots />
       </div>
 
-      {/* ARROWS OUTSIDE CARD */}
-      {events.length > 1 && (
-        <>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              prevEvent();
-            }}
-         className="
-  absolute -left-[38px] sm:-left-4
-  top-1/2 -translate-y-1/2
-  w-10 h-10
-  flex items-center justify-center
-  bg-transparent
-  text-white
-  hover:text-purple-400
-  transition-colors
-  z-20
-" aria-label="Previous event"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              nextEvent();
-            }}
-          className="
-  absolute -right-[38px] sm:-right-4
-  top-1/2 -translate-y-1/2
-  w-10 h-10
-  flex items-center justify-center
-  bg-transparent
-  text-white
-  hover:text-purple-400
-  transition-colors
-  z-20
-"
-
-
-            aria-label="Next event"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </>
-      )}
-
-      <MobileDots />
-    </div>
-  );
-
-  // DESKTOP / TABLET
-  const DesktopCard = () => (
-    <div
-      className="relative w-full max-w-5xl mx-auto py-10 px-6 sm:px-12 rounded-[2rem] shadow-2xl mt-12 mb-16 overflow-hidden transform transition-all duration-500 hover:scale-[1.01] cursor-pointer hidden sm:block"
-      key={event.id}
-      onClick={() => onDetailsClick(event.id)}
-    >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-xl z-0 rounded-[2rem]" />
-      <div
-        className="absolute inset-0 z-0 opacity-100 transition-opacity duration-1000"
-        style={{
-          background:
-            "radial-gradient(circle at 75% 10%, #020617, transparent 55%), radial-gradient(circle at 15% 90%, #111827, transparent 55%)",
-        }}
-      />
-
-      {events.length > 1 && (
-        <>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              prevEvent();
-            }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/20 text-white z-20 hover:bg-white/40 transition-colors"
-            aria-label="Previous event"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              nextEvent();
-            }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/20 text-white z-20 hover:bg-white/40 transition-colors"
-            aria-label="Next event"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </>
-      )}
-
-      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between transition-opacity duration-500 opacity-100">
-        <div className="md:w-1/2 p-4 md:pr-8 text-center md:text-left">
-          <h1 className="text-5xl sm:text-7xl font-extrabold text-white leading-tight mb-4 tracking-tighter">
-            {event.title}
-          </h1>
-          <p className="text-xl text-gray-200 font-medium mb-6 flex items-center justify-center md:justify-start">
-            <Calendar className="w-5 h-5 mr-3 text-yellow-300" />
-            {event.date}
-          </p>
-
-          {event.impressions !== undefined && (
-            <p className="text-md text-gray-300 font-medium mb-6 flex items-center justify-center md:justify-start">
-              <Eye className="w-5 h-5 mr-3 text-purple-300" />
-              {event.impressions.toLocaleString()} Impressions
-            </p>
-          )}
-
-          <div className="flex items-center justify-center md:justify-start space-x-4">
-            <button className="inline-flex items-center bg-white text-gray-900 font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-gray-200 transition-colors group">
-              Click to view event details
-              <span className="ml-3 transition-transform duration-300 group-hover:translate-x-1">
-                &rarr;
-              </span>
-            </button>
-            <button
-              onClick={localHandleShare}
-              className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-              title="Share this event"
-            >
-              <Share2 className="w-5 h-5" />
-            </button>
+      <div className="relative w-full max-w-5xl mx-auto py-10 px-6 sm:px-12 rounded-[2rem] shadow-2xl mt-12 mb-16 overflow-hidden transform transition-all duration-500 hover:scale-[1.01] cursor-pointer hidden sm:block" onClick={() => onDetailsClick(event.id)}>
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-xl z-0 rounded-[2rem]" />
+        {events.length > 1 && (
+          <>
+            <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/20 text-white z-20 hover:bg-white/40 transition-colors"><ChevronLeft className="w-6 h-6" /></button>
+            <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/20 text-white z-20 hover:bg-white/40 transition-colors"><ChevronRight className="w-6 h-6" /></button>
+          </>
+        )}
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between">
+          <div className="md:w-1/2 p-4 md:pr-8 text-center md:text-left">
+            <h1 className="text-5xl sm:text-7xl font-extrabold text-white leading-tight mb-4 tracking-tighter">{event.title}</h1>
+            <p className="text-xl text-gray-200 font-medium mb-6 flex items-center justify-center md:justify-start"><Calendar className="w-5 h-5 mr-3 text-yellow-300" />{event.date}</p>
+            {event.impressions !== undefined && <p className="text-md text-gray-300 font-medium mb-6 flex items-center justify-center md:justify-start"><Eye className="w-5 h-5 mr-3 text-purple-300" />{event.impressions.toLocaleString()} Impressions</p>}
+            <div className="flex items-center justify-center md:justify-start space-x-4">
+              <button className="inline-flex items-center bg-white text-gray-900 font-semibold py-3 px-8 rounded-full hover:bg-gray-200 transition-colors group">View details <span className="ml-3 transition-transform group-hover:translate-x-1">&rarr;</span></button>
+              <button onClick={localHandleShare} className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"><Share2 className="w-5 h-5" /></button>
+            </div>
+          </div>
+          <div className="md:w-1/2 p-4 mt-8 md:mt-0 flex justify-center">
+            <div className="w-full max-w-xs aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl ring-4 ring-white/20">
+              <img src={event.poster} alt={event.title} className="w-full h-full object-cover" />
+            </div>
           </div>
         </div>
-
-        <div className="md:w-1/2 p-4 mt-8 md:mt-0 flex justify-center">
-          <div className="w-full max-w-xs aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl ring-4 ring-white/20">
-            <img
-              src={event.poster}
-              alt={event.title}
-              className="w-full h-full object-cover transition-transform duration-500"
-              loading="lazy"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src =
-                  "https://placehold.co/400x550/111827/ffffff?text=Image+Not+Found";
-              }}
-            />
-          </div>
-        </div>
+        <DesktopDots />
       </div>
-
-      <DesktopDots />
-    </div>
-  );
-
-  return (
-    <>
-      <MobileCard />
-      <DesktopCard />
     </>
   );
-};
-
-// --- localStorage helpers ---
-const STORAGE_KEY = "event_impressions";
-const EVENTS_SNAPSHOT_KEY = "confique:events";
-const HOSTED_EVENTS_KEY = "confique:hostedEvents";
-
-const saveImpressionsToLocalStorage = (events) => {
-  if (typeof window !== "undefined") {
-    const dataToStore = events.map((e) => ({
-      id: e.id,
-      impressions: e.impressions,
-    }));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToStore));
-  }
-};
-
-const getInitialImpressions = (mockEvents, featuredEvents) => {
-  const ALL_MOCK_DATA = [
-    ...mockEvents,
-    ...featuredEvents.filter((e) => !mockEvents.some((m) => m.id === e.id)),
-  ];
-  const MAX_MOCK_ID = mockEvents.reduce(
-    (max, event) => Math.max(max, event.id),
-    0
-  );
-
-  const baseMockEvents = ALL_MOCK_DATA.map((event) => {
-    let baseImpressions =
-      Math.floor(Math.random() * (2500 - 500 + 1)) + 500;
-
-    const isRecentlyAdded = event.id > MAX_MOCK_ID - 5;
-    if (isRecentlyAdded) {
-      baseImpressions += Math.floor(Math.random() * (2000 - 500 + 1)) + 500;
-    }
-    if (event.isFeatured) {
-      baseImpressions += Math.floor(Math.random() * 500) + 1000;
-    }
-
-    return {
-      ...event,
-      impressions: baseImpressions,
-    };
-  });
-
-  if (typeof window === "undefined") {
-    return baseMockEvents.sort((a, b) => b.impressions - a.impressions);
-  }
-
-  let hostedEvents = [];
-  try {
-    const hostedRaw = localStorage.getItem(HOSTED_EVENTS_KEY);
-    if (hostedRaw) {
-      const parsed = JSON.parse(hostedRaw);
-      if (Array.isArray(parsed)) hostedEvents = parsed;
-    }
-  } catch (e) {
-    console.error("Error reading hosted events:", e);
-  }
-
-  const hostedWithImpressions = hostedEvents.map((ev) => {
-    const existingImp =
-      typeof ev.impressions === "number" ? ev.impressions : null;
-    const randomBoost =
-      Math.floor(Math.random() * (3500 - 1200 + 1)) + 1200;
-    const impressions = existingImp ?? randomBoost;
-
-    return {
-      ...ev,
-      impressions,
-    };
-  });
-
-  const baseEvents = [...baseMockEvents, ...hostedWithImpressions];
-
-  const savedData = localStorage.getItem(STORAGE_KEY);
-  if (!savedData) {
-    saveImpressionsToLocalStorage(baseEvents);
-    return baseEvents.sort((a, b) => b.impressions - a.impressions);
-  }
-
-  try {
-    const savedImpressionsMap = JSON.parse(savedData).reduce(
-      (map, item) => {
-        map[item.id] = item.impressions;
-        return map;
-      },
-      {}
-    );
-
-    const mergedEvents = baseEvents.map((event) => {
-      const savedImpressions = savedImpressionsMap[event.id];
-      const finalImpressions = savedImpressions
-        ? Math.max(event.impressions, savedImpressions)
-        : event.impressions;
-
-      return {
-        ...event,
-        impressions: finalImpressions,
-      };
-    });
-
-    return mergedEvents.sort((a, b) => b.impressions - a.impressions);
-  } catch (e) {
-    console.error("Error parsing impressions from localStorage:", e);
-    saveImpressionsToLocalStorage(baseEvents);
-    return baseEvents.sort((a, b) => b.impressions - a.impressions);
-  }
 };
 
 // --- MAIN COMPONENT ---
@@ -1087,576 +655,337 @@ const EventsPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [dynamicEvents, setDynamicEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [dynamicEvents, setDynamicEvents] = useState(() =>
-    getInitialImpressions(MOCK_EVENTS, FEATURED_CAROUSEL_EVENTS)
-  );
+  // --- Profile Dropdown States ---
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [user, setUser] = useState({ name: "User", email: "", avatar: DEFAULT_AVATAR });
+  const profileRef = useRef(null);
 
   const searchRef = useRef(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const eventIdParam =
-    searchParams.get("event") || searchParams.get("id");
+  const eventIdParam = searchParams.get("event") || searchParams.get("id");
   const viewParam = searchParams.get("view");
+  const editIdParam = searchParams.get("edit"); // Get edit parameter
 
+  // Load Profile and sync updates
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      localStorage.setItem(
-        EVENTS_SNAPSHOT_KEY,
-        JSON.stringify(dynamicEvents)
-      );
-    } catch (e) {
-      console.error("Failed to write events snapshot:", e);
-    }
-  }, [dynamicEvents]);
+    const loadProfile = async () => {
+      try {
+        const res = await fetch("/api/me", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.user) {
+            setUser({
+              name: data.user.name || "User",
+              email: data.user.email || "",
+              avatar: data.user.avatar || DEFAULT_AVATAR
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Profile load error", err);
+      }
+    };
+    loadProfile();
 
+    const handleUserUpdate = (e) => {
+      if (e.detail?.user) {
+        setUser({
+          name: e.detail.user.name,
+          email: e.detail.user.email,
+          avatar: e.detail.user.avatar
+        });
+      }
+    };
+    window.addEventListener("confique:user-updated", handleUserUpdate);
+    return () => window.removeEventListener("confique:user-updated", handleUserUpdate);
+  }, []);
+
+  // Dropdown click-outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Load Events from API and merge with Mocks
+  useEffect(() => {
+    let isMounted = true;
+    const loadEvents = async () => {
+      const dbEvents = await fetchEventsFromAPI();
+      const merged = [...dbEvents, ...MOCK_EVENTS];
+      
+      const map = new Map();
+      merged.forEach(ev => map.set(ev.id, ev));
+      
+      const finalEvents = Array.from(map.values()).map(ev => ({
+        ...ev,
+        impressions: typeof ev.impressions === 'number' ? ev.impressions : Math.floor(Math.random() * 2000) + 800
+      })).sort((a, b) => b.impressions - a.impressions);
+
+      if (isMounted) {
+        setDynamicEvents(finalEvents);
+        setLoading(false);
+      }
+    };
+    loadEvents();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Impression Ticker
   useEffect(() => {
     if (dynamicEvents.length === 0) return;
-
     const intervalId = setInterval(() => {
-      setDynamicEvents((prevEvents) => {
-        const nextEvents = prevEvents
-          .map((event) => {
-            const randomIncrease = Math.floor(Math.random() * 46) + 5;
-            return {
-              ...event,
-              impressions: event.impressions + randomIncrease,
-            };
-          })
-          .sort((a, b) => b.impressions - a.impressions);
-
-        saveImpressionsToLocalStorage(nextEvents);
-        return nextEvents;
-      });
-    }, 10000);
-
+      setDynamicEvents((prev) => 
+        [...prev].map(ev => ({ ...ev, impressions: ev.impressions + Math.floor(Math.random() * 10) + 1 }))
+        .sort((a, b) => b.impressions - a.impressions)
+      );
+    }, 15000);
     return () => clearInterval(intervalId);
   }, [dynamicEvents.length]);
 
   const ALL_EVENTS = useMemo(() => dynamicEvents, [dynamicEvents]);
 
   const eventDetailData = useMemo(() => {
-    const idNum = eventIdParam ? parseInt(eventIdParam, 10) : null;
-    const data =
-  idNum != null
-    ? ALL_EVENTS.find((e) => e.id === idNum) ?? null
-    : null;
-
-    return data;
+    if (!eventIdParam) return null;
+    const idNum = isNaN(eventIdParam) ? eventIdParam : parseInt(eventIdParam, 10);
+    return ALL_EVENTS.find((e) => e.id === idNum || String(e.id) === String(eventIdParam)) ?? null;
   }, [eventIdParam, ALL_EVENTS]);
+
+  // Identify event being edited with string comparison fallback
+  const editingEvent = useMemo(() => {
+    if (!editIdParam || ALL_EVENTS.length === 0) return null;
+    return ALL_EVENTS.find(ev => ev.id === editIdParam || String(ev.id) === String(editIdParam));
+  }, [editIdParam, ALL_EVENTS]);
 
   const relatedEvents = useMemo(() => {
     if (!eventDetailData) return [];
-    const currentEventId = eventDetailData.id;
-    const currentCategory = eventDetailData.category;
-
-    return ALL_EVENTS.filter(
-      (e) => e.category === currentCategory && e.id !== currentEventId
-    ).slice(0, 3);
+    return ALL_EVENTS.filter((e) => e.category === eventDetailData.category && e.id !== eventDetailData.id).slice(0, 3);
   }, [eventDetailData, ALL_EVENTS]);
 
   const renderDetailsView = Boolean(eventIdParam && eventDetailData);
-
   const renderHostView = viewParam === "host";
   const renderAllEventsView = viewParam === "all";
 
   const handleDetailsClick = (id) => {
-    setDynamicEvents((prevEvents) => {
-      const nextEvents = prevEvents
-        .map((event) => {
-          if (event.id === id) {
-            const userSurge =
-              Math.floor(Math.random() * 200) + 300;
-            return {
-              ...event,
-              impressions: event.impressions + userSurge,
-            };
-          }
-          return event;
-        })
-        .sort((a, b) => b.impressions - a.impressions);
-
-      saveImpressionsToLocalStorage(nextEvents);
-      return nextEvents;
-    });
-
     router.push(`${pathname}?event=${id}`, { scroll: true });
   };
 
-  const handleBackClick = () => {
-    router.push(pathname, { scroll: true });
-  };
-
-  const isMobile = () =>
-    typeof window !== "undefined" && window.innerWidth < 1024;
+  const handleBackClick = () => router.push(pathname, { scroll: true });
 
   const handleHostClick = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     router.push(`${pathname}?view=host`, { scroll: true });
-    if (isMobile()) setSidebarOpen(false);
+    setSidebarOpen(false);
   };
 
   const handleShareClick = (id) => {
     const shareLink = `${window.location.origin}${pathname}?event=${id}`;
-
     if (navigator.share) {
-      navigator
-        .share({
-          title: "Check out this event!",
-          url: shareLink,
-        })
-        .catch((error) => {
-          if (error.name !== "AbortError") {
-            console.error("Sharing failed", error);
-          }
-        });
-    } else if (navigator.clipboard) {
-      navigator.clipboard
-        .writeText(shareLink)
-        .then(() => {
-          console.log("Link copied to clipboard (Fallback)");
-        })
-        .catch((err) => {
-          console.error("Could not copy text: ", err);
-        });
+      navigator.share({ title: "Event", url: shareLink }).catch(() => {});
     } else {
-      alert(`Share functionality not supported. Link: ${shareLink}`);
+      navigator.clipboard.writeText(shareLink);
+      alert("Link copied!");
     }
   };
 
-  const handleSearchToggle = () => {
-    setIsSearching((prev) => !prev);
-    if (!isSearching) setSearchQuery("");
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userAvatar");
+      router.push("/auth/login");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
   };
 
-  const handleViewAllPopular = () => {
-    router.push(`${pathname}?view=all&category=All Events`, {
-      scroll: true,
-    });
-    setSearchQuery("");
-  };
+  const handleEventHosted = async (newHostedEvent) => {
+    try {
+      const isEdit = !!editIdParam;
+      const url = isEdit ? `/api/events/${editIdParam}` : "/api/events";
+      const method = isEdit ? "PATCH" : "POST";
 
-  const handleViewAllTech = () => {
-    router.push(`${pathname}?view=all&category=Tech`, {
-      scroll: true,
-    });
-    setSearchQuery("");
-  };
+      const res = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newHostedEvent),
+      });
 
-  const handleCategoryClickInListView = (categoryName) => {
-    setSelectedCategory(categoryName);
-    router.push(pathname, { scroll: false });
-    setSearchQuery("");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Operation failed");
+      }
+
+      const saved = await res.json();
+      
+      if (isEdit) {
+        setDynamicEvents(prev => prev.map(ev => (ev.id === editIdParam || String(ev.id) === String(editIdParam)) ? { ...saved, id: saved._id } : ev));
+      } else {
+        setDynamicEvents(prev => [{ ...saved, id: saved._id, impressions: 1200 }, ...prev]);
+      }
+      
+      return true;
+    } catch (err) {
+      console.error("Hosting Error:", err);
+      alert(`Failed: ${err.message}`);
+      throw err; 
+    }
   };
 
   const upcomingEvents = useMemo(() => {
-    const carouselIds = FEATURED_CAROUSEL_EVENTS.map((e) => e.id);
-    let filtered = ALL_EVENTS.filter((e) => !carouselIds.includes(e.id));
-
-    if (selectedCategory !== "All Events") {
-      filtered = filtered.filter((e) => e.category === selectedCategory);
-    }
-
+    let filtered = ALL_EVENTS.filter(e => !FEATURED_CAROUSEL_EVENTS.some(f => f.id === e.id));
+    if (selectedCategory !== "All Events") filtered = filtered.filter(e => e.category === selectedCategory);
     if (searchQuery.length > 2) {
-      const lowerQuery = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (e) =>
-          e.title.toLowerCase().includes(lowerQuery) ||
-          e.venue.toLowerCase().includes(lowerQuery) ||
-          e.category.toLowerCase().includes(lowerQuery) ||
-          e.tags?.some((tag) =>
-            tag.toLowerCase().includes(lowerQuery)
-          )
-      );
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(e => e.title.toLowerCase().includes(q) || e.category.toLowerCase().includes(q));
     }
-
     return filtered;
   }, [selectedCategory, searchQuery, ALL_EVENTS]);
 
-  const techEvents = useMemo(() => {
-    const carouselIds = FEATURED_CAROUSEL_EVENTS.map((e) => e.id);
-    const allMockEventsNoFeatured = ALL_EVENTS.filter(
-      (e) => !carouselIds.includes(e.id)
-    );
-    return allMockEventsNoFeatured.filter((e) => e.category === "Tech");
+  // Fix: Safe mapped events for the carousel using ALL_EVENTS check
+  const carouselEvents = useMemo(() => {
+      if (ALL_EVENTS.length === 0) return [];
+      return FEATURED_CAROUSEL_EVENTS.map(f => {
+          const found = ALL_EVENTS.find(a => a.id === f.id || String(a.id) === String(f.id));
+          return found ? found : f;
+      });
   }, [ALL_EVENTS]);
-
-  const popularEventsSlice = useMemo(() => {
-    const carouselIds = FEATURED_CAROUSEL_EVENTS.map((e) => e.id);
-    const popular = ALL_EVENTS.filter(
-      (e) => !carouselIds.includes(e.id)
-    );
-    // Slice only 5 events to keep the list short for the homepage
-    return popular.slice(0, 5); 
-  }, [ALL_EVENTS]);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      const isClickOnToggleButton = event.target.closest(
-        'button[aria-label="Toggle search"]'
-      );
-
-      if (
-        isSearching &&
-        searchRef.current &&
-        !searchRef.current.contains(event.target) &&
-        !isClickOnToggleButton
-      ) {
-        setIsSearching(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isSearching]);
-
-  const handleEventHosted = (newHostedEvent) => {
-    setDynamicEvents((prevEvents) => {
-      const impressionsBoost =
-        Math.floor(Math.random() * (3500 - 1200 + 1)) + 1200;
-
-      const normalizedEvent = {
-        ...newHostedEvent,
-        id: Date.now(),
-        title: newHostedEvent.title || "Untitled Event",
-        venue:
-          newHostedEvent.venue ||
-          (newHostedEvent.isOnline ? "Online" : "On-campus"),
-        date: newHostedEvent.date || "TBA",
-        poster:
-          newHostedEvent.poster ||
-          newHostedEvent.posterPreviewUrl ||
-          "https://placehold.co/400x550/111827/ffffff?text=EVENT",
-        tags: Array.isArray(newHostedEvent.tags)
-          ? newHostedEvent.tags
-          : [],
-        category: newHostedEvent.category || "Others",
-        impressions: impressionsBoost,
-      };
-
-      const updated = [normalizedEvent, ...prevEvents];
-      saveImpressionsToLocalStorage(updated);
-      localStorage.setItem(
-  EVENTS_SNAPSHOT_KEY,
-  JSON.stringify(updated)
-);
-      return updated.sort((a, b) => b.impressions - a.impressions);
-    });
-
-    try {
-      if (typeof window !== "undefined") {
-        const saved = localStorage.getItem(HOSTED_EVENTS_KEY);
-        const existing = saved ? JSON.parse(saved) : [];
-        const updatedHosted = [...existing, normalizedEvent];
-
-        localStorage.setItem(
-          HOSTED_EVENTS_KEY,
-          JSON.stringify(updatedHosted)
-        );
-      }
-    } catch (e) {
-      console.error("Failed to persist hosted event:", e);
-    }
-  };
-
-  const activeViewKey = renderHostView
-    ? "host"
-    : renderDetailsView
-    ? "details"
-    : renderAllEventsView
-    ? "all"
-    : "list";
 
   return (
-
     <div className="min-h-screen text-white font-sans antialiased relative bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000]">
-      {/* Dark overlay */}
-
-    {/* <div className="min-h-screen bg-[#0d0d0d]/80 text-white font-sans antialiased relative"> */}
-
-      <div
-        onClick={() => setSidebarOpen(false)}
-        className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 ${
-          sidebarOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        } lg:hidden`}
-      />
-
-      <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-[#050509] border-r border-[#262626] transform transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:hidden`}
-      >
+      <div onClick={() => setSidebarOpen(false)} className={`fixed inset-0 bg-black/50 z-[100] transition-opacity ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"} lg:hidden`} />
+      
+      <aside className={`fixed top-0 left-0 z-[110] h-full w-64 bg-[#050509] border-r border-[#262626] transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden`}>
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800">
-          <span className="text-lg font-extrabold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-            Confique
-          </span>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="p-1 text-white hover:text-purple-300"
-          >
-            <X className="w-7 h-7" strokeWidth={2.5} />
-          </button>
+          <span className="text-lg font-extrabold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Confique</span>
+          <button onClick={() => setSidebarOpen(false)}><X className="w-7 h-7" /></button>
         </div>
-
         <nav className="px-3 py-4 space-y-1">
           {MOBILE_NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => {
-                if (isMobile()) setSidebarOpen(false);
-              }}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                pathname === item.href
-                  ? "bg-[#111827] text-white"
-                  : "text-gray-300 hover:bg-[#111827] hover:text-white"
-              }`}
-            >
-              <item.icon className="w-4 h-4" />
-              <span>{item.label}</span>
-            </Link>
+            <Link key={item.href} href={item.href} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300"><item.icon className="w-4 h-4" />{item.label}</Link>
           ))}
+          <button onClick={handleHostClick} className="w-full text-left px-3 py-2 text-gray-300">Create Event</button>
         </nav>
-
-        <div className="mt-2 border-t border-gray-800 px-3 py-4 space-y-1 text-sm">
-          
-          <button
-            onClick={(e) => {
-              handleHostClick(e);
-              if (isMobile()) setSidebarOpen(false);
-            }}
-            className="w-full text-left px-3 py-2 rounded-lg text-gray-300 hover:bg-[#111827] hover:text-white"
-          >
-            Create Event
-          </button>
-
-          <Link
-            href="/saved"
-            onClick={() => isMobile() && setSidebarOpen(false)}
-            className="block px-3 py-2 rounded-lg text-gray-300 hover:bg-[#111827] hover:text-white"
-          >
-            Saved Items
-          </Link>
-          <Link
-            href="/settings"
-            onClick={() => isMobile() && setSidebarOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-[#111827] hover:text-white"
-          >
-            <Settings className="w-4 h-4" />
-            <span>Settings</span>
-          </Link>
-
-        </div>
       </aside>
 
-      <header
-        className={`z-40 bg-[#0d0d0d]/80 backdrop-blur-sm shadow-lg shadow-black/30 ${
-          renderDetailsView || renderHostView || renderAllEventsView
-            ? "hidden lg:block"
-            : ""
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+      <header className={`relative z-[90] bg-[#0d0d0d]/80 backdrop-blur-sm ${renderDetailsView || renderHostView || renderAllEventsView ? "hidden lg:block" : ""}`}>
+        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
           <div className="flex items-center space-x-4 w-full">
-            <div className="flex items-center space-x-3 lg:hidden">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                aria-label="Open sidebar"
-                className={`${sidebarOpen ? "hidden" : "inline-flex"}`}
-              >
-                <span className="flex flex-col justify-center space-y-1">
-                  <span className="block w-6 h-[2px] bg-white rounded-full" />
-                  <span className="block w-6 h-[2px] bg-white rounded-full" />
-                  <span className="block w-6 h-[2px] bg-white rounded-full" />
-                </span>
-              </button>
-
-              <Image
-                src="/Group%2051(3).png"
-                alt="Confique logo"
-                width={32}
-                height={32}
-                className="object-contain"
-              />
-            </div>
-
-            <h1 className="text-2xl font-extrabold tracking-tight text-purple-400 hidden lg:block">
-              Confique
-            </h1>
-
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden"><div className="space-y-1"><span className="block w-6 h-[2px] bg-white"></span><span className="block w-6 h-[2px] bg-white"></span><span className="block w-6 h-[2px] bg-white"></span></div></button>
+            <h1 className="text-2xl font-extrabold text-purple-400 hidden lg:block">Confique</h1>
             {isSearching ? (
-              <div
-                className="relative flex-grow max-w-lg md:max-w-xl"
-                ref={searchRef}
-              >
+              <div className="relative flex-grow max-w-lg" ref={searchRef}>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search events, posts, people..."
-                  className="w-full py-2 pl-10 pr-4 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
-                  autoFocus
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
+                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search..." className="w-full py-2 pl-10 bg-gray-800 rounded-lg text-white" autoFocus />
               </div>
             ) : (
-              <nav className="hidden md:flex items-center gap-2">
-                {TOP_NAV.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition ${
-                      pathname === item.href
-                        ? "bg-[#1a1a1a] text-white border border-[#333]"
-                        : "text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+              <nav className="hidden md:flex gap-2">
+                {TOP_NAV.map(item => <Link key={item.href} href={item.href} className="px-3 py-2 text-sm text-gray-300 hover:text-white">{item.label}</Link>)}
               </nav>
             )}
           </div>
+          <div className="flex items-center space-x-4">
+            <button onClick={handleHostClick} className="hidden lg:flex items-center bg-purple-600 px-4 py-2 rounded-full text-sm font-medium"><Plus className="w-4 h-4 mr-1" />Host</button>
+            <button onClick={() => setIsSearching(!isSearching)}><Search className="w-5 h-5 text-gray-400" /></button>
+            
+            <div className="relative" ref={profileRef}>
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2 p-1 rounded-full bg-slate-800/40 hover:bg-slate-700/60 transition-colors border border-slate-700/50"
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-purple-500">
+                  <img src={user.avatar} alt="User" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm font-medium text-slate-200 pr-2 hidden sm:block">{user.name}</span>
+              </button>
 
-          <div className="flex items-center space-x-4 ml-auto md:ml-0">
-            <button
-              onClick={handleHostClick}
-              className="hidden lg:inline-flex items-center bg-purple-600 text-white text-sm font-medium py-2 px-4 rounded-full hover:bg-purple-700 transition-colors shadow-md shadow-purple-500/50"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Host
-            </button>
-
-            <button
-              onClick={handleSearchToggle}
-              aria-label="Toggle search"
-            >
-              <Search
-                className={`w-5 h-5 transition-colors ${
-                  isSearching
-                    ? "text-purple-400"
-                    : "text-gray-400 hover:text-purple-400"
-                }`}
-              />
-            </button>
-
-            <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold cursor-pointer transition-transform hover:scale-105">
-              <User className="w-4 h-4" />
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-3 w-64 bg-[#111111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in zoom-in duration-200">
+                  <div className="p-6 flex flex-col items-center border-b border-white/5 bg-gradient-to-b from-slate-900/50 to-transparent">
+                    <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-purple-500 to-pink-500 mb-3">
+                      <img src={user.avatar} alt="Large User Avatar" className="w-full h-full rounded-full object-cover border-2 border-[#111]" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white text-center line-clamp-1">{user.name}</h3>
+                  </div>
+                  
+                  <div className="p-2">
+                    <button 
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        router.push("/profile/details");
+                      }} 
+                      className="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-white/5 rounded-xl transition-colors group text-left"
+                    >
+                      <User className="w-5 h-5 text-slate-400 group-hover:text-purple-400" />
+                      <span className="font-medium">Profile</span>
+                    </button>
+                    
+                    <button 
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors text-left group"
+                    >
+                      <LogOut className="w-5 h-5 text-red-500/70 group-hover:text-red-500" />
+                      <span className="font-medium">Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </header>
 
-      <main key={activeViewKey}>
+      <main>
         {renderHostView ? (
-          <HostEventPage
-            parentPathname={pathname}
-            onEventHosted={handleEventHosted}
+          <HostEventPage 
+            onEventHosted={handleEventHosted} 
+            initialData={editingEvent} 
           />
         ) : renderDetailsView ? (
-          <EventDetailsPage
-            event={eventDetailData}
-            onBackClick={handleBackClick}
-            EVENT_DETAIL_DATA_MOCK={EVENT_DETAIL_DATA}
-            relatedEvents={relatedEvents}
-            onDetailsClick={handleDetailsClick}
+          <EventDetailsPage 
+            event={eventDetailData} 
+            onBackClick={handleBackClick} 
+            relatedEvents={relatedEvents} 
+            onDetailsClick={handleDetailsClick} 
           />
         ) : renderAllEventsView ? (
-          <AllEventsPage
-            ALL_EVENTS={ALL_EVENTS}
-            categories={categories}
-            onDetailsClick={handleDetailsClick}
-            onShareClick={handleShareClick}
-            parentPathname={pathname}
+          <AllEventsPage 
+            ALL_EVENTS={ALL_EVENTS} 
+            categories={categories} 
+            onDetailsClick={handleDetailsClick} 
+            onShareClick={handleShareClick} 
           />
         ) : (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-            <FeaturedCarousel
-              events={FEATURED_CAROUSEL_EVENTS.map(
-                (e) => ALL_EVENTS.find((a) => a.id === e.id) || e
-              )}
-              onDetailsClick={handleDetailsClick}
-              onShareClick={handleShareClick}
-            />
-
+          <div className="max-w-7xl mx-auto px-4 pt-6">
+            {!loading && carouselEvents.length > 0 && (
+                <FeaturedCarousel 
+                  events={carouselEvents} 
+                  onDetailsClick={handleDetailsClick} 
+                  onShareClick={handleShareClick} 
+                />
+            )}
             <section className="py-10">
-              <div className="flex justify-center items-center mb-10">
-                <h2 className="text-4xl font-extrabold text-white text-center">
-                  Upcoming Events
-                </h2>
-              </div>
-
+              <h2 className="text-4xl font-extrabold text-white text-center mb-10">Upcoming Events</h2>
               <div className="flex space-x-3 overflow-x-auto pb-4 md:justify-center">
-                {categories.map((cat) => (
-                  <CategoryButton
-                    key={cat.name}
-                    name={cat.name}
-                    Icon={cat.icon}
-                    isActive={selectedCategory === cat.name}
-                    onClick={() =>
-                      handleCategoryClickInListView(cat.name)
-                    }
-                  />
-                ))}
+                {categories.map(cat => <CategoryButton key={cat.name} name={cat.name} Icon={cat.icon} isActive={selectedCategory === cat.name} onClick={() => setSelectedCategory(cat.name)} />)}
               </div>
             </section>
-
-            {isSearching && searchQuery.length > 2 && (
-              <div className="text-center py-5">
-                <p className="text-gray-400 text-lg">
-                  Showing results for:{" "}
-                  <span className="font-bold text-white">
-                    "{searchQuery}"
-                  </span>
-                </p>
-              </div>
-            )}
-
-            <HorizontalScrollSection
-              events={upcomingEvents}
-              onDetailsClick={handleDetailsClick}
-              onShareClick={handleShareClick}
-              title={
-                selectedCategory === "All Events"
-                  ? "All Events"
-                  : selectedCategory
-              }
-              onViewAllClick={handleViewAllPopular}
-            />
-
-            <HorizontalScrollSection
-              events={techEvents}
-              onDetailsClick={handleDetailsClick}
-              onShareClick={handleShareClick}
-              title="Tech Events"
-              onViewAllClick={handleViewAllTech}
-            />
-
-            {/* MODIFIED: Use HorizontalScrollSection for Popular Events and pass isPopular=true */}
-            <HorizontalScrollSection
-              events={popularEventsSlice}
-              onDetailsClick={handleDetailsClick}
-              onShareClick={handleShareClick}
-              title="Popular Events"
-              onViewAllClick={handleViewAllPopular}
-              isPopular={true} 
-            />
+            <HorizontalScrollSection events={upcomingEvents} title={selectedCategory} onDetailsClick={handleDetailsClick} onShareClick={handleShareClick} onViewAllClick={() => router.push("?view=all")} />
+            <HorizontalScrollSection events={ALL_EVENTS.filter(e => e.category === "Tech")} title="Tech Events" onDetailsClick={handleDetailsClick} onShareClick={handleShareClick} onViewAllClick={() => router.push("?view=all&category=Tech")} />
+            <HorizontalScrollSection events={ALL_EVENTS.slice(0, 5)} title="Popular Events" isPopular={true} onDetailsClick={handleDetailsClick} onShareClick={handleShareClick} onViewAllClick={() => router.push("?view=all")} />
           </div>
         )}
       </main>
@@ -1665,7 +994,6 @@ const EventsPage = () => {
         &copy; {new Date().getFullYear()} All rights reserved.
       </footer>
     </div>
-           /*</div> */
   );
 };
 

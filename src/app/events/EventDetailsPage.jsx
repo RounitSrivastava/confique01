@@ -1,4 +1,3 @@
-// components/EventDetailsPage.jsx
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -34,7 +33,7 @@ const getCurrentUserEmail = () => {
 const sendRegistrationNotification = (eventTitle) => {
   if (typeof window === "undefined") return;
   const email = getCurrentUserEmail();
-  if (!email) return; // no logged-in user
+  if (!email) return;
 
   let store = {};
   try {
@@ -63,11 +62,9 @@ const sendRegistrationNotification = (eventTitle) => {
     // ignore storage errors
   }
 
-  // Tell Topbar to refresh & play bell
   window.dispatchEvent(new Event("confique:new-notification"));
 };
 
-// Reusable SectionTitle component
 const SectionTitle = ({ children, icon: Icon, className = "" }) => (
   <h2
     className={`text-2xl font-bold text-white mb-6 border-b border-gray-800 pb-3 flex items-center ${className}`}
@@ -95,7 +92,6 @@ const TabButton = ({ name, icon: Icon, isActive, onClick }) => (
   </button>
 );
 
-// --- Related Event Card ---
 const RelatedEventCard = ({ event, onDetailsClick }) => (
   <div
     className="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-transform duration-300 hover:scale-[1.02] cursor-pointer shadow-lg hover:shadow-purple-500/20"
@@ -109,7 +105,6 @@ const RelatedEventCard = ({ event, onDetailsClick }) => (
     </div>
 
     <div className="text-gray-400 text-base space-y-3">
-      {/* Row 1: Date */}
       <div className="flex items-center">
         <Calendar className="w-5 h-5 mr-4 flex-shrink-0" />
         <span className="flex justify-between w-full">
@@ -120,7 +115,6 @@ const RelatedEventCard = ({ event, onDetailsClick }) => (
         </span>
       </div>
 
-      {/* Row 2: Category */}
       <div className="flex items-center">
         <Compass className="w-5 h-5 mr-4 flex-shrink-0" />
         <span className="flex justify-between w-full">
@@ -131,7 +125,6 @@ const RelatedEventCard = ({ event, onDetailsClick }) => (
         </span>
       </div>
 
-      {/* Row 3: Impressions */}
       <div className="flex items-center">
         <Eye className="w-5 h-5 mr-4 flex-shrink-0" />
         <span className="flex justify-between w-full">
@@ -145,7 +138,6 @@ const RelatedEventCard = ({ event, onDetailsClick }) => (
   </div>
 );
 
-// MAIN COMPONENT
 const EventDetailsPage = ({
   event: displayEvent,
   onBackClick,
@@ -182,11 +174,11 @@ const EventDetailsPage = ({
     tags = [],
     registrationStart,
     registrationEnd,
+    registrations = [],
   } = displayEvent || {};
 
   const CURRENCY_SYMBOL = "₹";
 
-  // participation format from tags
   const participationFormat =
     tags.find((tag) => tag.includes("Team") || tag.includes("Solo")) ||
     "Individual/Team (Check details)";
@@ -198,12 +190,12 @@ const EventDetailsPage = ({
     ? "1"
     : "Varies";
 
-  const regStart = registrationStart || "TBD";
-  const regEnd = registrationEnd || "TBD";
+  const regStart = registrationStart || displayEvent?.registration?.start || "TBD";
+  const regEnd = registrationEnd || displayEvent?.registration?.end || "TBD";
+  
   const eventRounds =
     rounds.length > 0 ? rounds : EVENT_DETAIL_DATA_MOCK?.rounds || [];
 
-  // 🔑 does this event actually have a custom registration form?
   const hasCustomForm =
     !isExternalRegistration &&
     Array.isArray(customFields) &&
@@ -223,20 +215,31 @@ const EventDetailsPage = ({
   }, [date]);
 
   useEffect(() => {
-    if (registrationStatus === "Open") {
-      const status = checkEventStatus();
-      if (status === "Ended") setRegistrationStatus("Ended");
+    const userEmail = getCurrentUserEmail();
+    
+    if (userEmail && registrations) {
+      const isAlreadyRegistered = registrations.some(
+        (reg) => reg.userEmail === userEmail
+      );
+      
+      if (isAlreadyRegistered) {
+        setRegistrationStatus("Registered");
+        return;
+      }
     }
-  }, [checkEventStatus, registrationStatus]);
+    
+    const status = checkEventStatus();
+    setRegistrationStatus(status);
+  }, [registrations, date, checkEventStatus]);
 
-  // --- REGISTRATION STORAGE KEY & helpers ---
   const REG_KEY = "confique:event_registrations";
 
   const incrementStoredRegistration = (eventKey) => {
     try {
       const raw = localStorage.getItem(REG_KEY) || "{}";
       const map = JSON.parse(raw);
-      map[eventKey] = (Number(map[eventKey] || 0) + 1);
+      const current = Number(map[eventKey] || 0);
+      map[eventKey] = current + 1;
       localStorage.setItem(REG_KEY, JSON.stringify(map));
       return map[eventKey];
     } catch (err) {
@@ -244,8 +247,6 @@ const EventDetailsPage = ({
       return null;
     }
   };
-
-  // --- REGISTRATION FORM HELPERS ---
 
   const handleFormChange = (fieldName, fieldType, value, checked) => {
     setFormData((prev) => ({
@@ -258,9 +259,7 @@ const EventDetailsPage = ({
     const errors = {};
     customFields.forEach((field) => {
       if (!field.required) return;
-
       const value = formData[field.name];
-
       if (field.type === "checkbox") {
         if (!value) errors[field.name] = "This field is required.";
       } else {
@@ -268,65 +267,33 @@ const EventDetailsPage = ({
           errors[field.name] = "This field is required.";
       }
     });
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleRegistrationSubmit = (e) => {
-    e.preventDefault();
+  const handleRegistrationSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (!validateForm()) return;
 
-    console.log("✅ Registration submitted for event:", title);
-    console.log("Form data:", formData);
+    const userEmail = getCurrentUserEmail();
 
-    setRegistrationStatus("Registered");
-    setShowRegistrationForm(false);
-
-    // persist + dispatch registration update
     try {
-      const eventKey = displayEvent?.id ?? displayEvent?.title ?? Date.now();
-      const finalCount = incrementStoredRegistration(eventKey);
+      const res = await fetch(`/api/events/${displayEvent.id || displayEvent._id}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userEmail: userEmail,
+          formData: formData,
+          paidRef: formData["Payment Ref (Last 4 digits)"] || null
+        }),
+      });
 
-      // dispatch update for host/profile listeners
-      window.dispatchEvent(
-        new CustomEvent("confique:registrations-updated", {
-          detail: {
-            id: displayEvent?.id,
-            title: displayEvent?.title,
-            registrations: finalCount,
-          },
-        })
-      );
-    } catch (err) {
-      console.error("Error updating registrations:", err);
-    }
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Registration failed");
 
-    // 🔔 send notification
-    sendRegistrationNotification(title);
-  };
-
-  const handleCloseForm = () => {
-    setShowRegistrationForm(false);
-    setFormErrors({});
-  };
-
-  const handleRegister = () => {
-    if (registrationStatus !== "Open") return;
-
-    // external -> redirect (we can't be sure they completed, so no notif here)
-    if (isExternalRegistration && registrationUrl) {
-      window.open(registrationUrl, "_blank");
-      return;
-    }
-
-    // internal:
-    if (!hasCustomForm) {
-      // 👉 NO FIELDS CONFIGURED: directly mark registered + notify
-      console.log("Registered without extra form for event:", title);
       setRegistrationStatus("Registered");
+      setShowRegistrationForm(false);
 
-      // persist + dispatch
       try {
         const eventKey = displayEvent?.id ?? displayEvent?.title ?? Date.now();
         const finalCount = incrementStoredRegistration(eventKey);
@@ -341,25 +308,45 @@ const EventDetailsPage = ({
           })
         );
       } catch (err) {
-        console.error("Failed to persist registration:", err);
+        console.error("Error updating local registrations:", err);
       }
 
-      // 🔔 send notification
       sendRegistrationNotification(title);
+    } catch (err) {
+      console.error("Registration Error:", err);
+      alert(err.message);
+    }
+  };
+
+  const handleCloseForm = () => {
+    setShowRegistrationForm(false);
+    setFormErrors({});
+  };
+
+  const handleRegister = () => {
+    // Logic for Registered or Closed states (Do nothing)
+    if (registrationStatus === "Registered" || registrationStatus === "Ended") return;
+
+    if (isExternalRegistration && registrationUrl) {
+      window.open(registrationUrl, "_blank");
       return;
     }
 
-    // fields exist: open popup
+    if (!hasCustomForm) {
+      handleRegistrationSubmit();
+      return;
+    }
+
     setShowRegistrationForm(true);
   };
 
   const getButtonProps = () => {
     if (registrationStatus === "Registered") {
       return {
-        text: "✓ Registered",
+        text: "Registered",
         className:
-          "w-full py-3 bg-green-600 text-white font-bold rounded-lg cursor-default shadow-lg shadow-green-500/30 flex items-center justify-center",
-        disabled: true,
+          "w-full py-3 bg-green-600 text-white font-bold rounded-lg transition-colors shadow-lg shadow-green-500/30 flex items-center justify-center",
+        disabled: true, // ✅ Disabled once registered
         Icon: CheckCircle,
       };
     }
@@ -384,7 +371,6 @@ const EventDetailsPage = ({
       };
     }
 
-    // internal + open
     return {
       text: "Register Now",
       className:
@@ -567,12 +553,9 @@ const EventDetailsPage = ({
         return (
           <div className="space-y-8">
             <SectionTitle icon={ClipboardList}>{title} Overview</SectionTitle>
-
             <p className="text-gray-300 text-lg leading-relaxed">
-              {tagline ||
-                "No short description provided. Please check the sidebar for key details like eligibility and registration dates."}
+              {tagline || "No short description provided."}
             </p>
-
             <p className="text-gray-300 text-lg leading-relaxed">
               The event is scheduled for{" "}
               <span className="font-semibold text-purple-300">
@@ -587,61 +570,18 @@ const EventDetailsPage = ({
 
             <SectionTitle icon={User}>Organizer & Contact</SectionTitle>
             <p className="text-gray-300">
-              Hosted by:{" "}
-              <span className="font-semibold text-purple-400">
-                {hostedBy || "The Host Organization"}
-              </span>
+              Hosted by: <span className="font-semibold text-purple-400">{hostedBy || "Host"}</span>
             </p>
             <p className="text-gray-300">
-              Location:{" "}
-              <span className="font-semibold text-purple-400">
-                {venue || (isOnline ? "Online" : "TBD")}
-              </span>
+              Location: <span className="font-semibold text-purple-400">{venue || (isOnline ? "Online" : "TBD")}</span>
             </p>
 
             {!isExternalRegistration && (
               <div className="bg-gray-800 p-4 rounded-lg border-l-4 border-yellow-500">
-                <p className="font-semibold text-yellow-300 mb-2">
-                  Registration Notes:
-                </p>
+                <p className="font-semibold text-yellow-300 mb-2">Registration Notes:</p>
                 <p className="text-sm text-gray-300 mb-3">
                   This event uses our internal registration system.
-                  {hasCustomForm ? (
-                    <>
-                      {" "}
-                      When you click{" "}
-                      <span className="font-semibold">Register Now</span>, a
-                      popup form will open where you must fill the required
-                      details.
-                    </>
-                  ) : (
-                    <>
-                      {" "}
-                      Clicking{" "}
-                      <span className="font-semibold">Register Now</span> will
-                      instantly confirm your registration.
-                    </>
-                  )}
                 </p>
-
-                {hasCustomForm && (
-                  <div className="mt-2">
-                    <p className="text-sm font-semibold text-gray-200 mb-1">
-                      Host will ask for:
-                    </p>
-                    <ul className="list-disc list-inside text-sm text-gray-300 space-y-1">
-                      {customFields.map((field, index) => (
-                        <li key={index}>
-                          <span className="font-medium">{field.name}</span>{" "}
-                          <span className="text-xs text-gray-400">
-                            ({field.type}
-                            {field.required ? ", required" : ", optional"})
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -654,7 +594,6 @@ const EventDetailsPage = ({
 
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans antialiased">
-      {/* Back Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <button
           onClick={onBackClick}
@@ -665,7 +604,6 @@ const EventDetailsPage = ({
         </button>
       </div>
 
-      {/* Event Header Hero */}
       <div className="relative h-[280px] overflow-hidden">
         <img
           src={banner || poster}
@@ -686,10 +624,8 @@ const EventDetailsPage = ({
         </div>
       </div>
 
-      {/* Main Content & Sidebar Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="lg:grid lg:grid-cols-12 lg:gap-10">
-          {/* Left Column */}
           <div className="lg:col-span-8">
             <div className="flex overflow-x-auto border-b border-gray-800 mb-8">
               {[
@@ -708,10 +644,8 @@ const EventDetailsPage = ({
             {renderContent()}
           </div>
 
-          {/* Right Column: Sidebar */}
           <div className="lg:col-span-4 mt-10 lg:mt-0 space-y-6">
             <div className="space-y-6 lg:sticky lg:top-20">
-              {/* Registration Card */}
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between text-white font-bold text-xl">
                   <p>Registration</p>
@@ -719,116 +653,43 @@ const EventDetailsPage = ({
                 </div>
 
                 <div className="space-y-2 text-gray-300 text-sm">
-                  <p className="flex justify-between">
-                    Main Date:{" "}
-                    <span className="font-medium text-white">
-                      {date ? new Date(date).toLocaleDateString() : "TBD"}
-                    </span>
-                  </p>
-                  <p className="flex justify-between">
-                    Start Date:{" "}
-                    <span className="font-medium text-white">{regStart}</span>
-                  </p>
-                  <p className="flex justify-between">
-                    End Date:{" "}
-                    <span className="font-medium text-white">{regEnd}</span>
-                  </p>
-                  <p className="flex justify-between">
-                    Fees:{" "}
-                    <span
-                      className={`font-medium ${
-                        isFree ? "text-green-400" : "text-yellow-400"
-                      }`}
-                    >
-                      {isFree ? "Free" : `${CURRENCY_SYMBOL}${paymentAmount || "TBD"}`}
-                    </span>
-                  </p>
-                  <p className="flex justify-between">
-                    Format:{" "}
-                    <span
-                      className={`font-medium ${
-                        participationFormat.includes("Team")
-                          ? "text-blue-400"
-                          : "text-yellow-400"
-                      }`}
-                    >
-                      {participationFormat}
-                    </span>
-                  </p>
-                  {participationFormat.includes("Team") && (
-                    <p className="flex justify-between">
-                      Team Size:{" "}
-                      <span className="font-medium text-white">{teamSize} members</span>
-                    </p>
-                  )}
+                  <p className="flex justify-between">Main Date: <span className="text-white">{date ? new Date(date).toLocaleDateString() : "TBD"}</span></p>
+                  <p className="flex justify-between">Start Date: <span className="text-white">{regStart}</span></p>
+                  <p className="flex justify-between">End Date: <span className="text-white">{regEnd}</span></p>
+                  <p className="flex justify-between">Fees: <span className={isFree ? "text-green-400" : "text-yellow-400"}>{isFree ? "Free" : `${CURRENCY_SYMBOL}${paymentAmount || "TBD"}`}</span></p>
+                  <p className="flex justify-between">Format: <span className="text-blue-400">{participationFormat}</span></p>
                 </div>
 
-                {/* QR Code (if any) */}
                 {!isFree && qrCode && (
                   <div className="mt-4 p-3 rounded-lg bg-gray-800 border border-gray-700 flex items-center space-x-4">
-                    <img
-                      src={qrCode}
-                      alt="Payment QR Code"
-                      className="w-20 h-20 object-contain rounded-md border border-purple-500"
-                    />
-                    <div className="text-xs text-gray-300">
-                      <p className="font-semibold text-white mb-1">Scan to Pay</p>
-                      <p>
-                        After payment, you may be asked for the last 4 digits of your transaction reference in the registration form.
-                      </p>
-                    </div>
+                    <img src={qrCode} alt="QR" className="w-20 h-20 object-contain rounded-md border border-purple-500" />
+                    <div className="text-xs text-gray-300"><p className="font-semibold text-white">Scan to Pay</p><p>Scan this QR to pay. Keep the ref number ready.</p></div>
                   </div>
                 )}
 
-                {/* Button */}
                 <button onClick={handleRegister} disabled={buttonProps.disabled} className={buttonProps.className}>
                   {buttonProps.Icon && <buttonProps.Icon className="w-5 h-5 mr-2" />}
                   {buttonProps.text}
                 </button>
               </div>
 
-              {/* Eligibility Card */}
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl space-y-3">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                </div>
+                <CheckCircle className="w-5 h-5 text-green-400" />
                 <p className="text-lg font-semibold text-white">Eligibility</p>
-                <p className="text-gray-300 text-sm">
-                  {eligibility || "Please check the official event communication for details."}
-                </p>
+                <p className="text-gray-300 text-sm">{eligibility || "Check official details."}</p>
               </div>
 
-              {/* Prizes Card */}
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl space-y-3">
-                <div className="flex items-center space-x-3">
-                  <Gift className="w-5 h-5 text-yellow-400" />
-                  <p className="text-lg font-semibold text-white">Prizes for Winners</p>
-                </div>
-                <p className="text-gray-300 text-sm">
-                  {prizes || "Prizes include cash rewards, goodies, and certificates for top performers."}
-                </p>
+                <Gift className="w-5 h-5 text-yellow-400" />
+                <p className="text-lg font-semibold text-white">Prizes for Winners</p>
+                <p className="text-gray-300 text-sm">{prizes || "Goodies and Certificates."}</p>
               </div>
-
-              {/* Impressions Card */}
-              {impressions !== undefined && (
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl space-y-3">
-                  <div className="flex items-center justify-between text-white font-bold text-xl">
-                    <div className="flex items-center space-x-3">
-                      <Eye className="w-6 h-6 text-purple-400" />
-                      <p className="text-lg font-semibold text-white">Impressions</p>
-                    </div>
-                    <p className="text-2xl text-purple-400">{impressions?.toLocaleString() || "N/A"}</p>
-                  </div>
-                  <p className="text-gray-400 text-xs">This shows how many times this event page has been viewed.</p>
-                </div>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Related Events */}
         <div className="mt-16 pt-8 border-t border-gray-800">
-          <SectionTitle icon={List}>Related Events You Might Like</SectionTitle>
+          <SectionTitle icon={List}>Related Events</SectionTitle>
           {relatedEvents.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedEvents.map((event, index) => (
@@ -836,15 +697,10 @@ const EventDetailsPage = ({
               ))}
             </div>
           ) : (
-            <div className="text-center py-10 text-gray-400">
-              <Compass className="w-8 h-8 mx-auto mb-4 text-purple-400" />
-              <p>No other events found in this category at the moment.</p>
-            </div>
+            <div className="text-center py-10 text-gray-400"><p>No related events found.</p></div>
           )}
         </div>
       </div>
-
-      {/* 🔥 POPUP REGISTRATION FORM */}
       {renderRegistrationFormModal()}
     </div>
   );

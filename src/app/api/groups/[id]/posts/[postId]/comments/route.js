@@ -10,38 +10,41 @@ export const dynamic = "force-dynamic";
 
 /* ==========================================
    GET COMMENTS
+   Route: /api/groups/[id]/posts/[postId]/comments
 ========================================== */
 export async function GET(req, context) {
   await dbConnect();
 
   try {
-    const { params } = context;
-    const { postId } = params;
+    const { id: groupId, postId } = context.params;
 
-    // Stability fix
-    // eslint-disable-next-line no-unused-vars
-    const [_, __] = [GroupComment, Post];
-
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
+    // ✅ Validate IDs
+    if (
+      !mongoose.Types.ObjectId.isValid(groupId) ||
+      !mongoose.Types.ObjectId.isValid(postId)
+    ) {
       return NextResponse.json(
-        { error: "Invalid Post ID." },
+        { error: "Invalid Group or Post ID." },
         { status: 400 }
       );
     }
 
+    // ✅ Fetch comments
     const comments = await GroupComment.find({
+      group: groupId,
       post: postId,
       isDeleted: false,
     })
       .sort({ createdAt: 1 })
       .lean();
 
+    // ✅ Frontend-compatible response (FIXED)
     const mappedComments = comments.map((c) => ({
       id: c._id.toString(),
       postId: c.post.toString(),
-      authorEmail: c.authorEmail,
-      authorName: c.authorName || c.authorEmail.split("@")[0],
-      authorImage: c.authorImage || null,
+      author: c.authorName || c.authorEmail?.split("@")[0] || "User",
+      authorEmail: c.authorEmail || null,
+      authorImage: c.authorImage || null, // already normalized at save-time
       text: c.text,
       parentId: c.parentComment ? c.parentComment.toString() : null,
       createdAt: c.createdAt,
@@ -62,21 +65,18 @@ export async function GET(req, context) {
 
 /* ==========================================
    POST COMMENT
+   Route: /api/groups/[id]/posts/[postId]/comments
 ========================================== */
 export async function POST(req, context) {
   await dbConnect();
 
   try {
-    const { params } = context;
-    const { id: groupId, postId } = params;
+    const { id: groupId, postId } = context.params;
 
-    // Stability fix
-    // eslint-disable-next-line no-unused-vars
-    const [_, __, ___] = [GroupComment, Post, User];
-
-    const actor = await getCurrentUser(req);
+    const actor = await getCurrentUser();
     const userId = actor?.id;
 
+    // ✅ Auth check
     if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized. Must be logged in to comment." },
@@ -84,6 +84,7 @@ export async function POST(req, context) {
       );
     }
 
+    // ✅ Validate IDs
     if (
       !mongoose.Types.ObjectId.isValid(groupId) ||
       !mongoose.Types.ObjectId.isValid(postId)
@@ -94,8 +95,7 @@ export async function POST(req, context) {
       );
     }
 
-    const body = await req.json();
-    const { text, parentId } = body;
+    const { text, parentId } = await req.json();
 
     if (!text || !text.trim()) {
       return NextResponse.json(
@@ -111,59 +111,71 @@ export async function POST(req, context) {
       );
     }
 
+    // ✅ Load user (FIX: include avatarUrl)
     const user = await User.findById(userId)
-      .select("name username avatar email")
+      .select("name username avatar avatarUrl email")
       .lean();
 
-    const postExists = await Post.exists({ _id: postId });
-
-    if (!user || !postExists) {
+    if (!user || !user.email) {
       return NextResponse.json(
-        { error: "Post or User not found." },
+        { error: "User not found or email missing." },
         { status: 404 }
       );
     }
 
+    // ✅ Ensure post exists
+    const postExists = await Post.exists({ _id: postId });
+    if (!postExists) {
+      return NextResponse.json(
+        { error: "Post not found." },
+        { status: 404 }
+      );
+    }
+
+    // ✅ Create comment (FIXED AVATAR SOURCE)
     const newComment = await GroupComment.create({
-      group: new mongoose.Types.ObjectId(groupId),
-      post: new mongoose.Types.ObjectId(postId),
-      author: new mongoose.Types.ObjectId(userId),
+      group: groupId,
+      post: postId,
+      author: userId,
       authorEmail: user.email,
-      authorName: user.name || user.username,
-      authorImage: user.avatar || null,
+      authorName: user.name || user.username || "",
+      authorImage: user.avatarUrl || user.avatar || null,
       text: text.trim(),
-      parentComment: parentId
-        ? new mongoose.Types.ObjectId(parentId)
-        : null,
+      parentComment: parentId || null,
     });
 
-    await Post.findByIdAndUpdate(postId, {
-      $inc: { commentsCount: 1 },
-    });
+    // ✅ Increment comment count
+    await Post.updateOne(
+      { _id: postId },
+      { $inc: { commentsCount: 1 } }
+    );
+
+    // ✅ Frontend-compatible response
+    const responseComment = {
+      id: newComment._id.toString(),
+      postId,
+      author:
+        newComment.authorName ||
+        newComment.authorEmail?.split("@")[0] ||
+        "User",
+      authorEmail: newComment.authorEmail,
+      authorImage: newComment.authorImage || null,
+      text: newComment.text,
+      parentId: newComment.parentComment
+        ? newComment.parentComment.toString()
+        : null,
+      createdAt: newComment.createdAt,
+    };
 
     return NextResponse.json(
       {
-        newComment: {
-          id: newComment._id.toString(),
-          postId,
-          authorEmail: newComment.authorEmail,
-          authorName: newComment.authorName,
-          authorImage: newComment.authorImage,
-          text: newComment.text,
-          parentId: newComment.parentComment
-            ? newComment.parentComment.toString()
-            : null,
-          createdAt: newComment.createdAt,
-        },
+        comment: responseComment,
+        newComment: responseComment,
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error(
-      "POST COMMENT ERROR:",
-      error.name,
-      error.message
-    );
+    console.error("POST COMMENT ERROR:", error);
 
     if (error.name === "ValidationError") {
       const msg = Object.values(error.errors)
@@ -173,7 +185,7 @@ export async function POST(req, context) {
     }
 
     return NextResponse.json(
-      { error: "Failed to create comment." },
+      { error: "Failed to create comment.", details: error.message },
       { status: 500 }
     );
   }

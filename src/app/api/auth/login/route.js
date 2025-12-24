@@ -5,12 +5,12 @@ import User from "@/models/User";
 import { verifyPassword, createToken } from "@/lib/auth";
 import { getAuthCookieOptions } from "@/lib/cookie-options";
 
-export const dynamic = "force-dynamic"; // ✅ REQUIRED IN NEXT 15
+export const runtime = "nodejs";        // ✅ REQUIRED (bcrypt, mongoose, jwt)
+export const dynamic = "force-dynamic"; // ✅ REQUIRED (req.json, cookies)
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { email, password } = body || {};
+    const { email, password } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -59,8 +59,8 @@ export async function POST(req) {
       { status: 200 }
     );
 
-    const { name: cookieName, cookieOptions } = getAuthCookieOptions();
-    res.cookies.set(cookieName, token, cookieOptions);
+    const { name, cookieOptions } = getAuthCookieOptions();
+    res.cookies.set(name, token, cookieOptions);
 
     return res;
   } catch (err) {
@@ -74,7 +74,7 @@ export async function POST(req) {
 
 export function GET() {
   return NextResponse.json(
-    { error: "Method not allowed. Use POST." },
+    { error: "Method not allowed" },
     { status: 405 }
   );
 }

@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongoose"; // Changed from { connectDB } to default import dbConnect
 import Event from "@/models/Event";
+export const dynamic = "force-dynamic";
+
 
 /* CREATE EVENT */
 export async function POST(req) {

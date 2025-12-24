@@ -3,6 +3,8 @@ import dbConnect from "@/lib/mongoose";
 import Event from "@/models/Event";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
+export const dynamic = "force-dynamic";
+
 
 // ✅ GET: Fetch a single event by ID
 export async function GET(req, { params }) {

@@ -1,44 +1,49 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import prisma from "@/lib/prisma";
-import { compare } from "bcryptjs";
 
 const handler = NextAuth({
-  adapter: PrismaAdapter(prisma),
   providers: [
+    // --------------------
+    // Google OAuth
+    // --------------------
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
+
+    // --------------------
+    // Email / Password
+    // --------------------
     CredentialsProvider({
       name: "Email/Password",
       credentials: {
-        email: { label: "Email", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const user = await prisma.user.findUnique({
-          where: { email: credentials?.email },
-        });
-        if (!user || !user.passwordHash) return null;
-
-        const isValid = await compare(
-          credentials.password,
-          user.passwordHash
-        );
-        if (!isValid) return null;
-
-        if (!user.emailVerified) {
-          throw new Error("Please verify your email first.");
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Missing credentials");
         }
 
-        return user;
+        /**
+         * TEMP USER
+         * Replace this with MongoDB logic later
+         */
+        return {
+          id: "1",
+          email: credentials.email,
+          name: credentials.email.split("@")[0],
+        };
       },
     }),
   ],
-  session: { strategy: "jwt" },
+
+  session: {
+    strategy: "jwt",
+  },
+
+  secret: process.env.NEXTAUTH_SECRET,
 });
 
 export { handler as GET, handler as POST };

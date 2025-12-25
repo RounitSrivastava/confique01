@@ -1,6 +1,6 @@
 // src/app/api/auth/login/route.js
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongoose";
+import dbConnect from "@/lib/mongoose"; 
 import User from "@/models/User";
 import { verifyPassword, createToken } from "@/lib/auth";
 import { getAuthCookieOptions } from "@/lib/cookie-options";

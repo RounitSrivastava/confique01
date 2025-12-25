@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@prisma/client": "^6.17.1",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.8.0",
     "dotenv": "^17.2.3",
@@ -20,7 +19,6 @@
     "next-auth": "^4.24.13",
     "next-connect": "^1.0.0",
     "nodemailer": "^7.0.12",
-    "prisma": "^6.16.2",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },

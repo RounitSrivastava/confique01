@@ -6,6 +6,7 @@ import {
     Search,
     MessageSquare,
     ArrowUp,
+    Heart,
     ArrowDown,
     MoreHorizontal,
     Plus,
@@ -1103,7 +1104,7 @@ const PostCard = ({
     currentUserAvatar,
     currentUserEmail,
     currentUserDisplayName,
-    sendVoteUpdate, // PROP FOR VOTING PERSISTENCE
+    onVote,
 }) => {
     const isMenuOpen = openMenuId === post.id;
     const menuButtonRef = React.useRef(null);
@@ -1151,29 +1152,14 @@ const PostCard = ({
                 : "https://picsum.photos/seed/community-user/50/50");
     }
     
-    // ⬅️ Upvote handler calls the new persistence function
     const handleUpvoteClick = () => {
-        if (typeof sendVoteUpdate === 'function') {
-            const newVoteType = post.userVote === 1 ? 0 : 1;
-            sendVoteUpdate(post.id, newVoteType);
-        } else {
-            console.warn("Voting disabled: sendVoteUpdate not available.");
+        if (typeof onVote === 'function') {
+            onVote(post.id, 1);
         }
     };
-    
-    // ⬅️ Downvote handler calls the new persistence function
-    const handleDownvoteClick = () => {
-        if (typeof sendVoteUpdate === 'function') {
-            const newVoteType = post.userVote === -1 ? 0 : -1;
-            sendVoteUpdate(post.id, newVoteType);
-        } else {
-            console.warn("Voting disabled: sendVoteUpdate not available.");
-        }
-    };
-
 
     return (
-        <div className="bg-[#0f0f10] p-4 rounded-lg border border-gray-700 mb-4 mx-4 shadow-lg">
+        <div className="p-4 mb-4 mx-4">
             <div className="flex justify-between relative">
                 <div className="flex items-center">
                     <button
@@ -1236,19 +1222,24 @@ const PostCard = ({
             )}
 
             <div className="flex justify-between mt-4">
-                <div className="flex items-center space-x-3 bg-gray-900 rounded-full p-1">
+                <div className="flex items-center">
                     <div
-                        onClick={handleUpvoteClick} // ⬅️ Correctly uses persistence handler
-                        className={`flex items-center px-2 py-1 rounded-full cursor-pointer transition-colors ${post.userVote === 1 ? "bg-transparent text-purple-600" : "hover:bg-gray-600 text-gray-400"}`}
+                        onClick={handleUpvoteClick}
+                        className={`flex items-center px-2 py-1 cursor-pointer transition-colors ${
+  post.userVote === 1
+    ? "text-purple-500"
+    : "text-gray-400 hover:text-white"
+}`}
                     >
-                        <ArrowUp className="w-4 h-4 mr-1" />
-                        <span className="font-semibold">{format(post.upvotes)}</span>
+                        <ArrowUp
+  className={`w-4 h-4 mr-1 transition-colors ${
+    post.userVote === 1 ? "text-purple-500" : "text-gray-400"
+  }`}
+/>
+                        <span className={`font-semibold ${post.userVote === 1 ? "text-white" : "text-gray-300"}`}>
+                            {format(post.upvotes)}
+                        </span>
                     </div>
-
-                    <ArrowDown
-                        onClick={handleDownvoteClick} // ⬅️ Correctly uses persistence handler
-                        className={`w-4 h-4 cursor-pointer transition-colors ${post.userVote === -1 ? "text-red-400" : "text-gray-400 hover:text-red-300"}`}
-                    />
                 </div>
 
                 <button className="flex items-center text-gray-400 cursor-pointer transition-colors p-1" onClick={() => onCommentsClick(post)}>
@@ -1337,7 +1328,7 @@ const mapBackendPostToFrontend = (post, communityInfo) => {
         authorImage: absAuthorImage,
         hasImage: !!absImageUrl,
         imageUrl: absImageUrl,
-        userVote: post.userVote || 0, // Ensure userVote is extracted if available
+        userVote: post.userVote || 0,
         createdAtMs: createdAt ? createdAt.getTime() : Date.now(),
         authorDisplayName: post.authorDisplayName || null,
         authorName: post.authorName || null,
@@ -1349,9 +1340,8 @@ const mapBackendPostToFrontend = (post, communityInfo) => {
 // MAIN FEED PAGE (Client Component)
 // --------------------
 export default function CommunityFeedPage({ community }) {
-    const router = useRouter(); 
+    const router = useRouter();
 
-    // ⬅️ Define interactive functions locally
     const handleGoBack = () => {
         router.back();
     };
@@ -1368,7 +1358,7 @@ export default function CommunityFeedPage({ community }) {
             try {
                 await apiFetch(`/api/groups/${encodeURIComponent(communityInfo.id)}`, { method: "DELETE" });
                 alert(`Community "${communityInfo.name}" deleted successfully.`);
-                router.push('/groups'); // Redirect back to explore page after deletion
+                router.push('/groups');
             } catch (e) {
                 console.error("Failed to delete community from backend", e);
                 alert("Failed to delete community.");
@@ -1407,7 +1397,6 @@ export default function CommunityFeedPage({ community }) {
     const [reports, setReports] = React.useState([]);
     const [currentUser, setCurrentUser] = React.useState(null);
 
-    // NEW: profile modal state
     const [selectedProfileEmail, setSelectedProfileEmail] = React.useState(null);
     const [selectedProfileData, setSelectedProfileData] = React.useState(null);
     const [profileLoading, setProfileLoading] = React.useState(false);
@@ -1435,7 +1424,6 @@ export default function CommunityFeedPage({ community }) {
                         }
                     } catch (e) {}
                 } else {
-                    // if 401 or other: fallback to local snapshot
                     const snap = getCurrentUserSnapshotFromLocalStorage();
                     if (snap) setCurrentUser(snap);
                     else {
@@ -1464,7 +1452,6 @@ export default function CommunityFeedPage({ community }) {
     const isCommunityOwner = communityInfo?.ownerEmail && currentUserEmail && communityInfo.ownerEmail === currentUserEmail;
     const isAdmin = isSiteOwner || isCommunityOwner;
 
-    // NEW: compute current user's exact avatar (Topbar's avatar)
     let currentUserAvatar = null;
     try {
         currentUserAvatar =
@@ -1523,7 +1510,6 @@ export default function CommunityFeedPage({ community }) {
         }
     }, []);
     
-    // ⬅️ NEW: Function to send vote update to the backend
     const sendVoteUpdate = React.useCallback(async (postId, newVoteType) => {
         if (!currentUserEmail) {
             alert("Please log in to vote.");
@@ -1534,27 +1520,50 @@ export default function CommunityFeedPage({ community }) {
              return;
         }
 
-        // Send vote to API
         try {
             const res = await apiFetch(`/api/groups/${encodeURIComponent(communityInfo.id)}/posts/${encodeURIComponent(postId)}/vote`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ vote: newVoteType }) // 1 for upvote, -1 for downvote, 0 to remove
+                body: JSON.stringify({ vote: newVoteType })
             });
             
             if (!res.ok) {
-                // If backend fails, log error
                 console.error("Failed to save vote to backend. Status:", res.status);
+                const errorData = await res.json().catch(() => ({}));
+                alert("Failed to save vote: " + (errorData.error || "Please try again"));
+                
+                if (communityInfo.id) {
+                    try {
+                        const res = await apiFetch(`/api/groups/${encodeURIComponent(communityInfo.id)}/posts`, { method: "GET" });
+                        if (res.ok) {
+                            const data = await res.json();
+                            const postsFromDb = Array.isArray(data.posts) ? data.posts : [];
+                            const mapped = postsFromDb.map((p) => mapBackendPostToFrontend(p, communityInfo));
+                            setPosts(mapped);
+                            enrichAuthors(mapped);
+                        }
+                    } catch (e) {
+                        console.error("Error re-fetching posts after vote failure", e);
+                    }
+                }
+            } else {
+                const data = await res.json();
+                if (data.post) {
+                    setPosts(prev => prev.map(p => 
+                        p.id === postId ? {
+                            ...p,
+                            upvotes: data.post.upvotes || p.upvotes,
+                            userVote: data.post.userVote || p.userVote
+                        } : p
+                    ));
+                }
             }
         } catch (e) {
             console.error("Vote API call failed:", e);
+            alert("Network error while voting. Please check your connection.");
         }
     }, [currentUserEmail, isDbBackedCommunity, communityInfo.id]);
 
-
-    // -------------------------
-    // ENRICH AUTHORS (updated to propagate avatar)
-    // -------------------------
     const enrichAuthors = React.useCallback(async (postsArray) => {
         if (!postsArray || postsArray.length === 0) return;
         const ids = new Set();
@@ -1583,12 +1592,11 @@ export default function CommunityFeedPage({ community }) {
                 const qRes = await apiFetch(`${USER_LOOKUP_BY_EMAIL}?email=${encodeURIComponent(email)}`, { method: "GET" });
                 if (qRes.ok) {
                     const qData = await qRes.json().catch(() => null);
-                    if (qData && qData.user) return qData.user;
+                    if (qData && data.user) return qData.user;
                     if (qData && Array.isArray(qData.users) && qData.users.length > 0) return qData.users[0];
                 }
             } catch (e) {}
             try {
-                // ⬅️ This is the request that returns 404 (needs to be fixed on backend)
                 const pRes = await apiFetch(`${USER_LOOKUP_BY_EMAIL}/by-email/${encodeURIComponent(email)}`, { method: "GET" });
                 if (pRes.ok) {
                     const pData = await pRes.json().catch(() => null);
@@ -1630,7 +1638,6 @@ export default function CommunityFeedPage({ community }) {
                     if (p.authorEmail) name = deriveNameFromEmail(p.authorEmail);
                 }
 
-                // --- prefer avatar from fetched user if available ---
                 let authorImage = p.authorImage || p.authorAvatar || p.authorImageUrl || null;
                 if ((!authorImage || authorImage === "") && p.authorId) {
                     const u = idMap[String(p.authorId)];
@@ -1641,17 +1648,14 @@ export default function CommunityFeedPage({ community }) {
                     if (u && u.avatar) authorImage = u.avatar;
                 }
 
-                // final fallback
                 if (!authorImage) {
                     authorImage = p.authorEmail
                         ? `https://avatars.dicebear.com/api/initials/${encodeURIComponent(name || deriveNameFromEmail(p.authorEmail))}.svg`
                         : "https://picsum.photos/seed/community-user/50/50";
                 }
 
-                // normalize authorImage to absolute
                 const absAuthorImage = authorImage ? makeAbsoluteUrl(authorImage) : authorImage;
 
-                // if this post belongs to current user, override author name/avatar with Topbar values
                 if (p.authorEmail && currentUserEmail && p.authorEmail === currentUserEmail) {
                     return {
                         ...p,
@@ -1681,7 +1685,6 @@ export default function CommunityFeedPage({ community }) {
         if (!isDbBackedCommunity || !communityInfo.id) return;
         async function loadPosts() {
             try {
-                // ⬅️ This GET request should now return 'upvotes' and 'userVote'
                 const res = await apiFetch(`/api/groups/${encodeURIComponent(communityInfo.id)}/posts`, { method: "GET" });
                 if (!res.ok) {
                     console.error("Failed to load posts for", communityInfo.id, res.status);
@@ -1699,7 +1702,6 @@ export default function CommunityFeedPage({ community }) {
         loadPosts();
     }, [isDbBackedCommunity, communityInfo.id, enrichAuthors]);
 
-    // -------------------- UPDATED handleNewPost --------------------
     const handleNewPost = async ({ title, content, imageFile, imagePreviewUrl }) => {
         if (!isDbBackedCommunity || !communityInfo.id) {
             const currentUserEmailLocal = currentUserEmail || getCurrentUserEmail() || "current@user.com";
@@ -1724,7 +1726,7 @@ export default function CommunityFeedPage({ community }) {
                 authorImage: userAvatar,
                 hasImage: !!imageFile,
                 imageUrl: imagePreviewUrl || null,
-                userVote: 1, // Default to 1 because the author is the one who posted
+                userVote: 1,
                 createdAtMs: nowMs,
             };
             setPosts((prev) => [newPost, ...prev]);
@@ -1734,7 +1736,6 @@ export default function CommunityFeedPage({ community }) {
         try {
             const payload = { title, content };
 
-            // if user selected a file, convert to base64 and include 
             if (imageFile) {
                 try {
                     const dataUrl = await fileToBase64(imageFile);
@@ -1744,7 +1745,6 @@ export default function CommunityFeedPage({ community }) {
                 }
             }
 
-            // fallback to preview URL if not sending base64 (e.g. remote image)
             if (!payload.imageBase64 && imagePreviewUrl) {
                 payload.imageUrl = imagePreviewUrl;
             }
@@ -1765,9 +1765,8 @@ export default function CommunityFeedPage({ community }) {
                 return;
             }
 
-            const { post } = await res.json(); // The POST response now includes userVote: 1
+            const { post } = await res.json();
 
-            // normalize server-returned URLs
             const normalized = {
                 ...post,
                 imageUrl: post.imageUrl ? makeAbsoluteUrl(post.imageUrl) : null,
@@ -1783,48 +1782,38 @@ export default function CommunityFeedPage({ community }) {
         }
     };
 
-    // ⬅️ CRITICAL FIX: Implement persistent voting logic
     const vote = (id, type) => {
+        // Since we only have upvote now, type will always be 1 or 0
         let likedPost = null;
-        let finalVoteType = 0; // 1: upvote, -1: downvote, 0: remove vote
         const currentUserEmailLocal = currentUserEmail || getCurrentUserEmail() || null;
 
         setPosts((prev) =>
             prev.map((p) => {
                 if (p.id !== id) return p;
+                
                 let newUpvotes = p.upvotes;
                 let newUserVote = p.userVote;
                 const previousVote = p.userVote;
 
-                if (type === 1) { // Upvote clicked
-                    if (previousVote === 1) { // Clicked upvote again (undo)
-                        newUpvotes -= 1;
-                        newUserVote = 0;
-                        finalVoteType = 0; // Send 0 (remove vote)
-                    } else { // New upvote or change from downvote
-                        if (previousVote === -1) newUpvotes += 2; // Undoing downvote (-1 to 0, then 0 to 1)
-                        else newUpvotes += 1; // New vote (0 to 1)
-                        newUserVote = 1;
-                        finalVoteType = 1; // Send 1 (upvote)
-                    }
-                } else if (type === -1) { // Downvote clicked
-                    if (previousVote === -1) { // Clicked downvote again (undo)
-                        newUpvotes += 1; // Score goes from -1 to 0
-                        newUserVote = 0;
-                        finalVoteType = 0; // Send 0 (remove vote)
-                    } else { // New downvote or change from upvote
-                        if (previousVote === 1) newUpvotes -= 2; // Undoing upvote (1 to 0, then 0 to -1)
-                        else newUpvotes -= 1; // New vote (0 to -1)
-                        newUserVote = -1;
-                        finalVoteType = -1; // Send -1 (downvote)
-                    }
+                // Only handle upvote toggle (1 -> 0, 0 -> 1)
+                if (type === 1 && previousVote === 1) {
+                    // Remove upvote
+                    newUpvotes -= 1;
+                    newUserVote = 0;
+                    type = 0; // Update finalVoteType
+                } else if (type === 1) {
+                    // Add upvote
+                    newUpvotes += 1;
+                    newUserVote = 1;
+                    type = 1; // Update finalVoteType
                 }
+
+                newUpvotes = Math.max(0, newUpvotes);
 
                 const updatedPost = { ...p, upvotes: newUpvotes, userVote: newUserVote };
                 
-                // Check for notification trigger (only notify on final UPVOTE)
                 if (
-                    finalVoteType === 1 && 
+                    newUserVote === 1 && 
                     previousVote !== 1 && 
                     updatedPost.authorEmail &&
                     currentUserEmailLocal &&
@@ -1837,9 +1826,11 @@ export default function CommunityFeedPage({ community }) {
             })
         );
         
-        // Call backend to persist the vote state
-        sendVoteUpdate(id, finalVoteType);
-
+        if (isDbBackedCommunity && communityInfo.id) {
+            // For backend, only send 1 (upvote) or 0 (remove vote)
+            const finalVoteType = type === 1 ? 1 : 0;
+            sendVoteUpdate(id, finalVoteType);
+        }
 
         if (likedPost && currentUserEmailLocal) {
             const notif = {
@@ -1856,7 +1847,6 @@ export default function CommunityFeedPage({ community }) {
             pushNotifications([notif]);
         }
     };
-
 
     const handleHidePost = (id) => {
         setPosts((prev) => prev.filter((p) => p.id !== id));
@@ -1921,13 +1911,10 @@ export default function CommunityFeedPage({ community }) {
         alert("Report submitted. Admins will review it.");
     };
 
-    // ⬅️ CRITICAL LOGIC: Deletes post from UI and calls API to delete from DB
     const handleAdminRemovePost = async (postId) => {
-        // 1. Optimistic UI update: Remove the post instantly
         setPosts((prev) => prev.filter((p) => p.id !== postId));
 
         try {
-            // 2. Update local reports status
             if (typeof window !== "undefined") {
                 const allReports = JSON.parse(localStorage.getItem("reports") || "[]");
                 const updated = allReports.map((r) => (r.postId === postId ? { ...r, status: "removed" } : r));
@@ -1938,22 +1925,18 @@ export default function CommunityFeedPage({ community }) {
             console.error("Failed to update reports after post removal", e);
         }
 
-        // 3. API Call to permanently delete from DB
         if (isDbBackedCommunity && communityInfo.id) {
             try {
                 const res = await apiFetch(`/api/groups/${encodeURIComponent(communityInfo.id)}/posts/${encodeURIComponent(postId)}`, { 
                     method: "DELETE" 
                 });
                 if (!res.ok) {
-                    // NOTE: If this fails, the post remains deleted from the UI, but not the DB.
                     console.error("Backend post deletion failed (DB not updated). Status:", res.status);
-                    // Optionally: Add rollback logic or a persistent warning to the user
                 } else {
                     alert("Post removed from the community and permanently deleted.");
                 }
             } catch (e) {
                 console.error("Failed to delete post from backend", e);
-                // Optionally: Re-add post to UI here if deletion is critical and failed immediately
             }
         } else {
             alert("Post removed from the community (local only).");
@@ -1965,7 +1948,6 @@ export default function CommunityFeedPage({ community }) {
             return;
         }
         
-        // Use the locally defined handler that redirects
         await handleDeleteCommunity(communityInfo);
     };
 
@@ -2002,11 +1984,8 @@ export default function CommunityFeedPage({ community }) {
         }
     };
 
-    // --------------------
-    // NEW: load profile by email (tries API then local snapshot then fallback)
     const loadProfileByEmail = React.useCallback(async (email, initialPreview = null) => {
         if (!email) return null;
-        // show quick preview immediately so UI isn't blank
         if (initialPreview) setSelectedProfileData(initialPreview);
         setProfileLoading(true);
         try {
@@ -2019,9 +1998,7 @@ export default function CommunityFeedPage({ community }) {
                         user = data.user || (data.users && data.users[0]);
                     }
                 }
-            } catch (e) {
-                // ignore
-            }
+            } catch (e) {}
 
             if (!user) {
                 try {
@@ -2055,7 +2032,6 @@ export default function CommunityFeedPage({ community }) {
         }
     }, [posts]);
 
-    // Show comments page if selectedPost set
     if (selectedPost) {
         return (
             <CommentsPage
@@ -2074,7 +2050,6 @@ export default function CommunityFeedPage({ community }) {
         <div className="min-h-screen bg-[#0d0d0d] text-white">
             <ImagePreviewModal imageUrl={previewImageUrl} onClose={() => setPreviewImageUrl(null)} />
 
-            {/* AUTHOR PROFILE MODAL */}
             {selectedProfileEmail && (
                 <AuthorProfileModal
                     email={selectedProfileEmail}
@@ -2152,7 +2127,7 @@ export default function CommunityFeedPage({ community }) {
                                     currentUserAvatar={currentUserAvatar}
                                     currentUserEmail={currentUserEmail}
                                     currentUserDisplayName={currentUserDisplayName}
-                                    sendVoteUpdate={sendVoteUpdate} // Pass the new persistence function
+                                    onVote={vote}
                                 />
                             );
                         })}

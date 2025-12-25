@@ -1,3 +1,4 @@
+  // app/api/groups/[id]/posts/[postId]/vote/route.js
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/mongoose";

@@ -8,10 +8,18 @@ import { getAuthCookieOptions } from "@/lib/cookie-options";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-
 export async function POST(req) {
   try {
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+
     const { name, email, password } = body || {};
 
     if (!name || !email || !password) {
@@ -48,6 +56,7 @@ export async function POST(req) {
 
     const res = NextResponse.json(
       {
+        ok: true,
         user: {
           id: String(user._id),
           name: user.name,
@@ -57,17 +66,15 @@ export async function POST(req) {
       { status: 201 }
     );
 
-    // ✅ Centralized, consistent cookie options
     const { name: cookieName, cookieOptions } = getAuthCookieOptions();
     res.cookies.set(cookieName, token, cookieOptions);
 
     return res;
   } catch (err) {
     console.error("REGISTER ROUTE ERROR:", err);
-    const isDev = process.env.NODE_ENV !== "production";
 
     return NextResponse.json(
-      { error: isDev ? String(err.message || err) : "Server error" },
+      { error: "Server error" },
       { status: 500 }
     );
   }

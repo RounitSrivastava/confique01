@@ -1,16 +1,31 @@
-// src/app/api/auth/login/route.js
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongoose"; 
+import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 import { verifyPassword, createToken } from "@/lib/auth";
 import { getAuthCookieOptions } from "@/lib/cookie-options";
 
-export const runtime = "nodejs";        // ✅ REQUIRED (bcrypt, mongoose, jwt)
-export const dynamic = "force-dynamic"; // ✅ REQUIRED (req.json, cookies)
+export const runtime = "nodejs";        // bcrypt, jwt
+export const dynamic = "force-dynamic"; // cookies, req.json
 
 export async function POST(req) {
   try {
-    const { email, password } = await req.json();
+    // 🔐 1️⃣ Guard: JWT_SECRET must exist on Vercel
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is missing");
+    }
+
+    // 🧾 2️⃣ Safe JSON parsing
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+
+    const { email, password } = body || {};
 
     if (!email || !password) {
       return NextResponse.json(
@@ -19,7 +34,7 @@ export async function POST(req) {
       );
     }
 
-    await connectToDatabase();
+    await dbConnect();
 
     const user = await User.findOne({
       email: String(email).trim().toLowerCase(),
@@ -51,7 +66,7 @@ export async function POST(req) {
       {
         ok: true,
         user: {
-          id: user._id,
+          id: String(user._id),
           email: user.email,
           name: user.name || "",
         },
@@ -59,14 +74,21 @@ export async function POST(req) {
       { status: 200 }
     );
 
+    // 🍪 3️⃣ Vercel-safe cookies
     const { name, cookieOptions } = getAuthCookieOptions();
-    res.cookies.set(name, token, cookieOptions);
+    res.cookies.set(name, token, {
+      ...cookieOptions,
+      secure: true,      // REQUIRED on Vercel
+      sameSite: "lax",   // safest default
+    });
 
     return res;
   } catch (err) {
     console.error("LOGIN ERROR:", err);
+
+    // 🧠 4️⃣ TEMP: expose real error (remove later)
     return NextResponse.json(
-      { error: "Server error" },
+      { error: err.message || "Server error" },
       { status: 500 }
     );
   }

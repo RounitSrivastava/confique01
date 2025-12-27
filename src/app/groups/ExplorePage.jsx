@@ -892,7 +892,7 @@ function ExplorePage({
                         placeholder="Search communities..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-gray-800 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-600"
+                        className="w-full pl-10 pr-4 py-3 bg-gray-900 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-600"
                     />
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 </div>

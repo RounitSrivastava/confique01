@@ -1,4 +1,3 @@
-// src/components/Topbar.jsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -10,7 +9,6 @@ const CREDENTIALS = "include";
 export default function Topbar({ onToggleSidebar = () => {} }) {
   const [openBell, setOpenBell] = useState(false);
   const [openUser, setOpenUser] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [isBellShaking, setIsBellShaking] = useState(true);
 
   const [currentUser, setCurrentUser] = useState(null);
@@ -20,13 +18,10 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
 
   const userRef = useRef(null);
   const bellRef = useRef(null);
-  const mobileSearchWrapperRef = useRef(null);
-  const mobileSearchInputRef = useRef(null);
 
   const prevNotifCountRef = useRef(0);
   const bellAudioRef = useRef(null);
 
-  // ... (unchanged setup effects)
   useEffect(() => {
     if (typeof Audio !== "undefined") {
       try {
@@ -48,7 +43,6 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     } catch {}
   };
 
-  // --- On mount: fetch /api/me (server is source of truth)
   useEffect(() => {
     let mounted = true;
 
@@ -83,7 +77,6 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
 
           setCurrentUser(normalized);
 
-          // load notifications (local-only store keyed by email)
           try {
             const store = JSON.parse(localStorage.getItem("notifications") || "{}");
             const myList = normalized.email ? store[normalized.email] || [] : [];
@@ -98,7 +91,6 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
         }
       } catch (err) {
         console.error("Failed to fetch /api/me:", err);
-        // Do NOT use localStorage to re-create auth — show logged out state
         setCurrentUser(null);
         setNotifications([]);
       }
@@ -110,7 +102,6 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     };
   }, []);
 
-  // --- Listen for auth-changed events from login/register/logout so UI updates instantly
   useEffect(() => {
     const handleAuthChanged = (e) => {
       try {
@@ -134,7 +125,6 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
             setNotifications([]);
           }
         } else {
-          // logged out
           setCurrentUser(null);
           setNotifications([]);
         }
@@ -147,29 +137,22 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     return () => window.removeEventListener("confique:auth-changed", handleAuthChanged);
   }, []);
 
-  // 🔑 NEW FIX: Listen for explicit profile update events (DISPATCHED BY TechProfilePage.jsx)
   useEffect(() => {
     const handleUserUpdated = (e) => {
         try {
             const updatedProfile = e?.detail?.user;
             if (updatedProfile) {
-                // Instantly update currentUser state with the new profile data
                 setCurrentUser(updatedProfile); 
-                // Since Topbar relies on currentUser, displayName and safeAvatar will update immediately.
             }
         } catch(err) {
             console.error("Profile update handler failed:", err);
         }
     };
 
-    // Listen for the event dispatched by TechProfilePage.jsx
     window.addEventListener("confique:user-updated", handleUserUpdated);
-    
     return () => window.removeEventListener("confique:user-updated", handleUserUpdated);
-  }, []); // Empty dependency array means this listener is set up once
+  }, []);
 
-
-  // ... (Other useEffects remain unchanged)
   useEffect(() => {
     const handleUpdate = () => {
       if (!currentUser?.email) return;
@@ -212,26 +195,16 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     function handleClickOutside(e) {
       const outsideUser = !userRef.current || !userRef.current.contains(e.target);
       const outsideBell = !bellRef.current || !bellRef.current.contains(e.target);
-      const outsideSearch = !mobileSearchWrapperRef.current || !mobileSearchWrapperRef.current.contains(e.target);
 
       if (outsideUser && outsideBell) {
         setOpenUser(false);
         setOpenBell(false);
-      }
-      if (outsideSearch) {
-        setMobileSearchOpen(false);
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    if (mobileSearchOpen && mobileSearchInputRef.current) {
-      mobileSearchInputRef.current.focus();
-    }
-  }, [mobileSearchOpen]);
 
   const handleBellClick = () => {
     setOpenBell((v) => !v);
@@ -252,16 +225,11 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     return "";
   };
 
-  // ------------------------------------------------------------------
-  // *** FIXED LOGOUT HANDLER ***
-  // ------------------------------------------------------------------
   const handleLogout = async () => {
-    // 1. **CRITICAL FIX:** Clear client state and notify the app **IMMEDIATELY**.
     setCurrentUser(null);
     setNotifications([]);
     window.dispatchEvent(new CustomEvent("confique:auth-changed", { detail: { user: null } }));
 
-    // 2. Clear local storage (optional cleanup)
     try {
       localStorage.removeItem("userEmail");
       localStorage.removeItem("userName");
@@ -270,21 +238,17 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
       localStorage.removeItem("confique_token");
     } catch {}
 
-    // 3. Call server to clear the HttpOnly cookie.
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
         credentials: CREDENTIALS,
       });
     } catch (err) {
-      console.error("Logout request failed (cookies may still be cleared):", err);
-      // Continue to navigate even on error, as local state is cleared.
+      console.error("Logout request failed:", err);
     } finally {
-      // 4. Navigate to login using router.push for soft navigation.
       router.push("/auth/login?loggedOut=true"); 
     }
   };
-  // ------------------------------------------------------------------
 
   const displayName =
     currentUser?.name?.trim() ||
@@ -296,8 +260,10 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#262626] bg-[#0d0d0d]/80 backdrop-blur">
-      <div className="mx-auto max-w-[1600px] px-3 md:px-6 h-16 flex items-center gap-4">
-        <div className="flex items-center gap-3 min-w-[180px]">
+      <div className="mx-auto max-w-[1600px] px-3 md:px-6 h-16 flex items-center justify-between">
+        
+        {/* Left Section */}
+        <div className="flex items-center gap-3">
           <button
             onClick={onToggleSidebar}
             className="flex flex-col justify-center items-center w-9 h-9 rounded-lg hover:bg-[#1a1a1a] lg:hidden"
@@ -308,11 +274,11 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
           </button>
 
           <img src="/Group 51(3).png" width={32} height={32} alt="Confique Logo" className="object-contain" />
-
           <span className="hidden sm:block font-medium tracking-wide">Confique</span>
         </div>
 
-        <div className="flex-1 max-w-2xl hidden sm:block">
+        {/* Center Section: Desktop Search */}
+        <div className="flex-1 max-w-2xl hidden sm:block mx-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -322,23 +288,9 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
           </div>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
-          <div ref={mobileSearchWrapperRef} className="relative sm:hidden">
-            {!mobileSearchOpen ? (
-              <button onClick={() => setMobileSearchOpen(true)} className="p-2 rounded-xl hover:bg-[#1a1a1a]">
-                <Search className="h-5 w-5 text-gray-300" />
-              </button>
-            ) : (
-              <div className="flex items-center bg-[#1a1a1a] border border-blue-600 px-3 py-1 rounded-xl w-44">
-                <Search className="h-4 w-4 text-gray-400" />
-                <input ref={mobileSearchInputRef} placeholder="Search..." className="flex-1 bg-transparent outline-none text-sm text-white ml-2" />
-                <button onClick={() => setMobileSearchOpen(false)}>
-                  <X className="h-4 w-4 text-gray-400" />
-                </button>
-              </div>
-            )}
-          </div>
-
+        {/* Right Section */}
+        <div className="flex items-center gap-2">
+          {/* Notifications */}
           <div className="relative" ref={bellRef}>
             <button onClick={handleBellClick} className={`relative flex items-center justify-center w-9 h-9 rounded-xl hover:bg-[#1a1a1a] ${isBellShaking ? "animate-bell-wiggle" : ""}`}>
               <div className="relative inline-block">
@@ -348,9 +300,14 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
             </button>
 
             {openBell && (
-              <div className="absolute right-0 mt-2 w-80 rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-lg">
-                <div className="px-4 py-3 border-b border-[#262626] font-medium">Notifications</div>
-                <ul className="max-h-80 overflow-y-auto">
+              <div className="fixed sm:absolute left-1/2 sm:left-auto right-auto sm:right-0 top-16 sm:top-auto mt-2 w-[92vw] sm:w-80 -translate-x-1/2 sm:translate-x-0 rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-lg overflow-hidden">
+                <div className="px-4 py-3 border-b border-[#262626] font-medium flex items-center justify-between">
+                  <span>Notifications</span>
+                  <button onClick={() => setOpenBell(false)} className="p-1 hover:bg-[#262626] rounded-lg transition-colors">
+                    <X className="h-4 w-4 text-gray-400" />
+                  </button>
+                </div>
+                <ul className="max-h-[60vh] sm:max-h-80 overflow-y-auto">
                   {notifications.length === 0 && <li className="px-4 py-3 text-sm text-gray-400">No notifications yet.</li>}
                   {notifications.map((n) => (
                     <li key={n.id} className="px-4 py-3 hover:bg-[#111] border-b border-[#262626]/60">
@@ -363,18 +320,18 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
             )}
           </div>
 
+          {/* User Profile */}
           <div className="relative" ref={userRef}>
             <button
               onClick={() => {
                 setOpenUser((v) => !v);
                 setOpenBell(false);
               }}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-[#1a1a1a]"
+              className="flex items-center gap-2 px-1 sm:px-2 py-1.5 rounded-full hover:bg-[#1a1a1a]"
             >
               <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-600">
                 <img src={safeAvatar} alt="User" width={36} height={36} className="object-cover w-full h-full" />
               </div>
-
               <span className="hidden sm:block text-sm font-medium text-white">{displayName}</span>
             </button>
 

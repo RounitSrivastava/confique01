@@ -687,9 +687,10 @@ const CommunityHeader = ({
                         <h1 className="text-lg sm:text-xl font-bold">
                             {community.name || "Community Name"}
                         </h1>
-                        <p className="text-xs sm:text-sm text-white">
-                            {membersLabel} • {community.online || "0"} online
-                        </p>
+                       <p className="text-xs sm:text-sm text-white">
+  {membersLabel}
+</p>
+
                     </div>
 
                     <div className="ml-auto flex items-center gap-2">
@@ -1042,11 +1043,15 @@ const CommentsPage = ({
             </div>
 
             <div
-                role="region"
-                aria-label="Comment input"
-                className="fixed bottom-0 z-50 bg-[#0d0d0d] border-t border-gray-800 shadow-2xl"
-                style={{ left: 250, width: "calc(100% - 250px - 360px)" }}
-            >
+  role="region"
+  aria-label="Comment input"
+  className="
+    fixed bottom-0 z-50 bg-[#0d0d0d] border-t border-gray-800 shadow-2xl
+    left-0 w-full
+    sm:left-[250px] sm:w-[calc(100%-250px-360px)]
+  "
+>
+
                 <div className="p-4">
                     {replyingTo && (
                         <div className="flex justify-between items-center text-xs text-gray-400 mb-2 p-2 bg-gray-800 rounded">

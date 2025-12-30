@@ -4,6 +4,7 @@ import dbConnect from "@/lib/mongoose";
 import Post from "@/models/Post";
 import Vote from "@/models/Vote";
 import GroupComment from "@/models/GroupComment";
+import cloudinary from "@/lib/cloudinary";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -34,7 +35,9 @@ export async function GET(req, context) {
   await dbConnect();
 
   try {
-    const { postId } = context.params;
+    // 1. AWAIT PARAMS (Next.js 15 Requirement)
+    const params = await context.params;
+    const { postId } = params;
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
       return NextResponse.json(
@@ -70,6 +73,7 @@ export async function GET(req, context) {
         content: post.content || null,
         imageUrl: post.imageUrl || null,
 
+        // 🔥 ALWAYS LIVE USER DATA
         authorId: author._id || null,
         authorEmail: author.email || null,
         authorName: author.name || author.username || "Unknown",
@@ -79,10 +83,9 @@ export async function GET(req, context) {
         commentsCount: post.commentsCount || 0,
         userVote,
         createdAt: post.createdAt,
-
-        isAuthor: actor?.id
-          ? author._id?.toString() === actor.id.toString()
-          : false,
+        
+        // Let the frontend know if the viewer can manage this post
+        isAuthor: actor?.id ? author._id?.toString() === actor.id.toString() : false,
       },
     });
   } catch (error) {
@@ -101,7 +104,9 @@ export async function DELETE(req, context) {
   await dbConnect();
 
   try {
-    const { postId } = context.params;
+    // 1. AWAIT PARAMS
+    const params = await context.params;
+    const { postId } = params;
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
       return NextResponse.json(
@@ -118,9 +123,9 @@ export async function DELETE(req, context) {
       );
     }
 
-    // Fetch post + community owner
+    // Fetch the post and its community to check for admin/owner rights
     const post = await Post.findById(postId)
-      .select("author group")
+      .select("author imagePublicId group")
       .populate("group", "ownerEmail");
 
     if (!post) {
@@ -130,17 +135,24 @@ export async function DELETE(req, context) {
       );
     }
 
-    // Permission: Author OR Community Owner
+    // Permission Logic: Author OR Community Owner can delete
     const isAuthor = post.author?.toString() === actor.id.toString();
-    const isCommunityOwner =
-      post.group?.ownerEmail?.toLowerCase() ===
-      actor.email?.toLowerCase();
+    const isCommunityOwner = post.group?.ownerEmail?.toLowerCase() === actor.email?.toLowerCase();
 
     if (!isAuthor && !isCommunityOwner) {
       return NextResponse.json(
         { error: "Forbidden: You do not have permission to delete this post" },
         { status: 403 }
       );
+    }
+
+    // Delete Cloudinary image
+    if (post.imagePublicId) {
+      try {
+        await cloudinary.uploader.destroy(post.imagePublicId);
+      } catch (err) {
+        console.error("Cloudinary delete error:", err);
+      }
     }
 
     // Cascading cleanup

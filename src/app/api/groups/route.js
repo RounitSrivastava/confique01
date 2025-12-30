@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongoose";
 import Group from "@/models/Group";
 import User from "@/models/User";
+import cloudinary from "@/lib/cloudinary";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
 
 /* ==========================================
     GET → Fetch all groups + user state
@@ -14,7 +16,7 @@ export async function GET() {
   await dbConnect();
 
   try {
-    const actor = await getCurrentUser();
+    const actor = await getCurrentUser(); // ✅ FIXED
 
     let joinedGroupIds = [];
     let createdGroupIds = [];
@@ -25,12 +27,18 @@ export async function GET() {
         .lean();
 
       if (user) {
-        joinedGroupIds = (user.joinedCommunities || []).map(String);
-        createdGroupIds = (user.createdGroups || []).map(String);
+        joinedGroupIds = (user.joinedCommunities || []).map((id) =>
+          id.toString()
+        );
+        createdGroupIds = (user.createdGroups || []).map((id) =>
+          id.toString()
+        );
       }
     }
 
-    const groups = await Group.find().lean();
+    const groups = await Group.find()
+      .sort({ membersCount: -1 })
+      .lean();
 
     const responseGroups = groups.map((g) => ({
       ...g,
@@ -54,13 +62,13 @@ export async function GET() {
 }
 
 /* ==========================================
-    POST → Create a new group (VERCEL SAFE)
+    POST → Create a new group
 ========================================== */
 export async function POST(req) {
   await dbConnect();
 
   try {
-    const actor = await getCurrentUser();
+    const actor = await getCurrentUser(); // ✅ FIXED
 
     if (!actor?.id || !actor?.email) {
       return NextResponse.json(
@@ -69,21 +77,40 @@ export async function POST(req) {
       );
     }
 
-    // 🔥 URLs only (uploaded from frontend)
     const body = await req.json();
-    const { name, description, category, iconUrl, bannerUrl } = body;
+    const { name, description, category, iconBase64, bannerBase64 } = body;
 
-    if (!name?.trim()) {
+    if (!name || !name.trim()) {
       return NextResponse.json(
         { error: "Group name required" },
         { status: 400 }
       );
     }
 
-    const slug = name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-");
+    const slug = name.toLowerCase().trim().replace(/\s+/g, "-");
+
+    let iconUrl = null;
+    let bannerUrl = null;
+    let iconPublicId = null;
+    let bannerPublicId = null;
+
+    if (iconBase64) {
+      const upload = await cloudinary.uploader.upload(iconBase64, {
+        folder: `confique/groups/${slug}`,
+        public_id: "icon",
+      });
+      iconUrl = upload.secure_url;
+      iconPublicId = upload.public_id;
+    }
+
+    if (bannerBase64) {
+      const upload = await cloudinary.uploader.upload(bannerBase64, {
+        folder: `confique/groups/${slug}`,
+        public_id: "banner",
+      });
+      bannerUrl = upload.secure_url;
+      bannerPublicId = upload.public_id;
+    }
 
     const group = await Group.create({
       name,
@@ -91,8 +118,10 @@ export async function POST(req) {
       slug,
       category,
       ownerEmail: actor.email.toLowerCase(),
-      iconUrl: iconUrl || null,
-      bannerUrl: bannerUrl || null,
+      iconUrl,
+      iconPublicId,
+      bannerUrl,
+      bannerPublicId,
       members: [actor.id],
       membersCount: 1,
     });

@@ -7,7 +7,7 @@ import dbConnect from "@/lib/mongoose";
 import Group from "@/models/Group";
 import Post from "@/models/Post";
 import User from "@/models/User";
-import Vote from "@/models/Vote"; 
+import Vote from "@/models/Vote";
 import cloudinary from "@/lib/cloudinary";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -18,14 +18,11 @@ export async function GET(req, context) {
     await dbConnect();
 
     try {
-        const params = await context.params;
-        const groupId = params.id;
-
-        const [_, __] = [Group, User];
+        const { id: groupId } = context.params;
 
         if (!groupId || !mongoose.Types.ObjectId.isValid(groupId)) {
             return NextResponse.json(
-                { error: `Invalid group ID: ${groupId}` },
+                { error: "Invalid group ID" },
                 { status: 400 }
             );
         }
@@ -35,96 +32,110 @@ export async function GET(req, context) {
             .lean();
 
         if (!group) {
-            return NextResponse.json({ error: "Group not found" }, { status: 404 });
+            return NextResponse.json(
+                { error: "Group not found" },
+                { status: 404 }
+            );
         }
-
-        const membersCount = group.members?.length || 0;
-        const { members, membersEmails, ...groupData } = group;
 
         return NextResponse.json({
             group: {
-                ...groupData,
+                ...group,
                 id: group._id.toString(),
-                membersCount,
+                membersCount: group.members?.length || 0,
             },
         });
     } catch (error) {
         console.error("GET GROUP ERROR:", error);
-        return NextResponse.json({ error: "Server error fetching group" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Server error fetching group" },
+            { status: 500 }
+        );
     }
 }
 
 /* ===========================
     PATCH (UPDATE) GROUP
+    ⚠️ VERCEL SAFE (NO BASE64)
 =========================== */
 export async function PATCH(req, context) {
     await dbConnect();
 
     try {
-        const params = await context.params;
-        const groupId = params.id;
+        const { id: groupId } = context.params;
 
         if (!groupId || !mongoose.Types.ObjectId.isValid(groupId)) {
-            return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
+            return NextResponse.json(
+                { error: "Invalid group ID" },
+                { status: 400 }
+            );
         }
 
-        // Auth & Ownership Check
+        // Auth check
         const actor = await getCurrentUser(req);
         if (!actor?.email) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
         }
 
         const group = await Group.findById(groupId);
         if (!group) {
-            return NextResponse.json({ error: "Group not found" }, { status: 404 });
+            return NextResponse.json(
+                { error: "Group not found" },
+                { status: 404 }
+            );
         }
 
         if (group.ownerEmail.toLowerCase() !== actor.email.toLowerCase()) {
             return NextResponse.json(
-                { error: "Forbidden: Only the owner can edit this community" },
+                { error: "Forbidden: Only owner can edit community" },
                 { status: 403 }
             );
         }
 
         const body = await req.json();
-        const { name, description, category, iconBase64, bannerBase64 } = body;
+        const { name, description, category, iconUrl, bannerUrl } = body;
 
         const updateData = {};
 
-        // 1. Handle Text fields
+        // Text updates
         if (name) {
             updateData.name = name;
-            updateData.slug = name.toLowerCase().trim().replace(/\s+/g, "-");
+            updateData.slug = name
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, "-");
         }
-        if (description !== undefined) updateData.description = description;
-        if (category) updateData.category = category;
 
-        // 2. Handle Icon Update
-        if (iconBase64) {
-            // Delete old icon from Cloudinary if it exists
+        if (description !== undefined) {
+            updateData.description = description;
+        }
+
+        if (category) {
+            updateData.category = category;
+        }
+
+        // Media updates (URLs only)
+        if (iconUrl) {
             if (group.iconPublicId) {
-                try { await cloudinary.uploader.destroy(group.iconPublicId); } catch (e) {}
+                try {
+                    await cloudinary.uploader.destroy(group.iconPublicId);
+                } catch {}
             }
-            const upload = await cloudinary.uploader.upload(iconBase64, {
-                folder: `confique/groups/${group.slug || 'updates'}`,
-                public_id: `icon_${Date.now()}`,
-            });
-            updateData.iconUrl = upload.secure_url;
-            updateData.iconPublicId = upload.public_id;
+            updateData.iconUrl = iconUrl;
+            updateData.iconPublicId = undefined; // optional if not tracking new public_id
         }
 
-        // 3. Handle Banner Update
-        if (bannerBase64) {
-            // Delete old banner from Cloudinary if it exists
+        if (bannerUrl) {
             if (group.bannerPublicId) {
-                try { await cloudinary.uploader.destroy(group.bannerPublicId); } catch (e) {}
+                try {
+                    await cloudinary.uploader.destroy(group.bannerPublicId);
+                } catch {}
             }
-            const upload = await cloudinary.uploader.upload(bannerBase64, {
-                folder: `confique/groups/${group.slug || 'updates'}`,
-                public_id: `banner_${Date.now()}`,
-            });
-            updateData.bannerUrl = upload.secure_url;
-            updateData.bannerPublicId = upload.public_id;
+            updateData.bannerUrl = bannerUrl;
+            updateData.bannerPublicId = undefined;
         }
 
         const updatedGroup = await Group.findByIdAndUpdate(
@@ -143,7 +154,10 @@ export async function PATCH(req, context) {
         });
     } catch (error) {
         console.error("PATCH GROUP ERROR:", error);
-        return NextResponse.json({ error: "Failed to update community" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Failed to update community" },
+            { status: 500 }
+        );
     }
 }
 
@@ -154,26 +168,32 @@ export async function DELETE(req, context) {
     await dbConnect();
 
     try {
-        const params = await context.params;
-        const groupId = params.id;
-
-        const [_, __, ___, ____] = [Group, Post, User, Vote];
+        const { id: groupId } = context.params;
 
         if (!groupId || !mongoose.Types.ObjectId.isValid(groupId)) {
-            return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
+            return NextResponse.json(
+                { error: "Invalid group ID" },
+                { status: 400 }
+            );
         }
 
         const actor = await getCurrentUser(req);
         if (!actor?.email) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
         }
 
         const group = await Group.findById(groupId).select(
-            "iconPublicId bannerPublicId slug ownerEmail"
+            "iconPublicId bannerPublicId ownerEmail"
         );
 
         if (!group) {
-            return NextResponse.json({ error: "Group not found" }, { status: 404 });
+            return NextResponse.json(
+                { error: "Group not found" },
+                { status: 404 }
+            );
         }
 
         if (group.ownerEmail.toLowerCase() !== actor.email.toLowerCase()) {
@@ -183,28 +203,34 @@ export async function DELETE(req, context) {
             );
         }
 
-        // A. Cloudinary Cleanup
+        // Cloudinary cleanup
         try {
-            if (group.iconPublicId) await cloudinary.uploader.destroy(group.iconPublicId);
-            if (group.bannerPublicId) await cloudinary.uploader.destroy(group.bannerPublicId);
+            if (group.iconPublicId) {
+                await cloudinary.uploader.destroy(group.iconPublicId);
+            }
+            if (group.bannerPublicId) {
+                await cloudinary.uploader.destroy(group.bannerPublicId);
+            }
         } catch (err) {
-            console.error("Cloudinary group image delete error:", err);
+            console.error("Cloudinary cleanup error:", err);
         }
 
-        // B. Cascade Post Images
+        // Cascade deletes
         const posts = await Post.find({ group: groupId }).select("imagePublicId");
         const postIds = posts.map(p => p._id);
 
         for (const post of posts) {
             if (post.imagePublicId) {
-                try { await cloudinary.uploader.destroy(post.imagePublicId); } catch (e) {}
+                try {
+                    await cloudinary.uploader.destroy(post.imagePublicId);
+                } catch {}
             }
         }
 
-        // C. Clean Database
-        if (postIds.length > 0) {
+        if (postIds.length) {
             await Vote.deleteMany({ postId: { $in: postIds } });
         }
+
         await Post.deleteMany({ group: groupId });
 
         await User.updateMany(
@@ -223,9 +249,11 @@ export async function DELETE(req, context) {
             ok: true,
             deletedGroupId: groupId.toString(),
         });
-
     } catch (error) {
         console.error("DELETE GROUP ERROR:", error);
-        return NextResponse.json({ error: "Failed to delete group" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Failed to delete group" },
+            { status: 500 }
+        );
     }
 }

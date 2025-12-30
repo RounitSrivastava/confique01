@@ -5,7 +5,6 @@ import Post from "@/models/Post";
 import Group from "@/models/Group";
 import User from "@/models/User";
 import Vote from "@/models/Vote";
-import cloudinary from "@/lib/cloudinary";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -42,8 +41,7 @@ export async function GET(req, context) {
   await dbConnect();
 
   try {
-    const params = await context.params;
-    const groupId = params.id;
+    const { id: groupId } = context.params;
 
     if (!mongoose.Types.ObjectId.isValid(groupId)) {
       return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
@@ -74,7 +72,6 @@ export async function GET(req, context) {
         content: post.content || null,
         imageUrl: post.imageUrl || null,
 
-        // 🔥 ALWAYS LIVE USER DATA
         authorId: author._id || null,
         authorEmail: author.email || null,
         authorName: author.name || author.username || "Unknown",
@@ -84,9 +81,11 @@ export async function GET(req, context) {
         commentsCount: post.commentsCount || 0,
         userVote: userVotesMap[postId] || 0,
         createdAt: post.createdAt,
-        
-        // Helpful for frontend conditional rendering (Edit/Delete buttons)
-        isAuthor: userId && author._id ? author._id.toString() === userId.toString() : false,
+
+        isAuthor:
+          userId && author._id
+            ? author._id.toString() === userId.toString()
+            : false,
       };
     });
 
@@ -101,14 +100,13 @@ export async function GET(req, context) {
 }
 
 /* ---------------------------------
-   CREATE NEW POST
+   CREATE NEW POST (VERCEL SAFE)
 ---------------------------------- */
 export async function POST(req, context) {
   await dbConnect();
 
   try {
-    const params = await context.params;
-    const groupId = params.id;
+    const { id: groupId } = context.params;
 
     if (!mongoose.Types.ObjectId.isValid(groupId)) {
       return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
@@ -119,7 +117,8 @@ export async function POST(req, context) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { title, content, imageBase64 } = await req.json();
+    // 🔥 imageUrl comes from frontend (Cloudinary upload already done)
+    const { title, content, imageUrl } = await req.json();
 
     if (!title?.trim()) {
       return NextResponse.json(
@@ -131,8 +130,9 @@ export async function POST(req, context) {
     const user = await User.findById(actor.id).select(
       "_id name username avatar email"
     );
+
     const group = await Group.findById(groupId).select(
-      "members ownerEmail slug"
+      "members ownerEmail"
     );
 
     if (!user || !group) {
@@ -146,7 +146,6 @@ export async function POST(req, context) {
     const isOwner = group.ownerEmail?.toLowerCase() === email;
     const isMember = group.members.some((id) => id.equals(user._id));
 
-    // Allow the owner or joined members to post
     if (!isOwner && !isMember) {
       return NextResponse.json(
         { error: "Join the community before posting." },
@@ -154,28 +153,16 @@ export async function POST(req, context) {
       );
     }
 
-    let imageUrl = null;
-    let imagePublicId = null;
-
-    if (imageBase64) {
-      const upload = await cloudinary.uploader.upload(imageBase64, {
-        folder: `confique/groups/${group.slug}/posts`,
-      });
-      imageUrl = upload.secure_url;
-      imagePublicId = upload.public_id;
-    }
-
     const post = await Post.create({
       group: group._id,
       title,
       content,
-      imageUrl,
-      imagePublicId,
+      imageUrl: imageUrl || null,
       author: user._id,
       upvotes: 1,
     });
 
-    // Auto-upvote the creator's own post
+    // Auto-upvote creator post
     await Vote.create({
       userId: user._id,
       postId: post._id,
@@ -199,7 +186,7 @@ export async function POST(req, context) {
           commentsCount: 0,
           userVote: 1,
           createdAt: post.createdAt,
-          isAuthor: true
+          isAuthor: true,
         },
       },
       { status: 201 }

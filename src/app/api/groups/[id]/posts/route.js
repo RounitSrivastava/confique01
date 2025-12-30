@@ -11,7 +11,6 @@ import { getCurrentUser } from "@/lib/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-
 /* ---------------------------------
    HELPER: Look up user's vote status
 ---------------------------------- */
@@ -43,7 +42,8 @@ export async function GET(req, context) {
   await dbConnect();
 
   try {
-    const { id: groupId } = context.params;
+    const params = await context.params;
+    const groupId = params.id;
 
     if (!mongoose.Types.ObjectId.isValid(groupId)) {
       return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
@@ -84,6 +84,9 @@ export async function GET(req, context) {
         commentsCount: post.commentsCount || 0,
         userVote: userVotesMap[postId] || 0,
         createdAt: post.createdAt,
+        
+        // Helpful for frontend conditional rendering (Edit/Delete buttons)
+        isAuthor: userId && author._id ? author._id.toString() === userId.toString() : false,
       };
     });
 
@@ -104,7 +107,8 @@ export async function POST(req, context) {
   await dbConnect();
 
   try {
-    const { id: groupId } = context.params;
+    const params = await context.params;
+    const groupId = params.id;
 
     if (!mongoose.Types.ObjectId.isValid(groupId)) {
       return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
@@ -139,9 +143,10 @@ export async function POST(req, context) {
     }
 
     const email = actor.email?.toLowerCase();
-    const isOwner = group.ownerEmail === email;
+    const isOwner = group.ownerEmail?.toLowerCase() === email;
     const isMember = group.members.some((id) => id.equals(user._id));
 
+    // Allow the owner or joined members to post
     if (!isOwner && !isMember) {
       return NextResponse.json(
         { error: "Join the community before posting." },
@@ -170,6 +175,7 @@ export async function POST(req, context) {
       upvotes: 1,
     });
 
+    // Auto-upvote the creator's own post
     await Vote.create({
       userId: user._id,
       postId: post._id,
@@ -193,6 +199,7 @@ export async function POST(req, context) {
           commentsCount: 0,
           userVote: 1,
           createdAt: post.createdAt,
+          isAuthor: true
         },
       },
       { status: 201 }

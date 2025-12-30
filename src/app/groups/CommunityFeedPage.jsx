@@ -373,12 +373,42 @@ const ImagePreviewModal = ({ imageUrl, onClose }) => {
         </div>
     );
 };
+
+const useKeyboardOffset = () => {
+  const [offset, setOffset] = React.useState(0);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const update = () => {
+      const vv = window.visualViewport;
+      const keyboardHeight =
+        window.innerHeight - vv.height - vv.offsetTop;
+      setOffset(keyboardHeight > 0 ? keyboardHeight : 0);
+    };
+
+    window.visualViewport.addEventListener("resize", update);
+    window.visualViewport.addEventListener("scroll", update);
+
+    update();
+
+    return () => {
+      window.visualViewport.removeEventListener("resize", update);
+      window.visualViewport.removeEventListener("scroll", update);
+    };
+  }, []);
+
+  return offset;
+};
+// update uper
 // create post modal form with image upload and preview
 const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
   const [imageFile, setImageFile] = React.useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = React.useState(null);
+
+  const keyboardOffset = useKeyboardOffset(); // ✅ NEW
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -417,8 +447,13 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
         fixed inset-0 z-50
         bg-black/70
         flex items-end sm:items-center justify-center
-        px-3 pb-4 pt-12
+        px-3 pt-12
       "
+      style={{
+        paddingBottom: keyboardOffset
+          ? `${keyboardOffset + 12}px`
+          : "1rem",
+      }}
     >
       {/* FLOATING CARD */}
       <div
@@ -428,12 +463,11 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
           rounded-2xl
           shadow-2xl
           flex flex-col
-          /* FIX: Ensure the modal doesn't exceed the viewport and hides overflow */
-          max-h-[90svh] 
+          max-h-[90svh]
           overflow-hidden
         "
       >
-        {/* HEADER - added flex-none */}
+        {/* HEADER */}
         <div className="flex-none flex items-center justify-between px-4 py-3 border-b border-gray-800">
           <div>
             <h2 className="text-lg font-semibold text-white">Create post</h2>
@@ -450,14 +484,8 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
           </button>
         </div>
 
-        {/* BODY - scrollable area */}
-        <div
-          className="
-            flex-1 overflow-y-auto
-            px-4 py-4 space-y-4
-            overscroll-contain
-          "
-        >
+        {/* BODY */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 overscroll-contain">
           {/* TITLE */}
           <input
             type="text"
@@ -475,27 +503,31 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
           />
 
           {/* CONTENT */}
-         <textarea
-  placeholder="What do you want to share?"
-  value={content}
-  onChange={(e) => setContent(e.target.value)}
-  rows={6}
-  className="
-    w-full bg-transparent
-    bg-[#0f172a]
-    text-white
-    placeholder-gray-400
-    rounded-xl
-    px-4 py-3
-
-    border border-white/20
-    focus:border-white/40
-
-    focus:outline-none
-    focus:ring-2 focus:ring-purple-600/40
-  "
-/>
-
+          <textarea
+            placeholder="What do you want to share?"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onFocus={(e) => {
+              setTimeout(() => {
+                e.target.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }, 100);
+            }}
+            rows={6}
+            className="
+              w-full bg-transparent
+              text-white
+              placeholder-gray-400
+              rounded-xl
+              px-4 py-3
+              border border-white/20
+              focus:border-white/40
+              focus:outline-none
+              focus:ring-2 focus:ring-purple-600/40
+            "
+          />
 
           {/* IMAGE PREVIEW */}
           {imagePreviewUrl && (
@@ -519,7 +551,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
           )}
         </div>
 
-        {/* FOOTER - added flex-none to prevent shrinking */}
+        {/* FOOTER */}
         <div
           className="
             flex-none
@@ -528,9 +560,8 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
             flex items-center gap-3
             bg-[#0d0d0d]
           "
-          style={{ 
-            /* Added a fallback padding for browsers/devices where env is 0 */
-            paddingBottom: "max(1rem, env(safe-area-inset-bottom))" 
+          style={{
+            paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
           }}
         >
           <label
@@ -539,6 +570,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
           >
             <ImageIcon className="w-5 h-5 text-purple-400" />
           </label>
+
           <input
             id="post-image"
             type="file"
@@ -566,6 +598,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
     </div>
   );
 };
+
 
 const InviteMenu = React.forwardRef(
     ({ communityName, communitySlug, onClose }, ref) => {

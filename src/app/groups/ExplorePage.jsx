@@ -2,8 +2,8 @@
 "use client";
 
 import React from "react";
-import { Search, ChevronRight, Plus, X, Upload, Trash2 } from "lucide-react";
-import { useSearchParams, useRouter } from "next/navigation"; // ⬅️ IMPORTED useRouter
+import { Search, ChevronRight, Plus, X, Upload, Trash2, Edit, Image, MoreVertical } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 // --- CONSTANTS ---
 const SITE_OWNER_EMAIL = "confique01@gmail.com";
@@ -93,8 +93,7 @@ const fetchMeData = async () => {
     }
 };
 
-
-// --- UI SUBCOMPONENTS (kept as is) ---
+// --- UI SUBCOMPONENTS (Updated with Admin Menu) ---
 const CategoryPill = ({ name, isSelected, onClick }) => (
     <button
         onClick={onClick}
@@ -132,6 +131,70 @@ const TrendingCard = ({ community, onNavigate }) => (
     </div>
 );
 
+// --- ADMIN MENU COMPONENT ---
+const AdminMenu = ({ 
+    community, 
+    onEdit, 
+    onEditMedia, 
+    onDelete,
+    onClose 
+}) => {
+    const menuRef = React.useRef(null);
+
+    // Close menu when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                onClose();
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose]);
+
+    return (
+        <div 
+            ref={menuRef}
+            className="absolute right-0 top-8 z-10 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl"
+        >
+            <div className="py-1">
+                <button
+                    onClick={() => {
+                        onEdit();
+                        onClose();
+                    }}
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Community
+                </button>
+                
+                <button
+                    onClick={() => {
+                        onEditMedia();
+                        onClose();
+                    }}
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                >
+                    <Image className="w-4 h-4 mr-2" />
+                    Edit Logo & Banner
+                </button>
+                
+                <button
+                    onClick={() => {
+                        onDelete();
+                        onClose();
+                    }}
+                    className="w-full flex items-center px-4 py-2 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300"
+                >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Community
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const RecommendedItem = ({
     community,
     isJoined,
@@ -139,17 +202,20 @@ const RecommendedItem = ({
     onNavigate,
     canDelete,
     onDelete,
+    onEdit,
+    onEditMedia,
 }) => {
     const displayIconUrl = community.iconUrl || community.icon;
+    const [showAdminMenu, setShowAdminMenu] = React.useState(false);
 
     return (
-        <div className="flex items-center justify-between py-3 border-b border-gray-700 last:border-b-0">
+        <div className="flex items-center justify-between py-3 border-b border-gray-700 last:border-b-0 relative">
             <div
                 className={`flex items-center flex-grow pr-4 rounded-lg -mx-2 px-2 py-1 ${
                     isJoined ? "cursor-pointer hover:bg-gray-800" : "cursor-default"
                 }`}
                 // CRITICAL: Navigation only proceeds if isJoined is true.
-                onClick={() => isJoined && onNavigate(community)}
+                onClick={() => onNavigate(community)}
             >
                 <div className="w-12 h-12 rounded-md mr-3 bg-gray-600 flex items-center justify-center text-lg font-bold overflow-hidden">
                     {displayIconUrl ? (
@@ -194,17 +260,29 @@ const RecommendedItem = ({
                     </button>
                 )}
 
-                {/* FIX: The delete option should only show for communities created by the user (admin) or site owner */}
+                {/* ADMIN MENU BUTTON */}
                 {canDelete && community.createdByCurrentUser && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete();
-                        }}
-                        className="p-1.5 rounded-full bg-red-900/40 hover:bg-red-800 text-red-300"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="relative">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowAdminMenu(!showAdminMenu);
+                            }}
+                            className="p-1.5 rounded-full hover:bg-gray-700 text-gray-400 hover:text-white"
+                        >
+                            <MoreVertical className="w-5 h-5" />
+                        </button>
+                        
+                        {showAdminMenu && (
+                            <AdminMenu
+                                community={community}
+                                onEdit={() => onEdit(community)}
+                                onEditMedia={() => onEditMedia(community)}
+                                onDelete={() => onDelete(community)}
+                                onClose={() => setShowAdminMenu(false)}
+                            />
+                        )}
+                    </div>
                 )}
             </div>
         </div>
@@ -285,248 +363,448 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     const logoRef = React.useRef(null);
     const bannerRef = React.useRef(null);
 
-    React.useEffect(() => {
-        if (!isOpen) {
-            setFormData({
-                name: "",
-                description: "",
-                bannerFile: null,
-                logoFile: null,
-                category: "Tech",
-            });
-            setErrors({});
-        }
-    }, [isOpen]);
+    if (!isOpen) return null;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
+        setFormData((p) => ({ ...p, [name]: value }));
+        setErrors((p) => ({ ...p, [name]: "" }));
     };
 
     const handleFileChange = (e) => {
         const { name, files } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: files[0] || null }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
+        setFormData((p) => ({ ...p, [name]: files?.[0] || null }));
     };
 
     const validate = () => {
-        const newErrors = {};
-
-        if (!formData.name.trim()) newErrors.name = "Community Name is required.";
-        if (!formData.description.trim()) newErrors.description = "Description is required.";
-        if (!formData.logoFile) newErrors.logoFile = "Logo is required.";
-        if (!formData.category) newErrors.category = "Category is required.";
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        const e = {};
+        if (!formData.name.trim()) e.name = "Required";
+        if (!formData.description.trim()) e.description = "Required";
+        if (!formData.logoFile) e.logoFile = "Logo required";
+        setErrors(e);
+        return Object.keys(e).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validate()) return;
 
-        const iconBase64 = formData.logoFile ? await fileToBase64(formData.logoFile) : null;
-        const bannerBase64 = formData.bannerFile ? await fileToBase64(formData.bannerFile) : null;
+        const iconBase64 = await fileToBase64(formData.logoFile);
+        const bannerBase64 = await fileToBase64(formData.bannerFile);
 
-        const payload = {
-            name: formData.name,
-            description: formData.description,
-            category: formData.category,
-            ownerEmail: getCurrentUserEmail() || SITE_OWNER_EMAIL,
-            iconBase64,
-            bannerBase64,
-        };
+        const res = await apiFetch("/api/groups", {
+            method: "POST",
+            body: JSON.stringify({
+                name: formData.name,
+                description: formData.description,
+                category: formData.category,
+                ownerEmail: getCurrentUserEmail(),
+                iconBase64,
+                bannerBase64,
+            }),
+        });
 
-        try {
-            const res = await apiFetch("/api/groups", {
-                method: "POST",
-                body: JSON.stringify(payload),
-            });
+        const data = await res.json();
+        onSubmitSuccess({
+            ...data.group,
+            createdByCurrentUser: true,
+        });
 
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                alert(data.error || "Failed to create community.");
-                return;
-            }
-
-            const data = await res.json();
-            const g = data.group;
-
-            onSubmitSuccess({
-                id: g._id || g.id,
-                name: g.name,
-                membersCount: g.membersCount || 1,
-                description: g.description,
-                iconUrl: g.iconUrl,
-                bannerUrl: g.bannerUrl,
-                slug: g.slug,
-                category: g.category,
-                createdByCurrentUser: true,
-                ownerEmail: g.ownerEmail,
-                role: "admin",
-            });
-
-            alert(`Community "${formData.name}" created successfully.`);
-            onClose();
-        } catch (err) {
-            console.error(err);
-            alert("Failed to create community");
-        }
+        onClose();
     };
 
-    if (!isOpen) return null;
-
-    const FileInput = ({ label, name, file, inputRef, required, error }) => (
-        <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-                {label} {required && "*"}
-            </label>
-            <div
-                className={`flex items-center justify-between h-12 px-3 border-2 rounded-lg bg-gray-800 ${
-                    error ? "border-red-500" : "border-dashed border-gray-600"
-                }`}
-            >
-                <span className={`text-sm truncate ${file ? "text-white" : "text-gray-400"}`}>
-                    {file ? file.name : "No file selected"}
-                </span>
-
-                <button
-                    type="button"
-                    onClick={() => {
-                        if (file) setFormData((prev) => ({ ...prev, [name]: null }));
-                        else inputRef.current?.click();
-                    }}
-                    className="flex items-center text-gray-400 hover:text-white p-1"
-                >
-                    {file ? <X className="w-4 h-4 mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
-                    {file ? "Remove" : "Upload"}
-                </button>
-
-                <input
-                    ref={inputRef}
-                    type="file"
-                    name={name}
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    key={file}
-                />
-            </div>
-
-            {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
-        </div>
-    );
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4 backdrop-blur-sm">
-            <div className="bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
-                {/* HEADER */}
-                <div className="flex justify-between items-center p-5 border-b border-gray-700">
-                    <h2 className="text-2xl font-bold text-white">🚀 Create New Community</h2>
-                    <button className="text-gray-400 hover:text-white" onClick={onClose}>
-                        <X className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
+            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-white shadow-2xl">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                    <div>
+                        <h2 className="text-xl font-semibold">Create community</h2>
+                        <p className="text-sm text-gray-400">Build your own space</p>
+                    </div>
+                    <button onClick={onClose} className="text-gray-400 hover:text-white">
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                {/* FORM */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Community Name *
-                        </label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            className={`w-full px-4 py-2 bg-gray-800 border rounded-lg text-white ${
-                                errors.name ? "border-red-500" : "border-gray-700"
-                            }`}
-                        />
-                        {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
-                    </div>
+                {/* Body */}
+                <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Description *
-                        </label>
-                        <input
-                            type="text"
-                            name="description"
-                            value={formData.description}
-                            onChange={handleChange}
-                            className={`w-full px-4 py-2 bg-gray-800 border rounded-lg text-white ${
-                                errors.description ? "border-red-500" : "border-gray-700"
-                            }`}
-                        />
-                        {errors.description && (
-                            <p className="text-red-400 text-xs mt-1">{errors.description}</p>
-                        )}
-                    </div>
+                    {/* Community Name */}
+                    <input
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder="Community name"
+                        className="w-full bg-transparent border-b border-white/10 focus:border-purple-500 outline-none py-2 text-lg"
+                    />
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Category *
-                        </label>
-                        <select
-                            name="category"
-                            value={formData.category}
-                            onChange={handleChange}
-                            className={`w-full px-4 py-2 bg-gray-800 border rounded-lg text-white ${
-                                errors.category ? "border-red-500" : "border-gray-700"
-                            }`}
+                    {/* Description */}
+                   <input
+    type="text"
+    name="description"
+    value={formData.description}
+    onChange={handleChange}
+    placeholder="What is this community about?"
+    maxLength={120}
+    className="
+        w-full
+        bg-transparent
+        border-b
+        border-white/10
+        focus:border-purple-500
+        outline-none
+        py-2
+        text-sm
+        placeholder-gray-400
+    "
+/>
+
+                    {/* Category */}
+                    <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        className="w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-sm"
+                    >
+                        {categories.filter(c => c !== "For You").map(c => (
+                            <option key={c}>{c}</option>
+                        ))}
+                    </select>
+
+                    {/* Upload Row */}
+                    <div className="flex gap-4">
+                        <button
+                            type="button"
+                            onClick={() => logoRef.current.click()}
+                            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500"
                         >
-                            {categories
-                                .filter((c) => c !== "For You")
-                                .map((c) => (
-                                    <option key={c} value={c}>
-                                        {c}
-                                    </option>
-                                ))}
-                        </select>
+                            <Image className="w-4 h-4 text-purple-400" />
+                            {formData.logoFile ? "Logo added" : "Add logo"}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => bannerRef.current.click()}
+                            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500"
+                        >
+                            <Upload className="w-4 h-4 text-purple-400" />
+                            {formData.bannerFile ? "Banner added" : "Add banner"}
+                        </button>
                     </div>
 
-                    {/* FILE INPUTS */}
-                    <div className="flex space-x-4">
-                        <FileInput
-                            label="Community Logo"
-                            name="logoFile"
-                            file={formData.logoFile}
-                            required
-                            inputRef={logoRef}
-                            error={errors.logoFile}
-                        />
+                    <input ref={logoRef} type="file" hidden accept="image/*"
+                        name="logoFile" onChange={handleFileChange} />
+                    <input ref={bannerRef} type="file" hidden accept="image/*"
+                        name="bannerFile" onChange={handleFileChange} />
+                </form>
 
-                        <FileInput
-                            label="Community Banner (Optional)"
-                            name="bannerFile"
-                            file={formData.bannerFile}
-                            inputRef={bannerRef}
-                            error={errors.bannerFile}
-                        />
-                    </div>
-
+                {/* Footer */}
+                <div className="flex justify-end px-6 py-4 border-t border-white/10">
                     <button
                         type="submit"
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold"
+                        onClick={handleSubmit}
+                        className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold"
                     >
-                        Create Community
+                        Create
                     </button>
-                </form>
+                </div>
             </div>
         </div>
     );
 };
+
+
 // -------------------------
-// MAIN EXPLORE PAGE (MODIFIED INITIALIZATION & LOGIC)
+// EDIT COMMUNITY FORMS (NEW)
+// -------------------------
+const EditCommunityForm = ({
+    community,
+    isOpen,
+    onClose,
+    onUpdateSuccess,
+}) => {
+    const [formData, setFormData] = React.useState({
+        name: community?.name || "",
+        description: community?.description || "",
+        category: community?.category || "Tech",
+    });
+
+    const [loading, setLoading] = React.useState(false);
+
+    React.useEffect(() => {
+        if (community) {
+            setFormData({
+                name: community.name,
+                description: community.description,
+                category: community.category || "Tech",
+            });
+        }
+    }, [community]);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((p) => ({ ...p, [name]: value }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!formData.name.trim() || !formData.description.trim()) return;
+
+        setLoading(true);
+        try {
+            const res = await apiFetch(`/api/groups/${community.id}`, {
+                method: "PATCH",
+                body: JSON.stringify(formData),
+            });
+
+            const data = await res.json();
+            onUpdateSuccess({
+                ...community,
+                ...data.group,
+            });
+            onClose();
+        } catch (err) {
+            alert("Failed to update community");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!isOpen || !community) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
+            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-white shadow-2xl">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                    <div>
+                        <h2 className="text-xl font-semibold">Edit community</h2>
+                        <p className="text-sm text-gray-400">Update details</p>
+                    </div>
+                    <button onClick={onClose} className="text-gray-400 hover:text-white">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <form onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
+
+                    {/* Community Name */}
+                    <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder="Community name"
+                        className="
+                            w-full
+                            bg-transparent
+                            border-b
+                            border-white/10
+                            focus:border-purple-500
+                            outline-none
+                            py-2
+                            text-lg
+                            placeholder-gray-500
+                        "
+                    />
+
+                    {/* Description (same space as name) */}
+                    <input
+                        type="text"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        placeholder="What is this community about?"
+                        maxLength={120}
+                        className="
+                            w-full
+                            bg-transparent
+                            border-b
+                            border-white/10
+                            focus:border-purple-500
+                            outline-none
+                            py-2
+                            text-sm
+                            placeholder-gray-400
+                        "
+                    />
+
+                    {/* Category */}
+                    <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        className="w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-sm"
+                    >
+                        {categories
+                            .filter((c) => c !== "For You")
+                            .map((c) => (
+                                <option key={c} value={c}>
+                                    {c}
+                                </option>
+                            ))}
+                    </select>
+                </form>
+
+                {/* Footer */}
+                <div className="flex justify-end px-6 py-4 border-t border-white/10">
+                    <button
+                        type="submit"
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold disabled:opacity-60"
+                    >
+                        {loading ? "Updating..." : "Update"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+const EditCommunityMediaForm = ({
+    community,
+    isOpen,
+    onClose,
+    onUpdateSuccess,
+}) => {
+    const [logoFile, setLogoFile] = React.useState(null);
+    const [bannerFile, setBannerFile] = React.useState(null);
+    const [loading, setLoading] = React.useState(false);
+
+    const logoRef = React.useRef(null);
+    const bannerRef = React.useRef(null);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!logoFile && !bannerFile) {
+            alert("Please select at least one file");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const payload = {};
+            if (logoFile) payload.iconBase64 = await fileToBase64(logoFile);
+            if (bannerFile) payload.bannerBase64 = await fileToBase64(bannerFile);
+
+            const res = await apiFetch(`/api/groups/${community.id}`, {
+                method: "PATCH",
+                body: JSON.stringify(payload),
+            });
+
+            const data = await res.json();
+            onUpdateSuccess({
+                ...community,
+                iconUrl: data.group.iconUrl || community.iconUrl,
+                bannerUrl: data.group.bannerUrl || community.bannerUrl,
+            });
+
+            onClose();
+        } catch (err) {
+            alert("Failed to update media");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!isOpen || !community) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
+            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-white shadow-2xl">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                    <div>
+                        <h2 className="text-xl font-semibold">Edit community media</h2>
+                        <p className="text-sm text-gray-400">
+                            Update logo or banner
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="text-gray-400 hover:text-white">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <form onSubmit={handleSubmit} className="px-6 py-6 space-y-5">
+
+                    {/* Media buttons */}
+                    <div className="flex gap-4">
+                        <button
+                            type="button"
+                            onClick={() => logoRef.current.click()}
+                            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500"
+                        >
+                            <Image className="w-4 h-4 text-purple-400" />
+                            {logoFile ? "Logo selected" : "Update logo"}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => bannerRef.current.click()}
+                            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500"
+                        >
+                            <Upload className="w-4 h-4 text-purple-400" />
+                            {bannerFile ? "Banner selected" : "Update banner"}
+                        </button>
+                    </div>
+
+                    <input
+                        ref={logoRef}
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                    />
+
+                    <input
+                        ref={bannerRef}
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) => setBannerFile(e.target.files?.[0] || null)}
+                    />
+
+                    {/* Helper text */}
+                    <p className="text-xs text-gray-500">
+                        Logo: 1:1 ratio • Banner: 16:9 ratio
+                    </p>
+                </form>
+
+                {/* Footer */}
+                <div className="flex justify-end px-6 py-4 border-t border-white/10">
+                    <button
+                        type="submit"
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold disabled:opacity-60"
+                    >
+                        {loading ? "Updating..." : "Update"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// -------------------------
+// MAIN EXPLORE PAGE (UPDATED WITH EDIT FUNCTIONALITY)
 // -------------------------
 function ExplorePage({
     onNavigateToCommunity,
     onCreateNewCommunity,
     onDeleteCommunity,
     userCreatedCommunities = [],
-    initialRecommended = [], // All groups user is a member of (created + explicitly joined)
+    initialRecommended = [],
 }) {
     const searchParams = useSearchParams();
     const invitedSlug = searchParams.get("invited");
@@ -544,12 +822,8 @@ function ExplorePage({
     const [showAllRecommended, setShowAllRecommended] = React.useState(false);
     const [showAllJoined, setShowAllJoined] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState("");
-    
-    // NOTE: initialRecommended contains *all* joined communities from /api/me
     const [recommendedCommunities, setRecommendedCommunities] = React.useState(initialRecommended || []);
     const [selectedCategory, setSelectedCategory] = React.useState(initCategory);
-
-    // JOINED CACHE: Initialize with groups from /api/me (both created and explicitly joined)
     const [joinedCommunities, setJoinedCommunities] = React.useState(
         initialRecommended.reduce((acc, comm) => ({ 
             ...acc, 
@@ -557,14 +831,16 @@ function ExplorePage({
         }), {})
     );
 
+    // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+    const [isEditMediaModalOpen, setIsEditMediaModalOpen] = React.useState(false);
+    const [selectedCommunityForEdit, setSelectedCommunityForEdit] = React.useState(null);
 
-    const currentUserEmail =
-        typeof window !== "undefined" ? getCurrentUserEmail() : null;
-
+    const currentUserEmail = typeof window !== "undefined" ? getCurrentUserEmail() : null;
     const isSiteOwner = currentUserEmail === SITE_OWNER_EMAIL;
 
-    // Sync category from URL (kept as is)
+    // Sync category from URL
     React.useEffect(() => {
         try {
             const q = searchParams.get("category");
@@ -572,7 +848,7 @@ function ExplorePage({
         } catch {}
     }, [searchParams?.toString()]);
 
-    // Load *additional* groups (i.e., not joined by the user yet)
+    // Load additional groups
     React.useEffect(() => {
         let mounted = true;
 
@@ -596,16 +872,13 @@ function ExplorePage({
                     ownerEmail: g.ownerEmail,
                 }));
                 
-                // Filter out any incoming groups that the user has already joined/created
                 const existingJoinedIds = new Set(Object.keys(joinedCommunities));
                 const newRecommended = incomingGroups.filter(g => !existingJoinedIds.has(g.id));
 
-                // Add the new recommended groups to the existing list
                 setRecommendedCommunities((prev) => {
                     const currentIds = new Set(prev.map(c => c.id));
                     const freshList = newRecommended.filter(g => !currentIds.has(g.id));
                     
-                    // Deduplicate and combine
                     const finalMap = new Map();
                     [...prev, ...freshList].forEach(c => finalMap.set(c.id, c));
                     
@@ -618,10 +891,10 @@ function ExplorePage({
 
         loadGroups();
         return () => (mounted = false);
-    }, [joinedCommunities]); // Depend on joinedCommunities to prevent duplicates
+    }, [joinedCommunities]);
 
     // --------------------------------------
-    // ✅ UPDATED SAFE JOIN FUNCTION (kept as is)
+    // ✅ UPDATED SAFE JOIN FUNCTION
     // --------------------------------------
     const handleJoin = async (community) => {
         const id = community.id;
@@ -676,21 +949,19 @@ function ExplorePage({
         }
     };
 
-    // NAVIGATE (kept as is)
+    // NAVIGATE
     const handleNavigate = (community) => {
         const isJoined =
             !!joinedCommunities[community.id] || community.createdByCurrentUser;
 
-        // If not joined/admin, optimistically mark as joined on navigate.
-        if (!isJoined) {
-            setJoinedCommunities((prev) => ({ ...prev, [community.id]: true }));
-        }
+       if (onNavigateToCommunity) {
+        onNavigateToCommunity(community);
+    }
 
-        // The RecommendedItem component ensures this is only called if isJoined is true.
         if (onNavigateToCommunity) onNavigateToCommunity(community); 
     };
 
-    // NEW COMMUNITY (kept as is)
+    // NEW COMMUNITY
     const handleNewCommunitySubmission = (newCommunity) => {
         setRecommendedCommunities((prev) => [
             ...prev.filter((c) => c.id !== newCommunity.id),
@@ -702,9 +973,9 @@ function ExplorePage({
         if (onCreateNewCommunity) onCreateNewCommunity(newCommunity);
     };
 
-    // DELETE COMMUNITY (kept as is)
+    // DELETE COMMUNITY
     const handleDeleteCommunity = async (community) => {
-        if (!window.confirm(`Delete "${community.name}"?`)) return;
+        if (!window.confirm(`Delete "${community.name}"? This action cannot be undone.`)) return;
 
         try {
             await apiFetch(`/api/groups/${community.id}`, { method: "DELETE" });
@@ -727,19 +998,52 @@ function ExplorePage({
         alert(`Community "${community.name}" deleted.`);
     };
 
-    // MERGED COMMUNITIES (CRITICAL FIX FOR ADMIN/JOINED STATUS)
+    // EDIT COMMUNITY
+    const handleEditCommunity = (community) => {
+        setSelectedCommunityForEdit(community);
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateCommunity = (updatedCommunity) => {
+        setRecommendedCommunities((prev) =>
+            prev.map((c) =>
+                c.id === updatedCommunity.id 
+                    ? { ...c, ...updatedCommunity }
+                    : c
+            )
+        );
+    };
+
+    // EDIT MEDIA
+    const handleEditMedia = (community) => {
+        setSelectedCommunityForEdit(community);
+        setIsEditMediaModalOpen(true);
+    };
+
+    const handleUpdateMedia = (updatedCommunity) => {
+        setRecommendedCommunities((prev) =>
+            prev.map((c) =>
+                c.id === updatedCommunity.id 
+                    ? { 
+                        ...c, 
+                        iconUrl: updatedCommunity.iconUrl || c.iconUrl,
+                        bannerUrl: updatedCommunity.bannerUrl || c.bannerUrl
+                    }
+                    : c
+            )
+        );
+    };
+
+    // MERGED COMMUNITIES
     const allCommunities = React.useMemo(() => {
         const finalSet = new Map();
         
-        // 1. Add all communities from recommended (from initial load + subsequent API calls)
         recommendedCommunities.forEach((c) => finalSet.set(c.id, c));
         
-        // 2. Overwrite/Merge with userCreatedCommunities (the definitive admin list).
-        // This ensures the `createdByCurrentUser` flag is set correctly and persists.
         userCreatedCommunities.forEach((c) => {
             finalSet.set(c.id, {
                 ...(finalSet.get(c.id) || c), 
-                createdByCurrentUser: true // <-- CRITICAL: Ensures the Admin flag is TRUE
+                createdByCurrentUser: true
             });
         });
 
@@ -766,7 +1070,6 @@ function ExplorePage({
 
     const explorableViewCommunities = React.useMemo(() => {
         let list = allCommunities.filter(
-            // Non-joined communities (excluding admin groups)
             (c) => !joinedCommunities[c.id] && !c.createdByCurrentUser 
         );
 
@@ -785,7 +1088,7 @@ function ExplorePage({
         return list;
     }, [allCommunities, joinedCommunities, invitedSlug, selectedCategory]);
 
-    // SEARCH (kept as is)
+    // SEARCH
     const filteredCommunities = React.useMemo(() => {
         const term = searchTerm.toLowerCase();
 
@@ -807,7 +1110,7 @@ function ExplorePage({
         );
     }, [searchTerm, allCommunities, selectedCategory, joinedCommunities]);
 
-    // Display logic (kept as is)
+    // Display logic
     const displayTrending = showAllTrending
         ? trendingByMembers
         : trendingByMembers.slice(0, INITIAL_DISPLAY_LIMIT);
@@ -850,7 +1153,9 @@ function ExplorePage({
                         onJoin={() => handleJoin(community)}
                         onNavigate={handleNavigate}
                         canDelete={canDelete}
-                        onDelete={() => handleDeleteCommunity(community)}
+                        onDelete={handleDeleteCommunity}
+                        onEdit={handleEditCommunity}
+                        onEditMedia={handleEditMedia}
                     />
                 );
             })}
@@ -865,11 +1170,31 @@ function ExplorePage({
 
     return (
         <div className="min-h-screen bg-[#0d0d0d] text-white p-4 sm:p-6">
-            {/* MODAL */}
+            {/* MODALS */}
             <CreateCommunityForm
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 onSubmitSuccess={handleNewCommunitySubmission}
+            />
+
+            <EditCommunityForm
+                community={selectedCommunityForEdit}
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedCommunityForEdit(null);
+                }}
+                onUpdateSuccess={handleUpdateCommunity}
+            />
+
+            <EditCommunityMediaForm
+                community={selectedCommunityForEdit}
+                isOpen={isEditMediaModalOpen}
+                onClose={() => {
+                    setIsEditMediaModalOpen(false);
+                    setSelectedCommunityForEdit(null);
+                }}
+                onUpdateSuccess={handleUpdateMedia}
             />
 
             {/* HEADER */}

@@ -8,17 +8,29 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-reac
 /* -------------------------
    Category → gradient map
 ------------------------- */
-const CATEGORY_GRADIENTS = {
-  Tech: "linear-gradient(180deg,#6d28d9 0%, #7c3aed 40%, #2b1f4a 100%)",
-  Entrepreneurship: "linear-gradient(180deg,#f59e0b 0%, #d97706 40%, #7a2e00 100%)",
-  Gaming: "linear-gradient(180deg,#059669 0%, #10b981 40%, #053017 100%)",
-  Sports: "linear-gradient(180deg,#ef4444 0%, #b91c1c 40%, #0b0b0b 100%)",
-  Music: "linear-gradient(180deg,#ec4899 0%, #db2777 40%, #3b0b2a 100%)",
-  Art: "linear-gradient(180deg,#334155 0%, #475569 40%, #0b0b0b 100%)",
-  Food: "linear-gradient(180deg,#ef4444 0%, #f97316 40%, #3b0b00 100%)",
-  Book: "linear-gradient(180deg,#334155 0%, #2b3642 40%, #09101a 100%)",
-  default: "linear-gradient(180deg,#111827 0%, #0b1220 100%)",
+const CATEGORY_GRADIENT_VARIANTS = {
+  Tech: [
+    "linear-gradient(180deg,#6d28d9,#a78bfa)",
+    "linear-gradient(180deg,#4f46e5,#818cf8)",
+    "linear-gradient(180deg,#4338ca,#6366f1)",
+  ],
+  Entrepreneurship: [
+    "linear-gradient(180deg,#f59e0b,#fbbf24)",
+    "linear-gradient(180deg,#d97706,#fde68a)",
+  ],
+  Gaming: [
+    "linear-gradient(180deg,#059669,#34d399)",
+    "linear-gradient(180deg,#047857,#6ee7b7)",
+  ],
+  Sports: [
+    "linear-gradient(180deg,#ef4444,#f87171)",
+    "linear-gradient(180deg,#b91c1c,#fecaca)",
+  ],
+  default: [
+    "linear-gradient(180deg,#1f2937,#374151)",
+  ],
 };
+
 
 /* -------------------------
    Helpers
@@ -50,6 +62,21 @@ const slugify = (s = "") =>
     .replace(/\s+/g, "-")
     .replace(/[^\w-]+/g, "")
     .replace(/-+/g, "-");
+const normalizeCategory = (cat = "", name = "") => {
+  const c = `${cat} ${name}`.toLowerCase();
+
+  if (c.includes("tech") || c.includes("dev") || c.includes("cp") || c.includes("ai"))
+    return "Tech";
+  if (c.includes("entre") || c.includes("startup"))
+    return "Entrepreneurship";
+  if (c.includes("game"))
+    return "Gaming";
+  if (c.includes("sport"))
+    return "Sports";
+
+  return "default";
+};
+
 
 /* normalize/convert incoming community objects to the shape Feed expects */
 const normalizeCommunities = (arr = []) =>
@@ -61,7 +88,7 @@ const normalizeCommunities = (arr = []) =>
     const bannerUrl = c.bannerUrl || c.hero || c.image || c.banner || null;
     const iconUrl = c.iconUrl || c.icon || null;
     const description = c.description || c.shortDescription || c.desc || "";
-    const category = c.category || c.gradientKey || "default";
+    const category = normalizeCategory(c.category || c.gradientKey, c.name);
     return {
       ...c,
       id,
@@ -82,11 +109,18 @@ const normalizeCommunities = (arr = []) =>
 ------------------------- */
 const DEFAULT_BANNER = "https://placehold.co/800x240/111827/ffffff?text=Community+Banner";
 
-function CommunityCard({ c, onOpen, className = "" }) {
+function CommunityCard({ c, index = 0, onOpen, className = "" }) {
   const bannerImg = c.bannerUrl || c.hero || c.image || null;
-  const gradientKey = c.gradientKey || c.category || "default";
-  const gradientStyle = CATEGORY_GRADIENTS[gradientKey] || CATEGORY_GRADIENTS.default;
   const description = c.description || "";
+
+  // ✅ ADD THESE LINES
+  const gradientKey = c.gradientKey || c.category || "default";
+  const variants =
+    CATEGORY_GRADIENT_VARIANTS[gradientKey] ||
+    CATEGORY_GRADIENT_VARIANTS.default;
+
+  const gradientStyle = variants[index % variants.length];
+
 
   const clampStyle = {
     display: "-webkit-box",
@@ -419,37 +453,39 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
 
         {/* Single-row layout with exactly 3 cards on large screens */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visibleCommunities.map((c) => (
-            <CommunityCard
-              key={c.id || c.slug || c.name}
-              c={{
-                ...c,
-                slug: c.slug || slugify(c.name),
-                members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
-                description: c.description || "",
-              }}
-              onOpen={goToCommunity}
-            />
-          ))}
+          {visibleCommunities.map((c, index) => (
+  <CommunityCard
+    key={c.id || c.slug || c.name}
+    c={{
+      ...c,
+      slug: c.slug || slugify(c.name),
+      members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
+      description: c.description || "",
+    }}
+    index={index}
+    onOpen={goToCommunity}
+  />
+))}
         </div>
 
         {/* On small screens keep the horizontal scroll version, but also limit to first 3 */}
         <div className="sm:hidden mt-2">
           <div className="grid grid-flow-col auto-cols-[minmax(240px,1fr)] gap-6 overflow-x-auto pb-4 snap-x snap-mandatory -mx-4 px-4">
-            {visibleCommunities.map((c) => (
-              <div key={`mobile-${c.id || c.slug || c.name}`} className="snap-start">
-                <CommunityCard
-                  c={{
-                    ...c,
-                    slug: c.slug || slugify(c.name),
-                    members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
-                    description: c.description || "",
-                  }}
-                  onOpen={goToCommunity}
-                  className="min-h-[300px]"
-                />
-              </div>
-            ))}
+            {visibleCommunities.map((c, index) => (
+  <CommunityCard
+    key={c.id || c.slug || index}
+    c={{
+      ...c,
+      slug: c.slug || slugify(c.name),
+      members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
+      description: c.description || "",
+    }}
+    index={index}
+    onOpen={goToCommunity}
+    className="min-h-[300px]"
+  />
+))}
+
           </div>
         </div>
       </section>

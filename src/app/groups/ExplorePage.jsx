@@ -51,6 +51,19 @@ const fileToBase64 = (file) =>
         fr.readAsDataURL(file);
     });
 
+    // --- GRADIENT HELPERS ---
+// --- PROFESSIONAL GRADIENTS (SUBTLE & PREMIUM) ---
+// --- PROFESSIONAL 2-COLOR GRADIENTS (TAILWIND SAFE) ---
+// --- IMAGE-STYLE SOFT GRADIENTS (TAILWIND SAFE) ---
+const PROFESSIONAL_GRADIENTS = [
+  "from-purple-600 to-violet-400", // purple → light violet (main image)
+  "from-orange-500 to-amber-400",  // orange → yellow
+  "from-sky-500 to-cyan-400",      // blue → cyan
+  "from-fuchsia-600 to-purple-500",// vibrant purple
+  "from-indigo-500 to-sky-400",    // indigo → light blue
+  "from-rose-500 to-orange-400",   // pink → orange
+];
+
 // --- NEW HELPER: Fetch user data with groups (CRITICAL FIX FOR BACKEND FIELDS) ---
 const fetchMeData = async () => {
     try {
@@ -108,29 +121,23 @@ const CategoryPill = ({ name, isSelected, onClick }) => (
     </button>
 );
 
-const TrendingCard = ({ community, onNavigate }) => (
+const TrendingCard = ({ community, gradient, onNavigate }) => {
+  return (
     <div
-        onClick={() => onNavigate(community)}
-        className="w-40 h-52 flex-shrink-0 rounded-xl overflow-hidden relative mr-4 cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+      onClick={() => onNavigate(community)}
+      className="w-40 h-52 flex-shrink-0 rounded-xl overflow-hidden mr-4 cursor-pointer"
     >
-        {community.bannerUrl ? (
-            <img src={community.bannerUrl} alt={community.name} className="w-full h-28 object-cover" />
-        ) : (
-            <div className="w-full h-28 bg-gray-800" />
-        )}
+      <div className={`w-full h-28 bg-gradient-to-br ${gradient}`} />
 
-        <div className="p-3 text-white">
-            <p className="font-semibold text-sm">{community.name}</p>
-            {community.description && (
-                <p className="text-xs text-gray-300 line-clamp-2 mt-1">{community.description}</p>
-            )}
-            <p className="text-xs text-gray-400 mt-2">
-                {community.membersCount || 0} members
-            </p>
-        </div>
+      <div className="p-3 text-white">
+        <p className="font-semibold text-sm">{community.name}</p>
+        <p className="text-xs text-gray-400 mt-1">
+          {community.membersCount || 0} members
+        </p>
+      </div>
     </div>
-);
-
+  );
+};
 // --- ADMIN MENU COMPONENT ---
 const AdminMenu = ({ 
     community, 
@@ -1050,6 +1057,33 @@ function ExplorePage({
         return [...finalSet.values()];
     }, [userCreatedCommunities, recommendedCommunities]);
 
+    // 🔥 REAL-TIME SYNC FOR RIGHT SIDEBAR (TOP COMMUNITIES)
+React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+        const payload = allCommunities.map((c) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            membersCount: Number(c.membersCount || 0),
+        }));
+
+        localStorage.setItem(
+            "confique:allCommunities",
+            JSON.stringify(payload)
+        );
+
+        // 🔔 Notify RightSidebar instantly
+        window.dispatchEvent(
+            new Event("confique:communities-updated")
+        );
+    } catch (err) {
+        console.error("Failed to sync communities:", err);
+    }
+}, [allCommunities]);
+
+
     const userJoinedCommunities = React.useMemo(
         () =>
             allCommunities.filter(
@@ -1227,7 +1261,7 @@ function ExplorePage({
             <section className="mb-8">
                 <h2 className="text-lg font-semibold mb-3">Categories</h2>
 
-                <div className="flex space-x-3 overflow-x-auto pb-2">
+                <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
                     {categories.map((c) => (
                         <CategoryPill
                             key={c}
@@ -1258,13 +1292,20 @@ function ExplorePage({
                 </div>
 
                 <div className="flex overflow-x-auto pb-2 -mr-4 scrollbar-hide">
-                    {displayTrending.map((community) => (
-                        <TrendingCard
-                            key={community.id}
-                            community={community}
-                            onNavigate={handleNavigate}
-                        />
-                    ))}
+                    {displayTrending.map((community, index) => (
+    <TrendingCard
+    key={community.id}
+    community={community}
+    gradient={
+      PROFESSIONAL_GRADIENTS[
+        index % PROFESSIONAL_GRADIENTS.length
+      ]
+    }
+    onNavigate={handleNavigate}
+  />
+))}
+
+
                 </div>
             </section>
 

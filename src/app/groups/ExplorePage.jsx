@@ -1063,12 +1063,14 @@ React.useEffect(() => {
 
     try {
         const payload = allCommunities.map((c) => ({
-            id: c.id,
-            name: c.name,
-            slug: c.slug,
-            membersCount: Number(c.membersCount || 0),
-        }));
-
+  id: c.id,
+  name: c.name,
+  slug: c.slug,
+  description: c.description || "",   // ✅ ADD
+  category: c.category || "default",  // ✅ ADD
+  membersCount: Number(c.membersCount || 0),
+  bannerUrl: c.bannerUrl || null,
+}));
         localStorage.setItem(
             "confique:allCommunities",
             JSON.stringify(payload)

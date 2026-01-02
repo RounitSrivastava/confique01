@@ -446,13 +446,15 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
     <div className="mx-auto max-w-[1300px] px-4">
       {/* Communities */}
       <section className="py-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-extrabold text-white">Communities</h2>
-          <p className="text-sm text-gray-400">Discover communities you may like</p>
-        </div>
+       <div className="mb-4">
+  <h2 className="text-2xl font-extrabold text-white">Communities</h2>
 
+  <p className="mt-1 text-sm text-gray-400 sm:mt-0 sm:text-right">
+    Discover communities you may like
+  </p>
+</div>
         {/* Single-row layout with exactly 3 cards on large screens */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleCommunities.map((c, index) => (
   <CommunityCard
     key={c.id || c.slug || c.name}

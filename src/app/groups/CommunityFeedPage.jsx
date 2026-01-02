@@ -374,32 +374,40 @@ const ImagePreviewModal = ({ imageUrl, onClose }) => {
     );
 };
 
-const useKeyboardOffset = () => {
-  const [offset, setOffset] = React.useState(0);
+const useKeyboardMetrics = () => {
+  const [metrics, setMetrics] = React.useState({
+    keyboardHeight: 0,
+    isOpen: false,
+  });
 
   React.useEffect(() => {
     if (typeof window === "undefined" || !window.visualViewport) return;
 
+    const vv = window.visualViewport;
+
     const update = () => {
-      const vv = window.visualViewport;
       const keyboardHeight =
         window.innerHeight - vv.height - vv.offsetTop;
-      setOffset(keyboardHeight > 0 ? keyboardHeight : 0);
+
+      setMetrics({
+        keyboardHeight: keyboardHeight > 0 ? keyboardHeight : 0,
+        isOpen: keyboardHeight > 0,
+      });
     };
 
-    window.visualViewport.addEventListener("resize", update);
-    window.visualViewport.addEventListener("scroll", update);
-
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
     update();
 
     return () => {
-      window.visualViewport.removeEventListener("resize", update);
-      window.visualViewport.removeEventListener("scroll", update);
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
     };
   }, []);
 
-  return offset;
+  return metrics;
 };
+
 // update uper
 // create post modal form with image upload and preview
 const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
@@ -408,7 +416,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
   const [imageFile, setImageFile] = React.useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = React.useState(null);
 
-  const keyboardOffset = useKeyboardOffset(); // ✅ NEW
+  const { keyboardHeight, isOpen } = useKeyboardMetrics(); // ✅ NEW
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -443,18 +451,19 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
 
   return (
     <div
-      className="
-        fixed inset-0 z-50
-        bg-black/70
-        flex items-end sm:items-center justify-center
-        px-3 pt-12
-      "
-      style={{
-        paddingBottom: keyboardOffset
-          ? `${keyboardOffset + 12}px`
-          : "1rem",
-      }}
-    >
+  className="
+    fixed inset-0 z-50
+    bg-black/70
+    flex items-center justify-center
+    px-3
+    transition-transform duration-300 ease-out
+  "
+  style={{
+    transform: isOpen
+      ? `translateY(-${keyboardHeight / 2}px)`
+      : "translateY(0)",
+  }}
+>
       {/* FLOATING CARD */}
       <div
         className="

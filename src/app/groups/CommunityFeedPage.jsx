@@ -2047,7 +2047,7 @@ export default function CommunityFeedPage({ community }) {
     }
 
     return (
-        <div className="min-h-screen bg-[#0d0d0d] text-white">
+        <div className="min-h-screen bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000] flex items-center justify-center">
             <ImagePreviewModal imageUrl={previewImageUrl} onClose={() => setPreviewImageUrl(null)} />
 
             {selectedProfileEmail && (

@@ -10,7 +10,6 @@ import { getCurrentUser } from "@/lib/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-
 /* ==========================================
    HELPER: Look up user's vote status
 ========================================== */
@@ -36,7 +35,9 @@ export async function GET(req, context) {
   await dbConnect();
 
   try {
-    const { postId } = context.params;
+    // 1. AWAIT PARAMS (Next.js 15 Requirement)
+    const params = await context.params;
+    const { postId } = params;
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
       return NextResponse.json(
@@ -50,7 +51,6 @@ export async function GET(req, context) {
     const post = await Post.findById(postId)
       .populate({
         path: "author",
-        // 🔥 FIX: include avatarUrl
         select: "name username avatar avatarUrl email",
       })
       .select("title content imageUrl upvotes commentsCount createdAt author")
@@ -73,7 +73,7 @@ export async function GET(req, context) {
         content: post.content || null,
         imageUrl: post.imageUrl || null,
 
-        // 🔥 ALWAYS LIVE USER DATA (FIXED)
+        // 🔥 ALWAYS LIVE USER DATA
         authorId: author._id || null,
         authorEmail: author.email || null,
         authorName: author.name || author.username || "Unknown",
@@ -83,6 +83,9 @@ export async function GET(req, context) {
         commentsCount: post.commentsCount || 0,
         userVote,
         createdAt: post.createdAt,
+        
+        // Let the frontend know if the viewer can manage this post
+        isAuthor: actor?.id ? author._id?.toString() === actor.id.toString() : false,
       },
     });
   } catch (error) {
@@ -101,7 +104,9 @@ export async function DELETE(req, context) {
   await dbConnect();
 
   try {
-    const { postId } = context.params;
+    // 1. AWAIT PARAMS
+    const params = await context.params;
+    const { postId } = params;
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
       return NextResponse.json(
@@ -118,9 +123,10 @@ export async function DELETE(req, context) {
       );
     }
 
-    const post = await Post.findById(postId).select(
-      "author imagePublicId"
-    );
+    // Fetch the post and its community to check for admin/owner rights
+    const post = await Post.findById(postId)
+      .select("author imagePublicId group")
+      .populate("group", "ownerEmail");
 
     if (!post) {
       return NextResponse.json(
@@ -129,11 +135,13 @@ export async function DELETE(req, context) {
       );
     }
 
+    // Permission Logic: Author OR Community Owner can delete
     const isAuthor = post.author?.toString() === actor.id.toString();
+    const isCommunityOwner = post.group?.ownerEmail?.toLowerCase() === actor.email?.toLowerCase();
 
-    if (!isAuthor) {
+    if (!isAuthor && !isCommunityOwner) {
       return NextResponse.json(
-        { error: "Forbidden: Only the author can delete this post" },
+        { error: "Forbidden: You do not have permission to delete this post" },
         { status: 403 }
       );
     }

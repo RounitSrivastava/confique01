@@ -107,7 +107,7 @@ const normalizeCommunities = (arr = []) =>
 /* -------------------------
    Card component
 ------------------------- */
-const DEFAULT_BANNER = "https://placehold.co/800x240/111827/ffffff?text=Community+Banner";
+const DEFAULT_BANNER = "https://placehold.co/800x240/111827/ffffff?text=POSTER";
 
 function CommunityCard({ c, index = 0, onOpen, className = "" }) {
   const bannerImg = c.bannerUrl || null;
@@ -452,26 +452,31 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
     if (!eventId) return;
     router.push(`/events?event=${encodeURIComponent(eventId)}`);
   };
+  
 
   // <-- IMPORTANT: show only first 3 communities (one row)
-  const visibleCommunities = (communitiesState || []).slice(0, 3);
+const visibleCommunities = (communitiesState || []).slice(0, 3);
 
-  return (
-    /* container width kept wide so 3 cols fit nicely */
+return (
+  /* PAGE BACKGROUND */
+  <div className="min-h-screen bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000]">
+
+    {/* container width kept wide so 3 cols fit nicely */}
     <div className="mx-auto max-w-[1300px] px-4">
+
       {/* Communities */}
       <section className="py-8">
        <div className="mb-4">
-  <h2 className="text-2xl font-extrabold text-white">Communities</h2>
+   <h2 className="text-2xl font-extrabold text-white">Communities</h2>
 
-  <p className="mt-1 text-sm text-gray-400 sm:mt-0 sm:text-right">
+   <p className="mt-1 text-sm text-gray-400 sm:mt-0 sm:text-right">
     Discover communities you may like
-  </p>
-</div>
+   </p>
+   </div>
         {/* Single-row layout with exactly 3 cards on large screens */}
         <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleCommunities.map((c, index) => (
-  <CommunityCard
+   <CommunityCard
     key={c.id || c.slug || c.name}
     c={{
       ...c,
@@ -481,11 +486,11 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
     }}
     index={index}
     onOpen={goToCommunity}
-  />
+    />
 ))}
         </div>
 
-        {/* On small screens keep the horizontal scroll version, but also limit to first 3 */}
+        {/* On small screens keep the horizontal scroll version */}
         <div className="sm:hidden mt-2">
           <div className="grid grid-flow-col auto-cols-[minmax(240px,1fr)] gap-6 overflow-x-auto pb-4 snap-x snap-mandatory -mx-4 px-4">
             {visibleCommunities.map((c, index) => (
@@ -510,16 +515,30 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
       {/* Featured events */}
       <div className="flex items-center justify-between mt-10 mb-3">
         <h2 className="text-2xl font-extrabold text-white">Featured Events</h2>
-        <button onClick={() => router.push("/events")} className="text-sm text-purple-400 hover:text-purple-300">See all events</button>
+        <button
+          onClick={() => router.push("/events")}
+          className="text-sm text-purple-400 hover:text-purple-300"
+        >
+          See all events
+        </button>
       </div>
 
       <section className="mb-12">
         {featuredEventsState && featuredEventsState.length > 0 ? (
-          <FeaturedCarousel events={featuredEventsState} interval={6000} onViewDetails={viewEventDetails} />
+          <FeaturedCarousel
+            events={featuredEventsState}
+            interval={6000}
+            onViewDetails={viewEventDetails}
+          />
         ) : (
-          <div className="p-6 bg-gray-900 rounded-lg text-center text-gray-400">No featured events right now.</div>
+          <div className="p-6 bg-gray-900 rounded-lg text-center text-gray-400">
+            No featured events right now.
+          </div>
         )}
       </section>
+
     </div>
-  );
+  </div>
+);
+
 }

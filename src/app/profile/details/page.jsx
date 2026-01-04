@@ -314,7 +314,7 @@ export default function TechProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000]">
         <p className="text-slate-200 text-sm italic tracking-widest">Loading Profile...</p>
       </div>
     );
@@ -323,7 +323,7 @@ export default function TechProfilePage() {
   return (
     <>
       {/* Main content with proper z-index */}
-      <div className="min-h-screen bg-[#0d0d0d] relative z-10">
+      <div className="min-h-screen bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000] relative z-10">
         <div className="max-w-5xl mx-auto px-4 py-8">
           
           <div className="relative bg-black backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 md:p-8 mb-6 shadow-xl text-white">

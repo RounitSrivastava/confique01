@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import React from "react";
 import {
@@ -25,6 +25,41 @@ import {
 import { useRouter } from "next/navigation";
 
 const SITE_OWNER_EMAIL = "confique01@gmail.com";
+
+// -------------------------
+// Custom Hook: Twitter-like Scroll Detection
+// -------------------------
+const useScrollDirection = (scrollRef) => {
+  const [showButton, setShowButton] = React.useState(true);
+  const lastY = React.useRef(0);
+
+  React.useEffect(() => {
+    if (!scrollRef || !scrollRef.current) return; // ✅ prevents crash
+
+    const el = scrollRef.current;
+    lastY.current = el.scrollTop;
+
+    const onScroll = () => {
+      const currentY = el.scrollTop;
+      const delta = currentY - lastY.current;
+
+      if (currentY < 120) {
+        setShowButton(true);
+      } else if (delta > 5) {
+        setShowButton(false); // scroll down
+      } else if (delta < -5) {
+        setShowButton(true); // scroll up
+      }
+
+      lastY.current = currentY;
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [scrollRef]);
+
+  return showButton;
+};
 
 // -------------------------
 // Helpers
@@ -148,7 +183,7 @@ const Avatar = ({ src, alt, size = 40, className = "" }) => {
             mounted = false;
         };
     }, [src]);
-
+  
     const px = typeof size === "number" ? `${size}px` : size;
 
     if (loaded === true) {
@@ -339,149 +374,240 @@ const ImagePreviewModal = ({ imageUrl, onClose }) => {
     );
 };
 
-const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
-    const [title, setTitle] = React.useState("");
-    const [content, setContent] = React.useState("");
-    const [imageFile, setImageFile] = React.useState(null);
-    const [imagePreviewUrl, setImagePreviewUrl] = React.useState(null);
+const useKeyboardMetrics = () => {
+  const [metrics, setMetrics] = React.useState({
+    keyboardHeight: 0,
+    isOpen: false,
+  });
 
-    const handleClearImage = () => {
-        if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
-        setImageFile(null);
-        setImagePreviewUrl(null);
+  React.useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+
+    const vv = window.visualViewport;
+
+    const update = () => {
+      const keyboardHeight =
+        window.innerHeight - vv.height - vv.offsetTop;
+
+      setMetrics({
+        keyboardHeight: keyboardHeight > 0 ? keyboardHeight : 0,
+        isOpen: keyboardHeight > 0,
+      });
     };
 
-    const handleImageChange = (e) => {
-        const file = e.target.files?.[0] || null;
-        if (file) {
-            if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
-            setImageFile(file);
-            setImagePreviewUrl(URL.createObjectURL(file));
-        } else {
-            handleClearImage();
-        }
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    update();
+
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
     };
+  }, []);
 
-    React.useEffect(() => {
-        return () => {
-            if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
-        };
-    }, [imagePreviewUrl]);
-
-    const handleSubmit = async (e) => {
-        if (e && typeof e.preventDefault === "function") e.preventDefault();
-        if (!title.trim()) return;
-        await onSubmit({
-            title: title.trim(),
-            content: content.trim() || "",
-            imageFile,
-            imagePreviewUrl,
-        });
-        onClose();
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4">
-            <div className="bg-gray-800 w-full max-w-xl rounded-xl shadow-2xl flex flex-col max-h-full">
-                <div className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
-                    <h2 className="text-xl font-bold text-white">
-                        Create a Post in {communityName}
-                    </h2>
-                    <X
-                        className="w-5 h-5 text-gray-400 cursor-pointer hover:text-white"
-                        onClick={onClose}
-                    />
-                </div>
-
-                <form
-                    onSubmit={handleSubmit}
-                    className="p-4 space-y-4 overflow-y-auto flex-grow"
-                >
-                    <div>
-                        <input
-                            type="text"
-                            placeholder="Title (required)"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            className="w-full bg-[#0d0d0d] text-white placeholder-gray-400 px-4 py-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-600"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <textarea
-                            placeholder="Text (optional)"
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            rows="5"
-                            className="w-full bg-[#0d0d0d] text-white placeholder-gray-400 px-4 py-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-600 resize-none"
-                        />
-                    </div>
-
-                    <div className="border border-dashed p-4 rounded-lg border-gray-600">
-                        {imagePreviewUrl ? (
-                            <div className="mb-3 relative">
-                                <p className="text-sm text-white mb-2">Image Preview:</p>
-                                <img
-                                    src={imagePreviewUrl}
-                                    alt="Selected Preview"
-                                    className="max-h-40 w-full object-cover rounded-lg"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleClearImage}
-                                    className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-purple-500 transition-colors"
-                                    aria-label="Remove selected image"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                                <p className="text-xs text-gray-400 mt-1">{imageFile?.name}</p>
-                            </div>
-                        ) : (
-                            <p className="text-gray-400 text-sm text-center">
-                                Select an image to attach to your post.
-                            </p>
-                        )}
-
-                        <div className="mt-3">
-                            <label
-                                htmlFor="image-upload"
-                                className={`flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-full cursor-pointer transition-colors ${
-                                    imageFile
-                                        ? "bg-red-700 text-white hover:bg-red-600"
-                                        : "bg-purple-600 text-white hover:bg-purple-700"
-                                }`}
-                            >
-                                <ImageIcon className="w-4 h-4 mr-2" />
-                                {imageFile ? "Change Image" : "Choose Image from Device"}
-                            </label>
-                            <input
-                                id="image-upload"
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleImageChange}
-                                onClick={(e) => {
-                                    if (imageFile) e.target.value = null;
-                                }}
-                            />
-                        </div>
-                    </div>
-                </form>
-
-                <div className="p-4 border-t border-gray-700 flex-shrink-0">
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!title.trim()}
-                        className="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-gray-900 disabled:text-gray-400"
-                    >
-                        Post
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
+  return metrics;
 };
+
+// update uper
+// create post modal form with image upload and preview
+const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
+  const [title, setTitle] = React.useState("");
+  const [content, setContent] = React.useState("");
+  const [imageFile, setImageFile] = React.useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = React.useState(null);
+
+  const { keyboardHeight, isOpen } = useKeyboardMetrics(); // ✅ NEW
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImageFile(file);
+    setImagePreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleClearImage = () => {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImageFile(null);
+    setImagePreviewUrl(null);
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
+  const handleSubmit = async () => {
+    if (!title.trim()) return;
+    await onSubmit({
+      title: title.trim(),
+      content: content.trim(),
+      imageFile,
+      imagePreviewUrl,
+    });
+    onClose();
+  };
+
+  return (
+    <div
+  className="
+    fixed inset-0 z-50
+    bg-black/70
+    flex items-center justify-center
+    px-3
+    transition-transform duration-300 ease-out
+  "
+  style={{
+    transform: isOpen
+      ? `translateY(-${keyboardHeight / 2}px)`
+      : "translateY(0)",
+  }}
+>
+      {/* FLOATING CARD */}
+      <div
+        className="
+          w-full sm:max-w-xl
+          bg-[#0d0d0d]
+          rounded-2xl
+          shadow-2xl
+          flex flex-col
+          max-h-[90svh]
+          overflow-hidden
+        "
+      >
+        {/* HEADER */}
+        <div className="flex-none flex items-center justify-between px-4 py-3 border-b border-gray-800">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Create post</h2>
+            <p className="text-xs text-gray-400">
+              Posting in <span className="text-purple-400">{communityName}</span>
+            </p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-gray-800 transition"
+          >
+            <X className="w-5 h-5 text-gray-300" />
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 overscroll-contain">
+          {/* TITLE */}
+          <input
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="
+              w-full bg-transparent
+              text-white
+              placeholder-gray-500
+              border-b border-gray-700
+              pb-2
+              focus:outline-none focus:border-purple-500
+            "
+          />
+
+          {/* CONTENT */}
+          <textarea
+            placeholder="What do you want to share?"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onFocus={(e) => {
+              setTimeout(() => {
+                e.target.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }, 100);
+            }}
+            rows={6}
+            className="
+              w-full bg-transparent
+              text-white
+              placeholder-gray-400
+              rounded-xl
+              px-4 py-3
+              border border-white/20
+              focus:border-white/40
+              focus:outline-none
+              focus:ring-2 focus:ring-purple-600/40
+            "
+          />
+
+          {/* IMAGE PREVIEW */}
+          {imagePreviewUrl && (
+            <div className="relative">
+              <img
+                src={imagePreviewUrl}
+                alt="Preview"
+                className="w-full max-h-56 object-cover rounded-xl"
+              />
+              <button
+                onClick={handleClearImage}
+                className="
+                  absolute top-2 right-2
+                  bg-black/60 p-1.5 rounded-full
+                  hover:bg-red-600 transition
+                "
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* FOOTER */}
+        <div
+          className="
+            flex-none
+            px-4 py-3
+            border-t border-gray-800
+            flex items-center gap-3
+            bg-[#0d0d0d]
+          "
+          style={{
+            paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+          }}
+        >
+          <label
+            htmlFor="post-image"
+            className="p-2 rounded-full hover:bg-gray-800 cursor-pointer"
+          >
+            <ImageIcon className="w-5 h-5 text-purple-400" />
+          </label>
+
+          <input
+            id="post-image"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+
+          <button
+            onClick={handleSubmit}
+            disabled={!title.trim()}
+            className="
+              ml-auto
+              px-6 py-2 rounded-full
+              font-semibold
+              bg-purple-600 text-white
+              disabled:bg-gray-700 disabled:text-gray-400
+              transition active:scale-95
+            "
+          >
+            Post
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const InviteMenu = React.forwardRef(
     ({ communityName, communitySlug, onClose }, ref) => {
@@ -534,10 +660,15 @@ const InviteMenu = React.forwardRef(
         };
 
         return (
-            <div
-                ref={ref}
-                className="absolute right-0 top-10 z-40 w-56 bg-gray-900 rounded-lg shadow-xl p-2 border border-gray-600"
-            >
+           <div
+  ref={ref}
+  className="
+    z-50 bg-gray-900 rounded-lg shadow-xl p-2 border border-gray-600 w-56
+    fixed left-1/2 bottom-6 -translate-x-1/2
+    sm:absolute sm:right-0 sm:top-10 sm:left-auto sm:bottom-auto sm:translate-x-0
+  "
+>
+
                 <h4 className="text-sm text-white px-3 py-1 font-semibold border-b border-gray-600 mb-1">
                     Invite Members
                 </h4>
@@ -612,25 +743,20 @@ const mobileInviteMenuRef = React.useRef(null);
 
    React.useEffect(() => {
   const handleClickOutside = (e) => {
-    if (!isInviteMenuOpen) return;
-
-    const isDesktop = window.matchMedia("(min-width: 640px)").matches;
-
-    // DESKTOP LOGIC
-    if (isDesktop) {
-      if (
-        desktopInviteBtnRef.current &&
-        desktopInviteMenuRef.current &&
-        !desktopInviteBtnRef.current.contains(e.target) &&
-        !desktopInviteMenuRef.current.contains(e.target)
-      ) {
-        setIsInviteMenuOpen(false);
-      }
-      return;
+    // Desktop
+    if (
+      isInviteMenuOpen &&
+      desktopInviteBtnRef.current &&
+      desktopInviteMenuRef.current &&
+      !desktopInviteBtnRef.current.contains(e.target) &&
+      !desktopInviteMenuRef.current.contains(e.target)
+    ) {
+      setIsInviteMenuOpen(false);
     }
 
-    // MOBILE LOGIC
+    // Mobile
     if (
+      isInviteMenuOpen &&
       mobileInviteBtnRef.current &&
       mobileInviteMenuRef.current &&
       !mobileInviteBtnRef.current.contains(e.target) &&
@@ -641,9 +767,9 @@ const mobileInviteMenuRef = React.useRef(null);
   };
 
   document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
+  return () =>
+    document.removeEventListener("mousedown", handleClickOutside);
 }, [isInviteMenuOpen]);
-
 
     const membersLabel = community.members
         ? community.members
@@ -711,9 +837,10 @@ const mobileInviteMenuRef = React.useRef(null);
                         <h1 className="text-lg sm:text-xl font-bold">
                             {community.name || "Community Name"}
                         </h1>
-                        <p className="text-xs sm:text-sm text-white">
-                            {membersLabel} • {community.online || "0"} online
-                        </p>
+                       <p className="text-xs sm:text-sm text-white">
+  {membersLabel}
+</p>
+
                     </div>
 
                     <div className="ml-auto flex items-center gap-2">
@@ -726,7 +853,6 @@ const mobileInviteMenuRef = React.useRef(null);
                         </button>
 
                         {inviteButton}
-
 
                         {/* Mobile Invite Button */}
 {/* Mobile Invite */}
@@ -764,12 +890,6 @@ const mobileInviteMenuRef = React.useRef(null);
 >
   Joined
 </button>
-                        <button
-                            className="rounded-full px-4 py-1.5 text-sm font-semibold bg-gray-200 text-black cursor-default"
-                            disabled
-                        >
-                            Joined
-                        </button>
 
 
                         {isSiteOwner && (
@@ -1078,7 +1198,19 @@ const CommentsPage = ({
                     <span className="text-white font-semibold">{post.author}</span> ·{" "}
                     {post.time}
                 </p>
-                {post.content && <p className="text-sm text-gray-200 mt-1">{post.content}</p>}
+                {post.content && (
+  <p
+    className="
+      text-gray-300 text-sm mt-2
+      whitespace-pre-wrap
+      leading-relaxed
+      line-clamp-3
+    "
+  >
+    {post.content}
+  </p>
+)}
+
             </div>
 
             <div>
@@ -1104,11 +1236,15 @@ const CommentsPage = ({
             </div>
 
             <div
-                role="region"
-                aria-label="Comment input"
-                className="fixed bottom-0 z-50 bg-[#0d0d0d] border-t border-gray-800 shadow-2xl"
-                style={{ left: 250, width: "calc(100% - 250px - 360px)" }}
-            >
+  role="region"
+  aria-label="Comment input"
+  className="
+    fixed bottom-0 z-50 bg-[#0d0d0d] border-t border-gray-800 shadow-2xl
+    left-0 w-full
+    sm:left-[250px] sm:w-[calc(100%-250px-360px)]
+  "
+>
+
                 <div className="p-4">
                     {replyingTo && (
                         <div className="flex justify-between items-center text-xs text-gray-400 mb-2 p-2 bg-gray-800 rounded">
@@ -1267,7 +1403,19 @@ const PostCard = ({
                 {post.title}
             </h3>
 
-            {post.content && <p className="text-gray-300 text-sm mt-1 line-clamp-3">{post.content}</p>}
+            {post.content && (
+  <p
+    className="
+      text-gray-300 text-sm mt-2
+      whitespace-pre-wrap
+      leading-relaxed
+      line-clamp-3
+    "
+  >
+    {post.content}
+  </p>
+)}
+
 
             {post.hasImage && post.imageUrl && (
                 <div className="mt-3 bg-gray-900 rounded-lg overflow-hidden cursor-pointer" onClick={() => onImageClick(post.imageUrl)}>
@@ -1402,6 +1550,12 @@ const mapBackendPostToFrontend = (post, communityInfo) => {
 // MAIN FEED PAGE (Client Component)
 // --------------------
 export default function CommunityFeedPage({ community }) {
+    // Use the custom hook for Twitter-like scroll behavior
+   const scrollRef = React.useRef(null);
+const showFab = useScrollDirection(scrollRef);
+
+  
+    
     const router = useRouter();
 
     const handleGoBack = () => {
@@ -1496,11 +1650,11 @@ export default function CommunityFeedPage({ community }) {
             } catch (e) {
                 console.error("CommunityFeedPage auth check failed:", e);
                 const snap = getCurrentUserSnapshotFromLocalStorage();
-                if (snap) setCurrentUser(snap);
-                else {
-                    const email = getCurrentUserEmail();
-                    if (email) setCurrentUser({ email, name: "", displayName: deriveNameFromEmail(email), username: deriveNameFromEmail(email) });
-                }
+                    if (snap) setCurrentUser(snap);
+                    else {
+                        const email = getCurrentUserEmail();
+                        if (email) setCurrentUser({ email, name: "", displayName: deriveNameFromEmail(email), username: deriveNameFromEmail(email) });
+                    }
             }
         }
         loadUser();
@@ -2109,7 +2263,40 @@ export default function CommunityFeedPage({ community }) {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000] flex items-center justify-center">
+        <div
+  ref={scrollRef}
+  className="h-screen bg-[#0d0d0d] text-white overflow-y-auto"
+
+>
+
+            
+            {/* Mobile Twitter-style FAB - Fixed with proper hide/show */}
+            <div className={`fixed bottom-20 right-4 z-50 sm:hidden transition-all duration-300 ease-in-out ${
+                showFab ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
+            }`}>
+                <button
+  onClick={() => setIsModalOpen(true)}
+  className="
+    w-13 h-13 
+    rounded-full
+    bg-purple-600
+    text-white
+    flex items-center justify-center
+    shadow-lg sm:shadow-xl
+    hover:bg-purple-700
+    active:scale-95
+    ring-1 sm:ring-2 ring-purple-400/30
+    transition-transform duration-200
+    fixed bottom-0 right-2 sm:right-4
+
+  "
+  aria-label="Create Post"
+>
+  <Plus className="w-5 h-5 sm:w-7 sm:h-7" />
+</button>
+
+            </div>
+
             <ImagePreviewModal imageUrl={previewImageUrl} onClose={() => setPreviewImageUrl(null)} />
 
             {selectedProfileEmail && (
@@ -2124,7 +2311,11 @@ export default function CommunityFeedPage({ community }) {
                 <CreatePostModal communityName={communityInfo.name} onClose={() => setIsModalOpen(false)} onSubmit={handleNewPost} />
             )}
 
-            <div className="flex items-center justify-between p-4 bg-[#0d0d0d] border-b border-gray-800" ref={topRef}>
+            <div
+                ref={topRef}
+                className="flex items-center justify-between px-4 pt-0 pb-4 bg-[#0d0d0d] border-b border-gray-800"
+            >
+
                 <ArrowLeft className="w-6 h-6 cursor-pointer text-gray-400 hover:text-white" onClick={handleGoBack} /> 
                 <div className="flex-1 text-center" />
                 <Search className="w-6 h-6 cursor-pointer text-gray-400 hover:text-white" onClick={() => setSearchShown(!searchShown)} />

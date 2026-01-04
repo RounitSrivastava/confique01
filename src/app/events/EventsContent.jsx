@@ -12,7 +12,7 @@ import {
   usePathname,
   useRouter,
 } from "next/navigation";
-
+import { CalendarPlus } from "lucide-react";
 import EventDetailsPage from "./EventDetailsPage";
 import HostEventPage from "./HostEventPage";
 import AllEventsPage from "./AllEventsPage";
@@ -20,7 +20,7 @@ import AllEventsPage from "./AllEventsPage";
 import {
   Search, User, Zap, Code, Shirt, Medal, Compass, BookOpen,
   Clock, MapPin, Calendar, X, Heart, Share2, ChevronRight,
-  ChevronLeft, Eye, Home, Users, CalendarDays, Plus, Clipboard, Settings, LogOut,
+  ChevronLeft, Eye, Home, Users, CalendarDays, Plus, Clipboard, Settings, LogOut,Rocket,
 } from "lucide-react";
 // --- Featured Carousel Poster Helper ---
 // --- Featured Carousel Poster Helper (STRICT: NO LOGOS EVER) ---
@@ -837,15 +837,29 @@ const upcomingEvents = useMemo(() => {
       <div onClick={() => setSidebarOpen(false)} className={`fixed inset-0 bg-black/50 z-[100] transition-opacity ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"} lg:hidden`} />
       
       <aside className={`fixed top-0 left-0 z-[110] h-full w-64 bg-[#050509] border-r border-[#262626] transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden`}>
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
           <span className="text-lg font-extrabold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Confique</span>
           <button onClick={() => setSidebarOpen(false)}><X className="w-7 h-7" /></button>
         </div>
         <nav className="px-3 py-4 space-y-1">
+
           {MOBILE_NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300"><item.icon className="w-4 h-4" />{item.label}</Link>
+            <Link
+  key={item.href}
+  href={item.href}
+  className="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-gray-800 transition"
+>
+  <item.icon className="w-5 h-5" />
+  {item.label}
+</Link>
           ))}
-          <button onClick={handleHostClick} className="w-full text-left px-3 py-2 text-gray-300">Create Event</button>
+          <button
+  onClick={handleHostClick}
+  className="flex items-center gap-4 w-full text-left px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-gray-800 transition"
+>
+  <CalendarPlus className="w-5 h-5" />
+  Create Event
+</button>
         </nav>
       </aside>
 

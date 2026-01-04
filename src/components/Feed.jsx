@@ -198,7 +198,7 @@ function FeaturedEventSingle({ event, onViewDetails }) {
   return (
     <div className="relative w-full">
       <div className="rounded-2xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] bg-black">
-        <div className="relative w-full h-[320px] sm:h-[380px] md:h-[420px] lg:h-[460px]">
+        <div className="relative w-full h-[240px] sm:h-[280px] md:h-[300px] lg:h-[320px]">
           <img
             src={event.poster}
             alt={event.title}
@@ -246,7 +246,7 @@ function FeaturedEventSingle({ event, onViewDetails }) {
   );
 }
 
-const FeaturedCarousel = ({ events = [], interval = 6000, onViewDetails }) => {
+const FeaturedCarousel = ({ events = [], interval = 3000, onViewDetails }) => {
   const [index, setIndex] = React.useState(0);
   const eventsCount = events.length;
   const autoRef = React.useRef(null);
@@ -298,7 +298,19 @@ const FeaturedCarousel = ({ events = [], interval = 6000, onViewDetails }) => {
       {eventsCount > 1 && (
         <div className="mt-6 flex justify-center space-x-3">
           {events.map((_, i) => (
-            <button key={i} onClick={(e) => { e.stopPropagation(); setIndex(i); }} className={`w-3.5 h-3.5 rounded-full ${i === index ? "bg-white scale-110" : "bg-white/40"}`} />
+           <button
+  key={i}
+  onClick={(e) => {
+    e.stopPropagation();
+    setIndex(i);
+  }}
+  className={`w-2 h-2 rounded-full transition-all ${
+    i === index
+      ? "bg-white scale-125"
+      : "bg-white/40 hover:bg-white/60"
+  }`}
+ />
+
           ))}
         </div>
       )}
@@ -309,6 +321,33 @@ const FeaturedCarousel = ({ events = [], interval = 6000, onViewDetails }) => {
 /* -------------------------
    MAIN Feed
 ------------------------- */
+const fetchEventsFromAPI = async () => {
+  try {
+    const res = await fetch("/api/events", {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch events");
+
+    const data = await res.json();
+
+    return data.map((ev) => ({
+      ...ev,
+      id: ev._id || ev.id,
+      title: ev.title,
+      poster: ev.poster,
+      isFeatured: Boolean(ev.isFeatured),
+      datetime: ev.date || ev.datetime,
+      location: ev.venue || ev.location,
+    }));
+  } catch (err) {
+    console.error("Feed event fetch error:", err);
+    return [];
+  }
+};
+
+
 export default function Feed({ communitiesProp = null, eventsProp = null }) {
   const router = useRouter();
 
@@ -319,9 +358,28 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
     return [];
   });
 
-  const [featuredEventsState, setFeaturedEventsState] = React.useState(() =>
-    eventsProp && Array.isArray(eventsProp) && eventsProp.length ? eventsProp.filter((e) => e.isFeatured) : []
-  );
+  const [featuredEventsState, setFeaturedEventsState] = React.useState([]);
+  React.useEffect(() => {
+  let mounted = true;
+
+  const loadEvents = async () => {
+    const allEvents = await fetchEventsFromAPI();
+    if (!mounted) return;
+
+    const featured = allEvents.filter((ev) => ev.isFeatured);
+
+    setFeaturedEventsState(
+      featured.length ? featured : allEvents.slice(0, 3)
+    );
+  };
+
+  loadEvents();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
 
   // initial load: prefer confique:allCommunities or other snapshots
   React.useEffect(() => {
@@ -339,18 +397,7 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
       ]));
     }
 
-    if (!(eventsProp && Array.isArray(eventsProp) && eventsProp.length)) {
-      const storedEvents = readJsonLocal("EVENTS_SNAPSHOT") || readJsonLocal("confique:events") || null;
-      if (Array.isArray(storedEvents) && storedEvents.length) {
-        const featured = storedEvents.filter((ev) => ev.isFeatured);
-        setFeaturedEventsState(featured.length ? featured : storedEvents.slice(0, 3));
-      } else {
-        setFeaturedEventsState([
-          { id: 101, title: "Featured: Raiders Reckoning", poster: "https://placehold.co/1600x900/111827/ffffff?text=Raiders+Reckoning", isFeatured: true, datetime: "Thu, 15 Dec 2025", location: "KIIT Auditorium" },
-          { id: 102, title: "Featured: Hackify Battle", poster: "https://placehold.co/1600x900/0D47A1/ffffff?text=Hackify+Battle", isFeatured: true, datetime: "Thu, 15 Dec 2025", location: "Online" },
-        ]);
-      }
-    }
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -365,13 +412,7 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
             setCommunitiesState(normalizeCommunities(parsed));
           }
         }
-        if (e.key === "confique:events" || e.key === "EVENTS_SNAPSHOT") {
-          const parsed = JSON.parse(e.newValue || "[]");
-          if (Array.isArray(parsed)) {
-            const featured = parsed.filter((ev) => ev.isFeatured);
-            setFeaturedEventsState(featured.length ? featured : parsed.slice(0, 3));
-          }
-        }
+       
       } catch {
         // ignore parse errors
       }
@@ -390,25 +431,14 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
       });
     };
 
-    const onCustomEvents = (evt) => {
-      const payload = evt?.detail;
-      if (!payload) return;
-      if (Array.isArray(payload)) {
-        const featured = payload.filter((ev) => ev.isFeatured);
-        setFeaturedEventsState(featured.length ? featured : payload.slice(0, 3));
-      } else if (payload.isFeatured) {
-        setFeaturedEventsState((prev) => [payload, ...prev]);
-      }
-    };
+   
 
     window.addEventListener("storage", onStorage);
     window.addEventListener("confique:communities-updated", onCustomCommunities);
-    window.addEventListener("confique:events-updated", onCustomEvents);
-
+    
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("confique:communities-updated", onCustomCommunities);
-      window.removeEventListener("confique:events-updated", onCustomEvents);
     };
   }, []);
 
@@ -533,7 +563,7 @@ return (
         {featuredEventsState && featuredEventsState.length > 0 ? (
           <FeaturedCarousel
             events={featuredEventsState}
-            interval={6000}
+            interval={3000}
             onViewDetails={viewEventDetails}
           />
         ) : (

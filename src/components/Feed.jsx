@@ -133,7 +133,8 @@ const logoImg = c.iconUrl || null;
   return (
     <article
       onClick={() => onOpen && onOpen(c)}
-      className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-[#151515] cursor-pointer hover:shadow-3xl transition-shadow flex flex-col h-full ${className}`}
+className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-white/15 hover:border-white/30 cursor-pointer transition-all flex flex-col h-full ${className}`}
+
     >
       <div className="h-36 w-full overflow-hidden flex-shrink-0 rounded-t-2xl bg-gray-900">
   {bannerImg ? (
@@ -168,14 +169,18 @@ const logoImg = c.iconUrl || null;
 </div>
 
 
-      <div className="p-5 flex flex-col flex-grow">
+      <div className="p-5 lg:px-4 lg:pt-3 lg:pb-3 flex flex-col h-full">
         <h3 className="text-lg font-bold text-white">{c.name}</h3>
 
-        <p className="mt-2 text-sm text-gray-300 flex-grow" style={clampStyle}>
+        <p
+  className="mt-1 text-sm text-gray-300 lg:text-xs flex-grow"
+  style={clampStyle}
+>
+
           {description}
         </p>
 
-        <p className="mt-4 text-sm text-gray-400 font-semibold">
+        <p className="mt-3 lg:mt-2 text-sm lg:text-xs text-gray-400 font-medium">
           {c.members || (typeof c.membersCount === "number" ? `${c.membersCount.toLocaleString()} members` : "0 members")}
         </p>
       </div>
@@ -459,7 +464,8 @@ const visibleCommunities = (communitiesState || []).slice(0, 3);
 
 return (
   /* PAGE BACKGROUND */
-  <div className="min-h-screen bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000]">
+  <div className="min-h-screen bg-[#0d0d0d]">
+
 
     {/* container width kept wide so 3 cols fit nicely */}
     <div className="mx-auto max-w-[1300px] px-4">

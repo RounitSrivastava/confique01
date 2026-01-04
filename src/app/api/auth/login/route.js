@@ -66,10 +66,11 @@ export async function POST(req) {
       {
         ok: true,
         user: {
-          id: String(user._id),
-          email: user.email,
-          name: user.name || "",
-        },
+  id: String(user._id),
+  email: user.email,
+  name: user.name || "",
+  avatar: user.avatar || null, // ✅ ADD THIS
+},
       },
       { status: 200 }
     );

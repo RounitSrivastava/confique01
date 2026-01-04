@@ -1,6 +1,6 @@
-// app/layout.jsx
 import "./globals.css";
 import ClientLayout from "./ClientLayout";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 export const metadata = {
   title: "Event Platform",
@@ -11,7 +11,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="h-full">
       <body className="min-h-screen bg-black text-white antialiased">
-        <ClientLayout>{children}</ClientLayout>
+        <GoogleOAuthProvider
+          clientId={process.env.GOOGLE_CLIENT_ID}
+        >
+          <ClientLayout>{children}</ClientLayout>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

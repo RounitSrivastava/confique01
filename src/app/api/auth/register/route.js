@@ -43,11 +43,17 @@ export async function POST(req) {
 
     const hashedPassword = await hashPassword(password);
 
-    const user = await User.create({
-      name: String(name).trim(),
-      email: normalizedEmail,
-      passwordHash: hashedPassword,
-    });
+// ✅ DEFAULT AVATAR (FIX)
+const defaultAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+  name || normalizedEmail
+)}`;
+
+const user = await User.create({
+  name: String(name).trim(),
+  email: normalizedEmail,
+  passwordHash: hashedPassword,
+  avatar: defaultAvatar, // 🔥 IMPORTANT
+});
 
     const token = createToken({
       userId: String(user._id),
@@ -57,11 +63,12 @@ export async function POST(req) {
     const res = NextResponse.json(
       {
         ok: true,
-        user: {
-          id: String(user._id),
-          name: user.name,
-          email: user.email,
-        },
+       user: {
+  id: String(user._id),
+  name: user.name,
+  email: user.email,
+  avatar: user.avatar, // ✅ ADD THIS
+},
       },
       { status: 201 }
     );

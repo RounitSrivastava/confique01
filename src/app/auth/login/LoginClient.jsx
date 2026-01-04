@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { GoogleLogin } from "@react-oauth/google";
 
 const slides = ["/auth-slide-1.jpg", "/auth-slide-2.jpg", "/auth-slide-3.jpg"];
 const CREDENTIALS = "include";
@@ -30,7 +31,7 @@ export default function LoginClient() {
   }, []);
 
   /* ---------------------------------
-      AUTH CHECK (SERVER = SOURCE OF TRUTH)
+      AUTH CHECK
   ---------------------------------- */
   useEffect(() => {
     let mounted = true;
@@ -49,23 +50,16 @@ export default function LoginClient() {
         if (!mounted) return;
 
         const data = await res.json().catch(() => null);
-
-        if (data?.user && pathname !== "/") {
-          router.replace("/");
-        }
-      } catch (err) {
-        console.warn("Auth check failed:", err);
-      }
+        if (data?.user && pathname !== "/") router.replace("/");
+      } catch {}
     }
 
     checkAuth();
-    return () => {
-      mounted = false;
-    };
+    return () => (mounted = false);
   }, [router, pathname, searchParams]);
 
   /* ---------------------------------
-      HANDLE LOGIN
+      EMAIL LOGIN
   ---------------------------------- */
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -93,18 +87,8 @@ export default function LoginClient() {
         return;
       }
 
-      // Optional UX storage
-      try {
-        if (data?.user?.email)
-          localStorage.setItem("userEmail", data.user.email);
-        if (data?.user?.name)
-          localStorage.setItem("userName", data.user.name);
-      } catch {}
-
-      // 🔥 Hard reload ensures cookie is available
       window.location.href = "/";
-    } catch (err) {
-      console.error("Login error:", err);
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
@@ -112,14 +96,31 @@ export default function LoginClient() {
   };
 
   /* ---------------------------------
-      UI
+      GOOGLE LOGIN
   ---------------------------------- */
+  const handleGoogleSuccess = async (res) => {
+    try {
+      await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: CREDENTIALS,
+        body: JSON.stringify({
+          idToken: res.credential,
+        }),
+      });
+
+      window.location.href = "/";
+    } catch {
+      setError("Google login failed");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-black text-white relative">
       <img
-        src="https://img.freepik.com/premium-photo/portrait-successful-business-woman-suit-gray-isolated-background-serious-office-female-worker-manager-employees-female-employee-young-secretary_545934-23090.jpg?w=200&h=200&fit=crop"
+        src="https://img.freepik.com/premium-photo/portrait-successful-business-woman-suit-gray-isolated-background-serious-office-female-worker-manager-employees-female-employee-young-secretary_545934-23090.jpg"
+        className="fixed inset-0 h-full w-full object-cover opacity-30"
         alt=""
-        className="pointer-events-none select-none fixed inset-0 h-full w-full object-cover opacity-30"
       />
       <div className="fixed inset-0 bg-black/60" />
 
@@ -127,74 +128,64 @@ export default function LoginClient() {
         <div className="w-full max-w-5xl rounded-3xl border border-white/10 bg-gray-900/70 backdrop-blur-xl overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2">
 
-            {/* LEFT SLIDESHOW */}
+            {/* LEFT */}
             <aside className="relative hidden md:block">
               {slides.map((src, i) => (
                 <img
                   key={src}
                   src={src}
-                  alt=""
                   className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
                     i === idx ? "opacity-100" : "opacity-0"
                   }`}
+                  alt=""
                 />
               ))}
               <div className="absolute inset-0 bg-black/45" />
-              <div className="absolute left-6 right-6 bottom-6">
-                <p className="text-2xl font-semibold leading-tight">
-                  “Design with intention, execute with elegance.”
-                </p>
-                <p className="mt-1 text-sm text-white/70">
-                  A mindful builder
-                </p>
-              </div>
             </aside>
 
-            {/* RIGHT LOGIN FORM */}
+            {/* RIGHT */}
             <section className="p-6 sm:p-10">
               <h1 className="text-3xl font-semibold">Welcome back</h1>
-              <p className="mt-1 text-sm text-gray-400">
-                Sign in to continue
-              </p>
+              <p className="mt-1 text-sm text-gray-400">Sign in to continue</p>
 
-              <form onSubmit={handleLogin} className="mt-8 space-y-5">
-                <div>
-                  <label className="block text-sm mb-1 text-gray-300">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@company.com"
-                    className="w-full rounded-xl bg-black border border-gray-700 px-4 py-3"
-                  />
-                </div>
+              {/* GOOGLE LOGIN */}
+              <div className="mt-6 flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError("Google login failed")}
+                  theme="filled_black"
+                  shape="pill"
+                />
+              </div>
 
-                <div>
-                  <div className="flex justify-between">
-                    <label className="block text-sm mb-1 text-gray-300">
-                      Password
-                    </label>
-                    <Link href="/forgot-password" className="text-xs text-purple-400">
-                      Forgot Password?
-                    </Link>
-                  </div>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full rounded-xl bg-black border border-gray-700 px-4 py-3"
-                  />
-                </div>
+              <div className="my-6 flex items-center gap-3 text-gray-500">
+                <div className="h-px flex-1 bg-gray-700" />
+                <span className="text-xs">OR</span>
+                <div className="h-px flex-1 bg-gray-700" />
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-5">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email"
+                  className="w-full rounded-xl bg-black border border-gray-700 px-4 py-3"
+                />
+
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  className="w-full rounded-xl bg-black border border-gray-700 px-4 py-3"
+                />
 
                 {error && <p className="text-sm text-red-400">{error}</p>}
 
                 <button
-                  type="submit"
                   disabled={loading}
-                  className="w-full rounded-xl bg-gradient-to-r from-[#6a11cb] to-[#2575fc] py-3 font-medium disabled:opacity-60"
+                  className="w-full rounded-xl bg-gradient-to-r from-[#6a11cb] to-[#2575fc] py-3 font-medium"
                 >
                   {loading ? "Logging in…" : "Log In"}
                 </button>

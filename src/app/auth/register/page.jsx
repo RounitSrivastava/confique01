@@ -1,9 +1,9 @@
-// components/RegisterPage.jsx
 "use client";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,6 +24,29 @@ export default function RegisterPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  /* ---------------------------------
+      GOOGLE REGISTER / LOGIN
+  ---------------------------------- */
+  const handleGoogleSuccess = async (res) => {
+    try {
+      await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          idToken: res.credential,
+        }),
+      });
+
+      window.location.href = "/";
+    } catch {
+      setError("Google sign up failed");
+    }
+  };
+
+  /* ---------------------------------
+      EMAIL REGISTER
+  ---------------------------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -46,7 +69,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // 🔑 REQUIRED for cookie
+        credentials: "include",
         body: JSON.stringify({
           name: form.name.trim(),
           email: form.email.trim(),
@@ -54,25 +77,13 @@ export default function RegisterPage() {
         }),
       });
 
-      let data = null;
-      try {
-        data = await res.json();
-      } catch {}
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
         setError(data?.error || `Registration failed (${res.status})`);
         return;
       }
 
-      // Optional UX cache (server cookie is source of truth)
-      try {
-        if (data?.user?.email) {
-          localStorage.setItem("userEmail", data.user.email);
-          localStorage.setItem("userName", data.user.name || "");
-        }
-      } catch {}
-
-      // ✅ IMPORTANT: hard redirect avoids auth race
       window.location.href = "/";
     } catch (err) {
       console.error("Register error:", err);
@@ -95,7 +106,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-5xl rounded-3xl border border-white/10 bg-gray-900/70 backdrop-blur-xl overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2">
 
-            {/* LEFT IMAGE */}
+            {/* LEFT */}
             <aside className="relative hidden md:block">
               <img
                 src="/register-side.jpg"
@@ -111,14 +122,30 @@ export default function RegisterPage() {
               </div>
             </aside>
 
-            {/* FORM */}
+            {/* RIGHT */}
             <section className="p-6 sm:p-10">
               <h1 className="text-3xl font-semibold">Create your account</h1>
               <p className="mt-1 text-sm text-gray-400">
                 Host, share and discover amazing events.
               </p>
 
-              <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+              {/* GOOGLE SIGN UP */}
+              <div className="mt-6 flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError("Google sign up failed")}
+                  theme="filled_black"
+                  shape="pill"
+                />
+              </div>
+
+              <div className="my-6 flex items-center gap-3 text-gray-500">
+                <div className="h-px flex-1 bg-gray-700" />
+                <span className="text-xs">OR</span>
+                <div className="h-px flex-1 bg-gray-700" />
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <input
                   name="name"
                   value={form.name}
@@ -188,6 +215,7 @@ export default function RegisterPage() {
                 </Link>
               </p>
             </section>
+
           </div>
         </div>
       </div>

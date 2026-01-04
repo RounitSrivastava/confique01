@@ -1,11 +1,9 @@
-// lib/auth.js
-
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies as nextCookies } from "next/headers";
 
 /* ===================================================
-   INTERNAL JWT CONFIG (SAFE FOR APP ROUTER)
+   INTERNAL JWT CONFIG
 =================================================== */
 function getJwtConfig() {
   const secret = process.env.JWT_SECRET;
@@ -13,13 +11,10 @@ function getJwtConfig() {
 
   if (!secret) {
     if (process.env.NODE_ENV === "production") {
-      // ❗ throw ONLY at runtime, never at import time
       throw new Error("JWT_SECRET is not defined");
     } else {
-      // eslint-disable-next-line no-console
       console.warn(
-        "⚠️ JWT_SECRET is not defined — using dev fallback. " +
-        "Set JWT_SECRET in .env.local to remove this warning."
+        "⚠️ JWT_SECRET not set — using dev fallback. Set JWT_SECRET in .env.local"
       );
       return {
         secret: "dev_fallback_change_me",
@@ -32,7 +27,7 @@ function getJwtConfig() {
 }
 
 /* ===================================================
-   PASSWORD HELPERS
+   PASSWORD HELPERS (LOCAL USERS ONLY)
 =================================================== */
 export const hashPassword = async (password) => {
   const salt = await bcrypt.genSalt(10);
@@ -44,16 +39,16 @@ export const verifyPassword = async (password, hash) => {
 };
 
 /* ===================================================
-   TOKEN CREATION
+   TOKEN CREATION  ✅ UPDATED
 =================================================== */
-export const createToken = ({ userId, email }) => {
+export const createToken = ({ userId, email, provider }) => {
   const { secret, expiresIn } = getJwtConfig();
 
   return jwt.sign(
     {
       sub: userId,
-      userId,
       email,
+      provider, // ✅ GOOGLE AWARE
     },
     secret,
     { expiresIn }
@@ -86,13 +81,11 @@ const getHeaderValue = (req, name) => {
   try {
     if (!req || !req.headers) return "";
 
-    // Next.js Request headers
     if (typeof req.headers.get === "function") {
       const v = req.headers.get(name);
       return typeof v === "string" ? v : "";
     }
 
-    // Node-style headers
     const raw = req.headers[name] ?? req.headers[name.toLowerCase()];
     if (Array.isArray(raw)) return String(raw[0] || "");
     return typeof raw === "string" ? raw : "";
@@ -101,23 +94,16 @@ const getHeaderValue = (req, name) => {
   }
 };
 
-/**
- * Extract token from:
- * 1) next/headers cookies()  ✅ App Router
- * 2) Cookie header
- * 3) Authorization: Bearer
- */
+/* ===================================================
+   TOKEN EXTRACTION
+=================================================== */
 export async function extractTokenFromRequest(req) {
-  // 1️⃣ App Router cookies()
   try {
     const cookieStore = nextCookies();
     const token = cookieStore.get(PRIMARY_COOKIE_NAME)?.value;
     if (token) return token.trim();
-  } catch {
-    // Safe to ignore — happens in edge/static contexts
-  }
+  } catch {}
 
-  // 2️⃣ Cookie header fallback
   try {
     const cookieHeader = getHeaderValue(req, "cookie");
     if (cookieHeader) {
@@ -128,7 +114,6 @@ export async function extractTokenFromRequest(req) {
     }
   } catch {}
 
-  // 3️⃣ Authorization header
   try {
     const authHeader = getHeaderValue(req, "authorization");
     if (authHeader?.toLowerCase().startsWith("bearer ")) {
@@ -148,17 +133,14 @@ export async function getCurrentUser(req) {
     if (!token) return null;
 
     const decoded = verifyToken(token);
-    if (!decoded) return null;
-
-    const id = decoded.sub || decoded.userId || decoded.id;
-    if (!id) return null;
+    if (!decoded?.sub) return null;
 
     return {
-      id: String(id),
+      id: String(decoded.sub),
       email: decoded.email || null,
+      provider: decoded.provider || "local",
     };
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error("❌ getCurrentUser failed:", err?.message || err);
     return null;
   }

@@ -154,6 +154,15 @@ const makeAbsoluteUrl = (u) => {
     return `${base}/${u}`;
 };
 
+const isPlaceholderAvatar = (url) => {
+  if (!url) return true;
+  return (
+    url.includes("dicebear.com") ||
+    url.includes("avatars.dicebear.com") ||
+    url.includes("initials/svg")
+  );
+};
+
 // helper: convert File -> data URL (base64)
 const fileToBase64 = (file) =>
     new Promise((resolve, reject) => {
@@ -166,55 +175,37 @@ const fileToBase64 = (file) =>
 
 // --------------------
 // Avatar component (fixes scaling / fallback)
+// --------------------
+// Avatar component (FIXED – SVG safe, DiceBear compatible)
+// --------------------
 const Avatar = ({ src, alt, size = 40, className = "" }) => {
-    const [loaded, setLoaded] = React.useState(null); // null = unknown, true = ok, false = failed
+  const px = typeof size === "number" ? `${size}px` : size;
 
-    React.useEffect(() => {
-        if (!src) {
-            setLoaded(false);
-            return;
-        }
-        let mounted = true;
-        const img = new Image();
-        img.onload = () => mounted && setLoaded(true);
-        img.onerror = () => mounted && setLoaded(false);
-        img.src = src;
-        return () => {
-            mounted = false;
-        };
-    }, [src]);
-  
-    const px = typeof size === "number" ? `${size}px` : size;
+  const finalSrc =
+  typeof src === "string" && src.trim().length > 0
+    ? src
+    : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+        alt || "User"
+      )}`;
 
-    if (loaded === true) {
-        return (
-            <div
-                className={`rounded-full overflow-hidden bg-center bg-no-repeat ${className}`}
-                style={{
-                    width: px,
-                    height: px,
-                    backgroundImage: `url(${src})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                }}
-                aria-label={alt || "avatar"}
-                role="img"
-            />
-        );
-    }
-
-    // fallback placeholder circle with initial
-    const initial = (alt && alt[0] ? alt[0].toUpperCase() : "U");
-    return (
-        <div
-            className={`rounded-full flex items-center justify-center bg-gray-800 text-white font-semibold ${className}`}
-            style={{ width: px, height: px }}
-            aria-label={alt || "avatar-placeholder"}
-        >
-            {initial}
-        </div>
-    );
+  return (
+    <img
+      src={finalSrc}
+      alt={alt || "avatar"}
+      width={px}
+      height={px}
+      className={`rounded-full object-cover bg-gray-800 ${className}`}
+      onError={(e) => {
+        e.currentTarget.onerror = null;
+        e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+          alt || "User"
+        )}`;
+      }}
+      style={{ width: px, height: px }}
+    />
+  );
 };
+
 // --------------------
 
 // --------------------
@@ -704,10 +695,19 @@ const AuthorProfileModal = ({ email, onClose, userData }) => {
     if (!email && !userData) return null;
     const u = userData || {};
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
+       <div
+  className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+  onMouseDown={onClose}
+>
             <div className="bg-[#0d0d0d] rounded-lg max-w-sm w-full p-4" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-4">
-                    <Avatar src={u?.avatar || u?.avatarUrl || u?.avatarUrlFull || u?.avatar || u?.avatarUrl} alt={u?.displayName || u?.email || "User"} size={72} className="" />
+                 <Avatar
+  src={u?.avatar || null}
+  alt={u?.displayName || u?.email || "User"}
+  size={72}
+/>
+
+
                     <div>
                         <h3 className="text-lg font-bold text-white">{u?.displayName || deriveNameFromEmail(email)}</h3>
                         <p className="text-sm text-gray-400">{u?.email || email}</p>
@@ -955,16 +955,24 @@ const FilterBar = ({ selected, setActiveFilter, eventsCount = 0 }) => (
 // --------------------
 const mapBackendCommentToFrontend = (comment) => {
     const createdAt = comment.createdAt ? new Date(comment.createdAt) : new Date();
-    const author =
+
+    const authorName =
         comment.authorName ||
         comment.authorDisplayName ||
-        (comment.authorEmail ? comment.authorEmail.split("@")[0] : "Unknown");
+        (comment.authorEmail ? comment.authorEmail.split("@")[0] : "User");
+
+    const rawAvatar =
+        comment.authorImage || comment.authorAvatar || null;
+
+    const authorImage = rawAvatar
+  ? makeAbsoluteUrl(rawAvatar)
+  : null; // ❗ NO DiceBear here
 
     return {
         id: comment._id || comment.id,
-        author,
+        author: authorName,
         authorEmail: comment.authorEmail || null,
-        authorImage: comment.authorImage || comment.authorAvatar || null,
+        authorImage,
         text: comment.text || "",
         time: createdAt.toLocaleString(),
         parentId: comment.parentId || null,
@@ -977,15 +985,11 @@ const CommentItem = ({ comment, allComments, onReply, currentUserEmail, currentU
 
     // if comment belongs to current user, prefer currentUserAvatar
     const avatarSrc =
-        (comment.authorEmail && currentUserEmail && comment.authorEmail === currentUserEmail)
-            ? (currentUserAvatar || comment.authorImage)
-            : comment.authorImage ||
-            comment.authorAvatar ||
-            (comment.authorEmail
-                ? `https://avatars.dicebear.com/api/initials/${encodeURIComponent(
-                    comment.author
-                )}.svg`
-                : null);
+    comment.authorEmail &&
+    currentUserEmail &&
+    comment.authorEmail === currentUserEmail
+        ? currentUserAvatar || comment.authorImage
+        : comment.authorImage;
 
     return (
         <div className="flex">
@@ -1337,23 +1341,13 @@ const PostCard = ({
             : post.author || (post.authorEmail ? deriveNameFromEmail(post.authorEmail) : "Unknown");
 
     // pick avatar from available fields with fallbacks
-    let avatarSrc;
-    if (currentUserEmail && post.authorEmail && post.authorEmail === currentUserEmail) {
-        // always show Topbar/current user's exact avatar for their own posts
-        avatarSrc = currentUserAvatar || post.authorImage || post.authorAvatar || post.authorImageUrl || null;
-    } else {
-        avatarSrc =
-            post.authorImage ||
-            post.authorAvatar ||
-            post.authorImageUrl ||
-            post.authorProfilePic ||
-            (post.authorEmail
-                ? `https://avatars.dicebear.com/api/initials/${encodeURIComponent(
-                    authorLabel
-                )}.svg`
-                : "https://picsum.photos/seed/community-user/50/50");
-    }
-    
+    const avatarSrc =
+  post.authorImage ||
+  post.authorAvatar ||
+  post.authorImageUrl ||
+  post.authorProfilePic ||
+  null; // ❗ DO NOT generate DiceBear here
+
     const handleUpvoteClick = () => {
         if (typeof onVote === 'function') {
             onVote(post.id, 1);
@@ -1366,11 +1360,17 @@ const PostCard = ({
                 <div className="flex items-center">
                     <button
                         onClick={() => {
-                            if (!onAuthorClick) return;
-                            const fallbackEmail = post.authorEmail || `${encodeURIComponent(authorLabel)}@local`;
-                            const preview = { displayName: authorLabel, avatar: avatarSrc, email: post.authorEmail || fallbackEmail };
-                            onAuthorClick(fallbackEmail, post.authorId, preview);
-                        }}
+  if (!onAuthorClick) return;
+
+  const safeEmail = post.authorEmail || null;
+  if (!safeEmail) {
+    console.warn("No valid email for author profile");
+    return;
+  }
+
+  onAuthorClick(safeEmail);
+
+}}
                         className="flex items-center gap-2 focus:outline-none"
                         title={`View ${authorLabel}'s profile`}
                     >
@@ -1524,9 +1524,15 @@ const mapBackendPostToFrontend = (post, communityInfo) => {
 
     // ensure image and authorImage are absolute
     const absImageUrl = post.imageUrl ? makeAbsoluteUrl(post.imageUrl) : null;
-    const candidateAuthorImage =
-        post.authorImage || post.authorAvatar || post.authorImageUrl || null;
-    const absAuthorImage = candidateAuthorImage ? makeAbsoluteUrl(candidateAuthorImage) : null;
+    const absAuthorImage =
+  post.authorImage !== undefined
+    ? makeAbsoluteUrl(post.authorImage)
+    : post.authorAvatar
+    ? makeAbsoluteUrl(post.authorAvatar)
+    : post.authorImageUrl
+    ? makeAbsoluteUrl(post.authorImageUrl)
+    : null;
+
 
     return {
         id: post._id || post.id,
@@ -1622,9 +1628,8 @@ const showFab = useScrollDirection(scrollRef);
     const [profileLoading, setProfileLoading] = React.useState(false);
 
     const topRef = React.useRef(null);
+    const fetchedEmailsRef = React.useRef(new Set());
 
-    const USER_LOOKUP_BY_ID = "/api/users";
-    const USER_LOOKUP_BY_EMAIL = "/api/users";
 
     React.useEffect(() => {
         let mounted = true;
@@ -1784,122 +1789,57 @@ const showFab = useScrollDirection(scrollRef);
         }
     }, [currentUserEmail, isDbBackedCommunity, communityInfo.id]);
 
-    const enrichAuthors = React.useCallback(async (postsArray) => {
-        if (!postsArray || postsArray.length === 0) return;
-        const ids = new Set();
-        const emails = new Set();
+    const enrichAuthors = React.useCallback(
+    async (postsArray) => {
+        if (!Array.isArray(postsArray) || postsArray.length === 0) return;
 
-        postsArray.forEach((p) => {
-            if (p.authorId) ids.add(String(p.authorId));
-            if (p.authorEmail) emails.add(String(p.authorEmail));
-        });
+        const updated = postsArray.map((p) => {
+            // ---------- AUTHOR NAME ----------
+            let name =
+                p.author ||
+                (p.authorEmail ? deriveNameFromEmail(p.authorEmail) : "User");
 
-        const idList = Array.from(ids);
-        const emailList = Array.from(emails);
-        if (idList.length === 0 && emailList.length === 0) return;
+            // ---------- AUTHOR AVATAR ----------
+            let authorImage = p.authorImage;
 
-        const fetchById = async (id) => {
-            try {
-                const res = await apiFetch(`${USER_LOOKUP_BY_ID}/${encodeURIComponent(id)}`, { method: "GET" });
-                if (!res.ok) return null;
-                const data = await res.json().catch(() => null);
-                return data && data.user ? data.user : null;
-            } catch (e) { return null; }
-        };
+// only normalize if it actually exists
+if (authorImage) {
+  authorImage = makeAbsoluteUrl(authorImage);
+}
 
-        const fetchByEmail = async (email) => {
-            try {
-                const qRes = await apiFetch(`${USER_LOOKUP_BY_EMAIL}?email=${encodeURIComponent(email)}`, { method: "GET" });
-                if (qRes.ok) {
-                    const qData = await qRes.json().catch(() => null);
-                    if (qData && data.user) return qData.user;
-                    if (qData && Array.isArray(qData.users) && qData.users.length > 0) return qData.users[0];
-                }
-            } catch (e) {}
-            try {
-                const pRes = await apiFetch(`${USER_LOOKUP_BY_EMAIL}/by-email/${encodeURIComponent(email)}`, { method: "GET" });
-                if (pRes.ok) {
-                    const pData = await pRes.json().catch(() => null);
-                    if (pData && pData.user) return pData.user;
-                }
-            } catch (e) {}
-            return null;
-        };
 
-        try {
-            const idFetches = idList.map((id) => fetchById(id));
-            const emailFetches = emailList.map((em) => fetchByEmail(em));
-            const idResults = await Promise.all(idFetches);
-            const emailResults = await Promise.all(emailFetches);
+            authorImage = makeAbsoluteUrl(authorImage);
 
-            const idMap = {};
-            idList.forEach((id, idx) => {
-                const u = idResults[idx];
-                if (u) idMap[String(id)] = u;
-            });
-
-            const emailMap = {};
-            emailList.forEach((em, idx) => {
-                const u = emailResults[idx];
-                if (u) emailMap[String(em)] = u;
-            });
-
-            const updated = postsArray.map((p) => {
-                let name = p.author;
-                if ((!name || name === "" || name === "Unknown" || name === "User") && p.authorId) {
-                    const u = idMap[String(p.authorId)];
-                    if (u && (u.displayName || u.name || u.username)) name = u.displayName || u.name || u.username;
-                }
-                if ((!name || name === "" || name === "Unknown" || name === "User") && p.authorEmail) {
-                    const u = emailMap[String(p.authorEmail)];
-                    if (u && (u.displayName || u.name || u.username)) name = u.displayName || u.name || u.username;
-                }
-                if (!name || name === "" || name === "Unknown") {
-                    if (p.authorEmail) name = deriveNameFromEmail(p.authorEmail);
-                }
-
-                let authorImage = p.authorImage || p.authorAvatar || p.authorImageUrl || null;
-                if ((!authorImage || authorImage === "") && p.authorId) {
-                    const u = idMap[String(p.authorId)];
-                    if (u && u.avatar) authorImage = u.avatar;
-                }
-                if ((!authorImage || authorImage === "") && p.authorEmail) {
-                    const u = emailMap[String(p.authorEmail)];
-                    if (u && u.avatar) authorImage = u.avatar;
-                }
-
-                if (!authorImage) {
-                    authorImage = p.authorEmail
-                        ? `https://avatars.dicebear.com/api/initials/${encodeURIComponent(name || deriveNameFromEmail(p.authorEmail))}.svg`
-                        : "https://picsum.photos/seed/community-user/50/50";
-                }
-
-                const absAuthorImage = authorImage ? makeAbsoluteUrl(authorImage) : authorImage;
-
-                if (p.authorEmail && currentUserEmail && p.authorEmail === currentUserEmail) {
-                    return {
-                        ...p,
-                        author: currentUserDisplayName || (name || deriveNameFromEmail(p.authorEmail)),
-                        authorImage: currentUserAvatar || absAuthorImage,
-                    };
-                }
-
+            // ---------- FORCE CURRENT USER ----------
+            if (
+                p.authorEmail &&
+                currentUserEmail &&
+                p.authorEmail === currentUserEmail
+            ) {
                 return {
                     ...p,
-                    author: name || (p.authorEmail ? deriveNameFromEmail(p.authorEmail) : "Unknown"),
-                    authorImage: absAuthorImage,
+                    author: currentUserDisplayName || name,
+                    authorImage: currentUserAvatar || authorImage,
                 };
-            });
+            }
 
-            setPosts((prev) => {
-                const map = new Map(prev.map((x) => [String(x.id), x]));
-                updated.forEach((u) => map.set(String(u.id), { ...(map.get(String(u.id)) || {}), ...u }));
-                return Array.from(map.values());
-            });
-        } catch (e) {
-            console.error("Failed to enrich authors:", e);
-        }
-    }, [USER_LOOKUP_BY_ID, USER_LOOKUP_BY_EMAIL, currentUserEmail, currentUserDisplayName, currentUserAvatar]);
+            return {
+                ...p,
+                author: name,
+                authorImage,
+            };
+        });
+
+        setPosts((prev) => {
+            const map = new Map(prev.map((x) => [String(x.id), x]));
+            updated.forEach((u) =>
+                map.set(String(u.id), { ...(map.get(String(u.id)) || {}), ...u })
+            );
+            return Array.from(map.values());
+        });
+    },
+    [currentUserEmail, currentUserDisplayName, currentUserAvatar]
+);
 
     React.useEffect(() => {
         if (!isDbBackedCommunity || !communityInfo.id) return;
@@ -2204,53 +2144,64 @@ const showFab = useScrollDirection(scrollRef);
         }
     };
 
-    const loadProfileByEmail = React.useCallback(async (email, initialPreview = null) => {
-        if (!email) return null;
-        if (initialPreview) setSelectedProfileData(initialPreview);
-        setProfileLoading(true);
-        try {
-            let user = null;
-            try {
-                const res = await apiFetch(`${USER_LOOKUP_BY_EMAIL}?email=${encodeURIComponent(email)}`, { method: "GET" });
-                if (res.ok) {
-                    const data = await res.json().catch(() => null);
-                    if (data && (data.user || (Array.isArray(data.users) && data.users[0]))) {
-                        user = data.user || (data.users && data.users[0]);
-                    }
-                }
-            } catch (e) {}
+   const loadProfileByEmail = React.useCallback(
+  async (email, initialPreview = null) => {
+    if (!email) return null;
 
-            if (!user) {
-                try {
-                    const snap = getCurrentUserSnapshotFromLocalStorage();
-                    if (snap && snap.email === email) user = snap;
-                    else {
-                        const found = posts.find((p) => p.authorEmail === email);
-                        if (found) {
-                            user = {
-                                displayName: found.author,
-                                avatar: found.authorImage,
-                                email: found.authorEmail,
-                            };
-                        }
-                    }
-                } catch (e) {}
-            }
+    try {
+      const res = await apiFetch(
+        `/api/users/by-email?email=${encodeURIComponent(email)}`,
+        { method: "GET" }
+      );
 
-            if (!user) {
-                user = {
-                    displayName: deriveNameFromEmail(email),
-                    email,
-                    avatar: `https://avatars.dicebear.com/api/initials/${encodeURIComponent(deriveNameFromEmail(email))}.svg`,
-                };
-            }
+      if (!res.ok) return null;
 
-            setSelectedProfileData(user);
-            return user;
-        } finally {
-            setProfileLoading(false);
-        }
-    }, [posts]);
+      const data = await res.json();
+      if (!data?.user) return null;
+
+      const user = data.user;
+
+      // ✅ 1️⃣ Update modal
+      setSelectedProfileData(user);
+
+      // ✅ 2️⃣ HARD backfill avatar into ALL posts
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.authorEmail === email
+            ? {
+                ...p,
+                authorImage: user.avatar || p.authorImage,
+                authorAvatar: user.avatar || p.authorAvatar,
+              }
+            : p
+        )
+      );
+
+      return user;
+    } catch (e) {
+      console.error("loadProfileByEmail failed:", e);
+      return null;
+    }
+  },
+  []
+);
+// 🔥 AUTO ENRICH POST AUTHORS (NO CLICK REQUIRED)
+React.useEffect(() => {
+  if (!posts.length) return;
+
+  posts.forEach((p) => {
+    if (
+  p.authorEmail &&
+  !fetchedEmailsRef.current.has(p.authorEmail)
+) {
+      // 🔒 lock immediately (VERY IMPORTANT)
+      fetchedEmailsRef.current.add(p.authorEmail);
+
+      // 🔥 auto fetch
+      loadProfileByEmail(p.authorEmail);
+    }
+  });
+}, [posts, loadProfileByEmail]);
 
     if (selectedPost) {
         return (
@@ -2375,13 +2326,12 @@ const showFab = useScrollDirection(scrollRef);
                                     onAdminRemove={handleAdminRemovePost}
                                     canDeleteSelf={canDeleteSelf}
                                     onDeleteSelf={(postId) => handleAdminRemovePost(postId)}
-                                    onAuthorClick={async (email, authorId, preview) => {
-                                        const chosenEmail = email; 
-                                        setSelectedProfileEmail(chosenEmail);
-                                        if (preview) setSelectedProfileData(preview);
-                                        await loadProfileByEmail(chosenEmail, preview || null);
-                                    }}
-                                    currentUserAvatar={currentUserAvatar}
+                                   onAuthorClick={(email) => {
+  setSelectedProfileEmail(email);
+  loadProfileByEmail(email); // ✅ ENSURE data
+}}
+
+                         currentUserAvatar={currentUserAvatar}
                                     currentUserEmail={currentUserEmail}
                                     currentUserDisplayName={currentUserDisplayName}
                                     onVote={vote}

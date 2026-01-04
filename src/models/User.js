@@ -1,130 +1,112 @@
-// src/models/User.js
 import mongoose from "mongoose";
 const { Schema, models, model } = mongoose;
 
 const UserSchema = new Schema(
-    {
-        name: { type: String, trim: true, default: "" },
+  {
+    name: { type: String, trim: true, default: "" },
 
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-            index: true,
-        },
-
-        passwordHash: {
-            type: String,
-            required: true,
-            select: false,
-        },
-
-        // Custom unique username field
-        username: {
-            type: String,
-            trim: true,
-            unique: true,
-            sparse: true, // Allows null/undefined values to not violate the unique constraint
-            lowercase: true,
-            index: true,
-        },
-
-        // ----------------------------
-        // Avatar Fields
-        // ----------------------------
-        avatar: { type: String, default: null }, // ✅ FIXED (was "")
-        avatarUrl: { type: String, default: null },
-        avatarPublicId: { type: String, default: null },
-        avatarMeta: { type: Schema.Types.Mixed, default: null },
-
-        // ----------------------------
-        // Profile Fields
-        // ----------------------------
-        bio: { type: String, trim: true, default: "" },
-        location: { type: String, trim: true, default: "" },
-        website: { type: String, trim: true, default: "" },
-
-        // =====================================================
-        // Communities created by user (Admin/Owner)
-        // =====================================================
-        createdGroups: [
-            { type: mongoose.Schema.Types.ObjectId, ref: "Group" }
-        ],
-
-        // =====================================================
-        // Communities joined by user (Member)
-        // =====================================================
-        joinedCommunities: [
-            { type: mongoose.Schema.Types.ObjectId, ref: "Group" }
-        ],
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
     },
-    {
-        timestamps: true,
-        toJSON: {
-            transform(doc, ret) {
-                if (ret._id) {
-                    ret.id = String(ret._id);
-                    delete ret._id;
-                }
-                delete ret.__v;
-                delete ret.passwordHash;
-                return ret;
-            },
-        },
-    }
+
+    // 🔐 Local auth only (Google users won't have this)
+    passwordHash: {
+      type: String,
+      required: false,     // ✅ CHANGED
+      select: false,
+    },
+
+    // 🔑 Auth provider
+    provider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+      index: true,
+    },
+
+    // 🟢 Google account ID
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
+
+    // Custom username
+    username: {
+      type: String,
+      trim: true,
+      unique: true,
+      sparse: true,
+      lowercase: true,
+      index: true,
+    },
+
+    // ----------------------------
+    // Avatar Fields
+    // ----------------------------
+    avatar: { type: String, default: null },
+    avatarUrl: { type: String, default: null },
+    avatarPublicId: { type: String, default: null },
+    avatarMeta: { type: Schema.Types.Mixed, default: null },
+
+    // ----------------------------
+    // Profile Fields
+    // ----------------------------
+    bio: { type: String, trim: true, default: "" },
+    location: { type: String, trim: true, default: "" },
+    website: { type: String, trim: true, default: "" },
+
+    // Communities
+    createdGroups: [{ type: Schema.Types.ObjectId, ref: "Group" }],
+    joinedCommunities: [{ type: Schema.Types.ObjectId, ref: "Group" }],
+  },
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret) {
+        if (ret._id) {
+          ret.id = String(ret._id);
+          delete ret._id;
+        }
+        delete ret.__v;
+        delete ret.passwordHash;
+        return ret;
+      },
+    },
+  }
 );
 
 // ----------------------------------------------------
 // PRE-SAVE NORMALIZATION
 // ----------------------------------------------------
 UserSchema.pre("save", function () {
-    if (this.email) this.email = this.email.trim().toLowerCase();
-    if (this.name) this.name = this.name.trim();
+  if (this.email) this.email = this.email.trim().toLowerCase();
+  if (this.name) this.name = this.name.trim();
+  if (this.username) this.username = this.username.trim().toLowerCase();
 
-    // Normalize username
-    if (this.username) {
-        this.username = this.username.trim().toLowerCase();
-    }
+  if (!this.joinedCommunities) this.joinedCommunities = [];
+  if (!this.createdGroups) this.createdGroups = [];
 
-    // Ensure array fields are initialized correctly
-    if (!this.joinedCommunities) this.joinedCommunities = [];
-    if (!this.createdGroups) this.createdGroups = [];
-
-    if (this.avatarUrl === "") this.avatarUrl = null;
-    if (this.avatarPublicId === "") this.avatarPublicId = null;
-
-    if (this.avatarMeta && typeof this.avatarMeta !== "object") {
-        this.avatarMeta = null;
-    }
+  if (this.avatarUrl === "") this.avatarUrl = null;
+  if (this.avatarPublicId === "") this.avatarPublicId = null;
 });
 
 // ----------------------------------------------------
 // INSTANCE METHOD: Get avatar safely
 // ----------------------------------------------------
 UserSchema.methods.getAvatar = function () {
-    return (
-        this.avatarUrl ||
-        this.avatar ||
-        "https://ui-avatars.com/api/?background=333&color=fff&name=" +
-            encodeURIComponent(this.name || this.username || "User")
-    );
-};
-
-// ----------------------------------------------------
-// STATIC METHOD: Update avatar (Cloudinary-safe)
-// ----------------------------------------------------
-UserSchema.statics.updateAvatar = async function (userId, { url, publicId, meta }) {
-    return this.findByIdAndUpdate(
-        userId,
-        {
-            avatarUrl: url || null,
-            avatarPublicId: publicId || null,
-            avatarMeta: meta || null,
-        },
-        { new: true }
-    ).lean();
+  return (
+    this.avatarUrl ||
+    this.avatar ||
+    "https://ui-avatars.com/api/?background=333&color=fff&name=" +
+      encodeURIComponent(this.name || this.username || "User")
+  );
 };
 
 // ----------------------------------------------------

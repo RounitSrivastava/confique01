@@ -20,8 +20,30 @@ import AllEventsPage from "./AllEventsPage";
 import {
   Search, User, Zap, Code, Shirt, Medal, Compass, BookOpen,
   Clock, MapPin, Calendar, X, Heart, Share2, ChevronRight,
-  ChevronLeft, Eye, Home, Users, CalendarDays, Plus, Clipboard, LogOut,
+  ChevronLeft, Eye, Home, Users, CalendarDays, Plus, Clipboard, Settings, LogOut,
 } from "lucide-react";
+// --- Featured Carousel Poster Helper ---
+// --- Featured Carousel Poster Helper (STRICT: NO LOGOS EVER) ---
+// --- Featured Carousel Gradient Helper ---
+const FEATURED_GRADIENTS = [
+  "from-purple-700 via-purple-900 to-black",
+  "from-indigo-700 via-indigo-900 to-black",
+  "from-pink-700 via-rose-900 to-black",
+  "from-emerald-700 via-emerald-900 to-black",
+  "from-blue-700 via-blue-900 to-black",
+  "from-orange-600 via-orange-900 to-black",
+  "from-cyan-700 via-cyan-900 to-black",
+];
+
+const getFeaturedGradient = (event) => {
+  if (!event) return FEATURED_GRADIENTS[0];
+
+  const hash = String(event.id)
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+  return FEATURED_GRADIENTS[hash % FEATURED_GRADIENTS.length];
+};
 
 // --- CONSTANTS ---
 const DEFAULT_AVATAR =
@@ -188,44 +210,18 @@ export const categories = [
   { name: "Others", icon: null },
 ];
 
-const FEATURED_CAROUSEL_EVENTS = [
-  MOCK_EVENTS[0],
-  {
-    ...MOCK_EVENTS[1],
-    id: 101,
-    title: "Featured: Raiders Reckoning",
-    isFeatured: true,
-    date: "Thu, 15 Dec 2025",
-  },
-  {
-    ...MOCK_EVENTS[4],
-    id: 102,
-    title: "Featured: Hackify Battle",
-    isFeatured: true,
-    date: "Thu, 15 Dec 2025",
-  },
-  {
-    id: 999,
-    title: "Global Tech Summit 2026",
-    venue: "Virtual Event",
-    date: "May 10-12 2026",
-    poster: "https://placehold.co/400x550/004D40/ffffff?text=GLOBAL+TECH+SUMMIT",
-    tags: ["Team (1)", "Paid"],
-    isFeatured: true,
-    category: "Seminar",
-  },
-];
-
 const TOP_NAV = [
   { label: "Home", href: "/" },
   { label: "Community", href: "/groups" },
-  { label: "Insights", href: "/insights" },
+  
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 const MOBILE_NAV = [
   { label: "Home", href: "/", icon: Home },
   { label: "Community", href: "/groups", icon: Users },
-  { label: "Events", href: "/events", icon: CalendarDays },
+ 
+   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 // --- API Helpers ---
@@ -369,7 +365,7 @@ const PopularEventCard = ({ event, onDetailsClick }) => {
   return (
     <div className="flex flex-shrink-0 w-[80vw] max-w-sm mx-auto sm:w-[300px] sm:max-w-[300px]">
       <div
-        className="relative w-full rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-black cursor-pointer group transition-transform duration-300 hover:scale-[1.02]"
+        className="relative w-full rounded-[1.8rem] overflow-hidden bg-transparent sm:bg-black sm:shadow-[0_18px_60px_rgba(0,0,0,0.8)] cursor-pointer group transition-transform duration-300 hover:scale-[1.02]"
         onClick={() => onDetailsClick(event.id)}
       >
         <div className="relative w-full h-[260px] aspect-[4/3] sm:aspect-auto">
@@ -383,7 +379,7 @@ const PopularEventCard = ({ event, onDetailsClick }) => {
               e.target.src = "https://placehold.co/400x550/111827/ffffff?text=Image+Not+Found";
             }}
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 hidden sm:block bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           <div className="absolute top-4 left-4 flex items-center">
             <span className="px-3 py-1 rounded-full bg-purple-600 text-[11px] font-semibold text-white shadow-lg shadow-purple-800/70">
               Popular Pick
@@ -538,7 +534,7 @@ const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 500
       <div className="relative mt-8 mb-10 sm:hidden">
         <div className="relative max-w-sm mx-auto rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-black cursor-pointer" onClick={() => onDetailsClick(event.id)}>
           <div className="relative w-full h-[260px]">
-            <img src={event.poster} alt={event.title} className="w-full h-full object-cover" onError={(e) => { e.target.src = "https://placehold.co/400x550/111827/ffffff?text=Not+Found"; }} />
+          <div className={`absolute inset-0 bg-gradient-to-br ${getFeaturedGradient(event)}`} />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
             <div className="absolute top-3 left-4 flex items-center">
               <span className="px-3 py-1 rounded-full bg-[#5B3FFF] text-[11px] font-semibold text-white">Featured Event</span>
@@ -559,8 +555,8 @@ const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 500
         </div>
         {events.length > 1 && (
           <>
-            <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute -left-[38px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white hover:text-purple-400 z-20"><ChevronLeft className="w-6 h-6" /></button>
-            <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute -right-[38px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white hover:text-purple-400 z-20"><ChevronRight className="w-6 h-6" /></button>
+            <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute -left-[28px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white hover:text-purple-400 z-20"><ChevronLeft className="w-6 h-6" /></button>
+            <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute -right-[28px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white hover:text-purple-400 z-20"><ChevronRight className="w-6 h-6" /></button>
           </>
         )}
         <MobileDots />
@@ -585,8 +581,14 @@ const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 500
             </div>
           </div>
           <div className="md:w-1/2 p-4 mt-8 md:mt-0 flex justify-center">
-            <div className="w-full max-w-xs aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl ring-4 ring-white/20">
-              <img src={event.poster} alt={event.title} className="w-full h-full object-cover" />
+            <div className="w-full max-w-xs aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl ring-4 ring-white/20 bg-black">
+             <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${getFeaturedGradient(event)}`}>
+  <h3 className="text-white text-xl font-extrabold text-center px-6">
+    {event.title}
+  </h3>
+</div>
+
+
             </div>
           </div>
         </div>
@@ -701,6 +703,28 @@ const EventsContent = ({ searchParams }) => {
   }, [dynamicEvents.length]);
 
   const ALL_EVENTS = useMemo(() => dynamicEvents, [dynamicEvents]);
+  const featuredEventIds = useMemo(() => {
+  return ALL_EVENTS
+    .filter(event => event.isFeatured === true)
+    .map(event => String(event.id));
+}, [ALL_EVENTS]);
+const carouselEvents = useMemo(() => {
+  if (ALL_EVENTS.length === 0) return [];
+
+  const featured = ALL_EVENTS.filter(event => event.isFeatured === true);
+
+  if (featured.length >= 3) {
+    return featured.slice(0, 5);
+  }
+
+  const fallback = ALL_EVENTS
+    .filter(event => !featuredEventIds.includes(String(event.id)))
+    .sort((a, b) => b.impressions - a.impressions)
+    .slice(0, 5 - featured.length);
+
+  return [...featured, ...fallback];
+}, [ALL_EVENTS, featuredEventIds]);
+
 
   const eventDetailData = useMemo(() => {
     if (!eventIdParam) return null;
@@ -788,24 +812,26 @@ const EventsContent = ({ searchParams }) => {
     }
   };
 
-  const upcomingEvents = useMemo(() => {
-    let filtered = ALL_EVENTS.filter(e => !FEATURED_CAROUSEL_EVENTS.some(f => f.id === e.id));
-    if (selectedCategory !== "All Events") filtered = filtered.filter(e => e.category === selectedCategory);
-    if (searchQuery.length > 2) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(e => e.title.toLowerCase().includes(q) || e.category.toLowerCase().includes(q));
-    }
-    return filtered;
-  }, [selectedCategory, searchQuery, ALL_EVENTS]);
+const upcomingEvents = useMemo(() => {
+  let result = ALL_EVENTS.filter(
+    event => !featuredEventIds.includes(String(event.id))
+  );
 
-  const carouselEvents = useMemo(() => {
-      if (ALL_EVENTS.length === 0) return [];
-      return FEATURED_CAROUSEL_EVENTS.map(f => {
-          const found = ALL_EVENTS.find(a => String(a.id) === String(f.id));
-          return found ? found : f;
-      });
-  }, [ALL_EVENTS]);
+  if (selectedCategory !== "All Events") {
+    result = result.filter(event => event.category === selectedCategory);
+  }
 
+  if (searchQuery.length > 2) {
+    const q = searchQuery.toLowerCase();
+    result = result.filter(
+      event =>
+        event.title.toLowerCase().includes(q) ||
+        event.category.toLowerCase().includes(q)
+    );
+  }
+
+  return result;
+}, [ALL_EVENTS, featuredEventIds, selectedCategory, searchQuery]);
   return (
     <div className="min-h-screen text-white font-sans antialiased relative bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000]">
       <div onClick={() => setSidebarOpen(false)} className={`fixed inset-0 bg-black/50 z-[100] transition-opacity ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"} lg:hidden`} />

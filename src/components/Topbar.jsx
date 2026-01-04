@@ -270,6 +270,7 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
             aria-label="Open menu"
           >
             <span className="w-4 h-[2px] bg-gray-100 rounded-full mb-1"></span>
+              <span className="w-4 h-[2px] bg-gray-100 rounded-full mb-1"></span>
             <span className="w-4 h-[2px] bg-gray-100 rounded-full"></span>
           </button>
 

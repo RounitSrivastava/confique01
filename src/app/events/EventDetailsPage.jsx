@@ -145,11 +145,15 @@ const EventDetailsPage = ({
   relatedEvents = [],
   onDetailsClick,
 }) => {
-  const [activeTab, setActiveTab] = useState("Stages & Timeline");
+  const [activeTab, setActiveTab] = useState("Details");
   const [registrationStatus, setRegistrationStatus] = useState("Open");
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [formData, setFormData] = useState({});
   const [formErrors, setFormErrors] = useState({});
+    useEffect(() => {
+    setActiveTab("Details");
+  }, [displayEvent?.id]);
+
 
   const {
     title,
@@ -629,9 +633,9 @@ const EventDetailsPage = ({
           <div className="lg:col-span-8">
             <div className="flex overflow-x-auto border-b border-gray-800 mb-8">
               {[
-                { name: "Stages & Timeline", icon: Clock },
-                { name: "Details", icon: ClipboardList },
-              ].map((tab) => (
+  { name: "Details", icon: ClipboardList },
+  { name: "Stages & Timeline", icon: Clock },
+].map((tab) => (
                 <TabButton
                   key={tab.name}
                   name={tab.name}

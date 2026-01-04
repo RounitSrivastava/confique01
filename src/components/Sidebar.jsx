@@ -15,7 +15,7 @@ import { usePathname } from "next/navigation";
 
 const nav = [
   { icon: Home, label: "Home", href: "/" },
-  { icon: Users, label: "Groups", href: "/groups" },
+  { icon: Users, label: "Commmunity", href: "/groups" },
   { icon: CalendarDays, label: "Events", href: "/events" },
 ];
 

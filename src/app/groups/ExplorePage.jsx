@@ -122,15 +122,36 @@ const CategoryPill = ({ name, isSelected, onClick }) => (
 );
 
 const TrendingCard = ({ community, gradient, onNavigate }) => {
+  const logo = community.iconUrl || community.icon;
+
   return (
     <div
       onClick={() => onNavigate(community)}
-      className="w-40 h-52 flex-shrink-0 rounded-xl overflow-hidden mr-4 cursor-pointer"
-    >
-      <div className={`w-full h-28 bg-gradient-to-br ${gradient}`} />
+      className="w-40 min-h-[190px] flex-shrink-0 rounded-xl overflow-hidden mr-4 cursor-pointer bg-black-900 border border-white/8"
 
+    >
+      {/* COVER IMAGE */}
+      <div className="w-full h-28 bg-gray-800 overflow-hidden">
+        {logo ? (
+          <img
+            src={logo}
+            alt={community.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div
+            className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-2xl font-bold`}
+          >
+            {community.name?.charAt(0)}
+          </div>
+        )}
+      </div>
+
+      {/* TEXT */}
       <div className="p-3 text-white">
-        <p className="font-semibold text-sm">{community.name}</p>
+        <p className="font-semibold text-sm truncate">
+          {community.name}
+        </p>
         <p className="text-xs text-gray-400 mt-1">
           {community.membersCount || 0} members
         </p>
@@ -138,6 +159,7 @@ const TrendingCard = ({ community, gradient, onNavigate }) => {
     </div>
   );
 };
+
 // --- ADMIN MENU COMPONENT ---
 const AdminMenu = ({ 
     community, 
@@ -1062,16 +1084,17 @@ React.useEffect(() => {
     if (typeof window === "undefined") return;
 
     try {
-        const payload = allCommunities.map((c) => ({
+    const payload = allCommunities.map((c) => ({
   id: c.id,
   name: c.name,
   slug: c.slug,
-  description: c.description || "",   // ✅ ADD
-  category: c.category || "default",  // ✅ ADD
+  description: c.description || "",
+  category: c.category || "default",
   membersCount: Number(c.membersCount || 0),
   bannerUrl: c.bannerUrl || null,
+  iconUrl: c.iconUrl || null,   // ✅ THIS WAS MISSING
 }));
-        localStorage.setItem(
+   localStorage.setItem(
             "confique:allCommunities",
             JSON.stringify(payload)
         );
@@ -1206,6 +1229,7 @@ React.useEffect(() => {
 
     return (
         <div className="min-h-screen bg-[#0d0d0d] text-white p-4 sm:p-6">
+
             {/* MODALS */}
             <CreateCommunityForm
                 isOpen={isCreateModalOpen}

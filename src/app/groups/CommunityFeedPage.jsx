@@ -734,25 +734,47 @@ const CommunityHeader = ({
     onDeleteCommunity,
 }) => {
     const [isInviteMenuOpen, setIsInviteMenuOpen] = React.useState(false);
-    const inviteButtonRef = React.useRef(null);
-    const inviteMenuRef = React.useRef(null);
+    const desktopInviteBtnRef = React.useRef(null);
+const desktopInviteMenuRef = React.useRef(null);
 
-    React.useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (
-                isInviteMenuOpen &&
-                inviteButtonRef.current &&
-                !inviteButtonRef.current.contains(event.target) &&
-                inviteMenuRef.current &&
-                !inviteMenuRef.current.contains(event.target)
-            ) {
-                setIsInviteMenuOpen(false);
-            }
-        };
+const mobileInviteBtnRef = React.useRef(null);
+const mobileInviteMenuRef = React.useRef(null);
 
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isInviteMenuOpen]);
+
+   React.useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (!isInviteMenuOpen) return;
+
+    const isDesktop = window.matchMedia("(min-width: 640px)").matches;
+
+    // DESKTOP LOGIC
+    if (isDesktop) {
+      if (
+        desktopInviteBtnRef.current &&
+        desktopInviteMenuRef.current &&
+        !desktopInviteBtnRef.current.contains(e.target) &&
+        !desktopInviteMenuRef.current.contains(e.target)
+      ) {
+        setIsInviteMenuOpen(false);
+      }
+      return;
+    }
+
+    // MOBILE LOGIC
+    if (
+      mobileInviteBtnRef.current &&
+      mobileInviteMenuRef.current &&
+      !mobileInviteBtnRef.current.contains(e.target) &&
+      !mobileInviteMenuRef.current.contains(e.target)
+    ) {
+      setIsInviteMenuOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, [isInviteMenuOpen]);
+
 
     const membersLabel = community.members
         ? community.members
@@ -764,24 +786,26 @@ const CommunityHeader = ({
         : "0 members";
 
     const inviteButton = (
-        <div className="relative">
-            <button
-                ref={inviteButtonRef}
-                onClick={() => setIsInviteMenuOpen((prev) => !prev)}
-                className="hidden sm:flex items-center px-3 py-1.5 text-xs font-semibold rounded-full border border-gray-300"
-            >
-                <UserPlus className="w-4 h-4 mr-1" />
-                Invite
-            </button>
-            {isInviteMenuOpen && (
-                <InviteMenu
-                    ref={inviteMenuRef}
-                    communityName={community.name}
-                    communitySlug={community.slug}
-                    onClose={() => setIsInviteMenuOpen(false)}
-                />
-            )}
-        </div>
+        
+<div className="relative hidden sm:block">
+  <button
+    ref={desktopInviteBtnRef}
+    onClick={() => setIsInviteMenuOpen((p) => !p)}
+    className="flex items-center px-3 py-1.5 text-xs font-semibold rounded-full border border-gray-300"
+  >
+    <UserPlus className="w-4 h-4 mr-1" />
+    Invite
+  </button>
+
+  {isInviteMenuOpen && (
+    <InviteMenu
+      ref={desktopInviteMenuRef}
+      communityName={community.name}
+      communitySlug={community.slug}
+      onClose={() => setIsInviteMenuOpen(false)}
+    />
+  )}
+</div>
     );
 
     return (
@@ -836,35 +860,33 @@ const CommunityHeader = ({
                         {inviteButton}
 
                         {/* Mobile Invite Button */}
+{/* Mobile Invite */}
 <div className="relative sm:hidden">
   <button
-    ref={inviteButtonRef}
-    onClick={() => setIsInviteMenuOpen((prev) => !prev)}
+    ref={mobileInviteBtnRef}
+    onClick={() => setIsInviteMenuOpen((p) => !p)}
     className="flex items-center px-3 py-1.5 text-xs font-semibold rounded-full border border-gray-300"
   >
     <UserPlus className="w-4 h-4 mr-1" />
     Invite
   </button>
 
- {isInviteMenuOpen && (
-  <>
-    {/* Backdrop – click anywhere to close */}
-    <div
-      className="fixed inset-0 z-40"
-      onClick={() => setIsInviteMenuOpen(false)}
-    />
-
-    {/* Invite Menu */}
-    <InviteMenu
-      ref={inviteMenuRef}
-      communityName={community.name}
-      communitySlug={community.slug}
-      onClose={() => setIsInviteMenuOpen(false)}
-    />
-  </>
-)}
-
+  {isInviteMenuOpen && (
+    <>
+      <div
+        className="fixed inset-0 z-40"
+        onClick={() => setIsInviteMenuOpen(false)}
+      />
+      <InviteMenu
+        ref={mobileInviteMenuRef}
+        communityName={community.name}
+        communitySlug={community.slug}
+        onClose={() => setIsInviteMenuOpen(false)}
+      />
+    </>
+  )}
 </div>
+
 
 {/* Desktop Joined Button */}
 <button

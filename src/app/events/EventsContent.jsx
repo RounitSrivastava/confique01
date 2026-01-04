@@ -218,13 +218,13 @@ const FEATURED_CAROUSEL_EVENTS = [
 
 const TOP_NAV = [
   { label: "Home", href: "/" },
-  { label: "Groups", href: "/groups" },
+  { label: "Community", href: "/groups" },
   { label: "Insights", href: "/insights" },
 ];
 
 const MOBILE_NAV = [
   { label: "Home", href: "/", icon: Home },
-  { label: "Groups", href: "/groups", icon: Users },
+  { label: "Community", href: "/groups", icon: Users },
   { label: "Events", href: "/events", icon: CalendarDays },
 ];
 

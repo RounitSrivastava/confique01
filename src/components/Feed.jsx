@@ -110,7 +110,8 @@ const normalizeCommunities = (arr = []) =>
 const DEFAULT_BANNER = "https://placehold.co/800x240/111827/ffffff?text=Community+Banner";
 
 function CommunityCard({ c, index = 0, onOpen, className = "" }) {
-  const bannerImg = c.bannerUrl || c.hero || c.image || null;
+  const bannerImg = c.bannerUrl || null;
+const logoImg = c.iconUrl || null;
   const description = c.description || "";
 
   // ✅ ADD THESE LINES
@@ -134,24 +135,38 @@ function CommunityCard({ c, index = 0, onOpen, className = "" }) {
       onClick={() => onOpen && onOpen(c)}
       className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-[#151515] cursor-pointer hover:shadow-3xl transition-shadow flex flex-col h-full ${className}`}
     >
-      {bannerImg ? (
-        <div className="h-36 w-full overflow-hidden flex-shrink-0 rounded-t-2xl">
-          <img
-            src={bannerImg}
-            alt={c.name}
-            className="object-cover w-full h-full"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = DEFAULT_BANNER;
-            }}
-          />
-        </div>
-      ) : (
-        <div
-          className="h-36 w-full flex-shrink-0 rounded-t-2xl"
-          style={{ background: gradientStyle }}
-        />
-      )}
+      <div className="h-36 w-full overflow-hidden flex-shrink-0 rounded-t-2xl bg-gray-900">
+  {bannerImg ? (
+    <img
+      src={bannerImg}
+      alt={c.name}
+      className="w-full h-full object-cover"
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = DEFAULT_BANNER;
+      }}
+    />
+  ) : logoImg ? (
+    <img
+  src={logoImg}
+  alt={c.name}
+  className="w-full h-full object-cover"
+  onError={(e) => {
+    e.target.onerror = null;
+    e.target.src = DEFAULT_BANNER;
+  }}
+/>
+
+  ) : (
+    <div
+      className="w-full h-full flex items-center justify-center text-3xl font-bold text-white"
+      style={{ background: gradientStyle }}
+    >
+      {c.name?.charAt(0)}
+    </div>
+  )}
+</div>
+
 
       <div className="p-5 flex flex-col flex-grow">
         <h3 className="text-lg font-bold text-white">{c.name}</h3>

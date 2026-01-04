@@ -743,20 +743,25 @@ const mobileInviteMenuRef = React.useRef(null);
 
    React.useEffect(() => {
   const handleClickOutside = (e) => {
-    // Desktop
-    if (
-      isInviteMenuOpen &&
-      desktopInviteBtnRef.current &&
-      desktopInviteMenuRef.current &&
-      !desktopInviteBtnRef.current.contains(e.target) &&
-      !desktopInviteMenuRef.current.contains(e.target)
-    ) {
-      setIsInviteMenuOpen(false);
+    if (!isInviteMenuOpen) return;
+
+    const isDesktop = window.matchMedia("(min-width: 640px)").matches;
+
+    // DESKTOP LOGIC
+    if (isDesktop) {
+      if (
+        desktopInviteBtnRef.current &&
+        desktopInviteMenuRef.current &&
+        !desktopInviteBtnRef.current.contains(e.target) &&
+        !desktopInviteMenuRef.current.contains(e.target)
+      ) {
+        setIsInviteMenuOpen(false);
+      }
+      return;
     }
 
-    // Mobile
+    // MOBILE LOGIC
     if (
-      isInviteMenuOpen &&
       mobileInviteBtnRef.current &&
       mobileInviteMenuRef.current &&
       !mobileInviteBtnRef.current.contains(e.target) &&
@@ -767,8 +772,7 @@ const mobileInviteMenuRef = React.useRef(null);
   };
 
   document.addEventListener("mousedown", handleClickOutside);
-  return () =>
-    document.removeEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
 }, [isInviteMenuOpen]);
 
     const membersLabel = community.members

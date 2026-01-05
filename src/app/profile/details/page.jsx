@@ -7,14 +7,16 @@ import {
 } from "lucide-react";
 
 const presetAvatars = [
-  "https://i.pravatar.cc/150?img=1",
-  "https://i.pravatar.cc/150?img=2",
-  "https://i.pravatar.cc/150?img=3",
-  "https://i.pravatar.cc/150?img=4",
-  "https://i.pravatar.cc/150?img=5",
-  "https://i.pravatar.cc/150?img=6",
-  "https://i.pravatar.cc/150?img=7",
-  "https://i.pravatar.cc/150?img=8",
+    "/ChatGPT Image Jan 5, 2026, 04_10_16 PM.png",
+  "/ChatGPT Image Jan 5, 2026, 04_11_13 PM.png",
+  "/ChatGPT Image Jan 5, 2026, 04_11_21 PM.png",
+  "/ChatGPT Image Jan 5, 2026, 04_17_02 PM.png",
+  "/ChatGPT Image Jan 5, 2026, 04_18_07 PM.png",
+  "/ChatGPT Image Jan 5, 2026, 04_19_22 PM.png",
+  "/ChatGPT Image Jan 5, 2026, 04_20_00 PM.png",
+  "/ChatGPT Image Jan 5, 2026, 04_20_53 PM.png",
+
+  
 ];
 
 const DEFAULT_AVATAR =

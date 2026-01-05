@@ -1,35 +1,43 @@
-// src/app/api/auth/logout/route.js
-
 import { NextResponse } from "next/server";
-import { getAuthCookieOptions } from "@/lib/cookie-options";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-// ✅ REQUIRED in Next.js 15
 
 export async function POST() {
-  const res = NextResponse.json(
-    { ok: true },
-    { headers: { "Cache-Control": "no-store" } }
-  );
+  console.log("🔥 LOGOUT API HIT");
 
-  // 1. Get master cookie options
-  const { name: primaryCookieName, cookieOptions: masterOptions } =
-    getAuthCookieOptions();
+  const response = NextResponse.json({ 
+    ok: true,
+    message: "Logged out successfully"
+  });
 
-  // 2. Deletion options (must MATCH original cookie options)
-  const deleteOptions = {
-    ...masterOptions,
-    maxAge: 0,
-    expires: new Date(0),
-  };
+  // Create past date
+  const expiredDate = new Date(0);
+  
+  // Try ALL possible domain variations
+  const domains = ['localhost', '.localhost', undefined];
+  const paths = ['/', '/api', '/auth', undefined];
+  
+  for (const domain of domains) {
+    for (const path of paths) {
+      // Using delete()
+      response.cookies.delete("confique_token");
+      
+      // Using set() with expired date
+      const options = {
+        name: "confique_token",
+        value: "",
+        expires: expiredDate,
+        httpOnly: true,
+        secure: false, // false for localhost
+        sameSite: "lax",
+      };
+      
+      if (domain) options.domain = domain;
+      if (path) options.path = path;
+      
+      response.cookies.set(options);
+    }
+  }
 
-  // 3. Clear primary auth cookie
-  res.cookies.set(primaryCookieName, "", deleteOptions);
-
-  // 4. Clear legacy cookies (safety)
-  res.cookies.set("auth_token", "", deleteOptions);
-  res.cookies.set("token", "", deleteOptions);
-
-  return res;
+  return response;
 }

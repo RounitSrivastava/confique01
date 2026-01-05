@@ -4,17 +4,15 @@ import User from "@/models/User";
 import { verifyPassword, createToken } from "@/lib/auth";
 import { getAuthCookieOptions } from "@/lib/cookie-options";
 
-export const runtime = "nodejs";        // bcrypt, jwt
-export const dynamic = "force-dynamic"; // cookies, req.json
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
-    // 🔐 1️⃣ Guard: JWT_SECRET must exist on Vercel
     if (!process.env.JWT_SECRET) {
       throw new Error("JWT_SECRET is missing");
     }
 
-    // 🧾 2️⃣ Safe JSON parsing
     let body;
     try {
       body = await req.json();
@@ -26,7 +24,6 @@ export async function POST(req) {
     }
 
     const { email, password } = body || {};
-
     if (!email || !password) {
       return NextResponse.json(
         { error: "Missing fields" },
@@ -66,28 +63,25 @@ export async function POST(req) {
       {
         ok: true,
         user: {
-  id: String(user._id),
-  email: user.email,
-  name: user.name || "",
-  avatar: user.avatar || null, // ✅ ADD THIS
-},
+          id: String(user._id),
+          email: user.email,
+          name: user.name || "",
+          avatar: user.avatar || null,
+        },
       },
       { status: 200 }
     );
 
-    // 🍪 3️⃣ Vercel-safe cookies
+    // 🍪 SET COOKIE (CORRECT)
     const { name, cookieOptions } = getAuthCookieOptions();
     res.cookies.set(name, token, {
       ...cookieOptions,
-      secure: true,      // REQUIRED on Vercel
-      sameSite: "lax",   // safest default
+      maxAge: 60 * 60 * 24 * 7, // ✅ 7 days
     });
 
     return res;
   } catch (err) {
     console.error("LOGIN ERROR:", err);
-
-    // 🧠 4️⃣ TEMP: expose real error (remove later)
     return NextResponse.json(
       { error: err.message || "Server error" },
       { status: 500 }

@@ -1,4 +1,3 @@
-// src/app/api/auth/register/route.js
 import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 import { hashPassword, createToken } from "@/lib/auth";
@@ -21,7 +20,6 @@ export async function POST(req) {
     }
 
     const { name, email, password } = body || {};
-
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Missing name/email/password" },
@@ -43,17 +41,17 @@ export async function POST(req) {
 
     const hashedPassword = await hashPassword(password);
 
-// ✅ DEFAULT AVATAR (FIX)
-const defaultAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-  name || normalizedEmail
-)}`;
+    // ✅ Default avatar
+    const defaultAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+      name || normalizedEmail
+    )}`;
 
-const user = await User.create({
-  name: String(name).trim(),
-  email: normalizedEmail,
-  passwordHash: hashedPassword,
-  avatar: defaultAvatar, // 🔥 IMPORTANT
-});
+    const user = await User.create({
+      name: String(name).trim(),
+      email: normalizedEmail,
+      passwordHash: hashedPassword,
+      avatar: defaultAvatar,
+    });
 
     const token = createToken({
       userId: String(user._id),
@@ -63,23 +61,26 @@ const user = await User.create({
     const res = NextResponse.json(
       {
         ok: true,
-       user: {
-  id: String(user._id),
-  name: user.name,
-  email: user.email,
-  avatar: user.avatar, // ✅ ADD THIS
-},
+        user: {
+          id: String(user._id),
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+        },
       },
       { status: 201 }
     );
 
+    // 🍪 SET COOKIE (CORRECT)
     const { name: cookieName, cookieOptions } = getAuthCookieOptions();
-    res.cookies.set(cookieName, token, cookieOptions);
+    res.cookies.set(cookieName, token, {
+      ...cookieOptions,
+      maxAge: 60 * 60 * 24 * 7, // ✅ 7 days
+    });
 
     return res;
   } catch (err) {
     console.error("REGISTER ROUTE ERROR:", err);
-
     return NextResponse.json(
       { error: "Server error" },
       { status: 500 }

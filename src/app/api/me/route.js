@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongoose"; 
 import User from "@/models/User"; 
 import Group from "@/models/Group"; 
-import { getCurrentUser, extractTokenFromRequest } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import mongoose from "mongoose";
 
 export const runtime = "nodejs";
@@ -52,27 +52,6 @@ const buildUserPayload = (u, groups = { created: [], joined: [] }) => {
         joinedGroups: groups.joined,
     };
 };
-
-/* ===================================================
-    HELPER: Clear stale auth cookies
-=================================================== */
-function clearAuthCookies(res) {
-    const isProd = process.env.NODE_ENV === "production";
-    const secureFlag = isProd && process.env.SECURE_COOKIES !== "false";
-
-    const opts = {
-        httpOnly: true,
-        path: "/",
-        sameSite: "lax",
-        secure: secureFlag,
-        maxAge: 0,
-    };
-
-    res.cookies.set("confique_token", "", opts);
-    res.cookies.set("auth_token", "", opts);
-    res.cookies.set("token", "", opts);
-}
-
 /* ===================================================
     GET → Return authenticated user's data + groups
 =================================================== */
@@ -80,15 +59,15 @@ export async function GET(req) {
     await dbConnect();
 
     try {
-        const rawToken = await extractTokenFromRequest(req);
-        const actor = await getCurrentUser(req); 
+    
+        const actor = await getCurrentUser(); 
 
-        if (!actor?.id) {
-            const res = NextResponse.json({ user: null }, { status: 200, headers: HEADERS });
-            if (rawToken) clearAuthCookies(res);
-            return res;
-        }
-        
+       if (!actor?.id) {
+  return NextResponse.json(
+    { user: null },
+    { status: 200, headers: HEADERS }
+  );
+}
         // 🚨 CRITICAL STABILITY FIX: Force Mongoose to register models
         const _registeredModels = [User, Group]; 
 
@@ -97,11 +76,12 @@ export async function GET(req) {
             .select("name email username avatar bio location website createdGroups joinedCommunities")
             .lean();
 
-        if (!user) {
-            const res = NextResponse.json({ user: null }, { status: 200, headers: HEADERS });
-            clearAuthCookies(res);
-            return res;
-        }
+       if (!user) {
+  return NextResponse.json(
+    { user: null },
+    { status: 200, headers: HEADERS }
+  );
+}
 
         // 2. Identify all unique group IDs
         const groupIds = [
@@ -175,17 +155,15 @@ export async function PATCH(req) {
     await dbConnect();
     
     try {
-        const rawToken = await extractTokenFromRequest(req);
-        const actor = await getCurrentUser(req);
+       
+        const actor = await getCurrentUser();
 
-        if (!actor?.id) {
-            const res = NextResponse.json(
-                { error: "Not authenticated" },
-                { status: 401, headers: HEADERS }
-            );
-            if (rawToken) clearAuthCookies(res);
-            return res;
-        }
+      if (!actor?.id) {
+  return NextResponse.json(
+    { error: "Not authenticated" },
+    { status: 401, headers: HEADERS }
+  );
+}
 
         const userId = actor.id;
         const body = await req.json();
@@ -230,11 +208,12 @@ export async function PATCH(req) {
             { new: true, runValidators: true }
         ).lean();
 
-        if (!updatedUser) {
-            const res = NextResponse.json({ error: "User not found" }, { status: 404, headers: HEADERS });
-            clearAuthCookies(res);
-            return res;
-        }
+       if (!updatedUser) {
+    return NextResponse.json(
+        { error: "User not found" },
+        { status: 404, headers: HEADERS }
+    );
+}
 
         return NextResponse.json(
             { user: buildUserPayload(updatedUser) },

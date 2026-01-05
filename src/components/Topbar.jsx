@@ -44,63 +44,70 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
   };
 
   useEffect(() => {
-    let mounted = true;
+  // 🔥 DO NOT run auth check on /auth pages
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/auth")) {
+    return;
+  }
 
-    async function loadUser() {
-      try {
-        const res = await fetch("/api/me", {
-          method: "GET",
-          credentials: CREDENTIALS,
-          cache: "no-store",
-        });
+  let mounted = true;
 
-        if (!mounted) return;
+  async function loadUser() {
+    try {
+      const res = await fetch("/api/me", {
+        method: "GET",
+        credentials: CREDENTIALS,
+        cache: "no-store",
+      });
 
-        if (!res.ok) {
-          setCurrentUser(null);
+      if (!mounted) return;
+
+      if (!res.ok) {
+        setCurrentUser(null);
+        setNotifications([]);
+        return;
+      }
+
+      const json = await res.json().catch(() => null);
+      const serverUser = json?.user ?? null;
+
+      if (serverUser) {
+        const normalized = {
+          name: serverUser.name || "",
+          email: serverUser.email || "",
+          avatar: serverUser.avatar || null,
+          bio: serverUser.bio || "",
+          location: serverUser.location || "",
+          website: serverUser.website || "",
+        };
+
+        setCurrentUser(normalized);
+
+        try {
+          const store = JSON.parse(localStorage.getItem("notifications") || "{}");
+          const myList = normalized.email ? store[normalized.email] || [] : [];
+          setNotifications(myList);
+          prevNotifCountRef.current = myList.length;
+        } catch {
           setNotifications([]);
-          return;
         }
-
-        const json = await res.json().catch(() => null);
-        const serverUser = json?.user ?? null;
-
-        if (serverUser) {
-          const normalized = {
-            name: serverUser.name || "",
-            email: serverUser.email || "",
-            avatar: serverUser.avatar || null,
-            bio: serverUser.bio || "",
-            location: serverUser.location || "",
-            website: serverUser.website || "",
-          };
-
-          setCurrentUser(normalized);
-
-          try {
-            const store = JSON.parse(localStorage.getItem("notifications") || "{}");
-            const myList = normalized.email ? store[normalized.email] || [] : [];
-            setNotifications(myList);
-            prevNotifCountRef.current = myList.length;
-          } catch {
-            setNotifications([]);
-          }
-        } else {
-          setCurrentUser(null);
-          setNotifications([]);
-        }
-      } catch (err) {
-        console.error("Failed to fetch /api/me:", err);
+      } else {
         setCurrentUser(null);
         setNotifications([]);
       }
+    } catch (err) {
+      console.error("Failed to fetch /api/me:", err);
+      setCurrentUser(null);
+      setNotifications([]);
     }
+  }
 
-    loadUser();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  loadUser();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
 
   useEffect(() => {
     const handleAuthChanged = (e) => {
@@ -246,7 +253,7 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
     } catch (err) {
       console.error("Logout request failed:", err);
     } finally {
-      router.push("/auth/login?loggedOut=true"); 
+     router.replace("/auth/login?loggedOut=true");
     }
   };
 

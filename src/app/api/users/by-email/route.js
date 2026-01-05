@@ -13,7 +13,7 @@ export async function GET(req) {
 
   try {
     // optional: require auth
-    const actor = await getCurrentUser(req);
+    const actor = await getCurrentUser();
     if (!actor?.id) {
       return NextResponse.json(
         { error: "Not authenticated" },

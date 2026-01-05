@@ -69,7 +69,7 @@ export async function PATCH(req, context) {
         }
 
         // Auth & Ownership Check
-        const actor = await getCurrentUser(req);
+        const actor = await getCurrentUser();
         if (!actor?.email) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
@@ -163,7 +163,7 @@ export async function DELETE(req, context) {
             return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
         }
 
-        const actor = await getCurrentUser(req);
+        const actor = await getCurrentUser();
         if (!actor?.email) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }

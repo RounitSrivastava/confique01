@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+
 import { GoogleLogin } from "@react-oauth/google";
 
 const slides = ["/auth-slide-1.jpg", "/auth-slide-2.jpg", "/auth-slide-3.jpg"];
@@ -15,9 +15,6 @@ export default function LoginClient() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   /* ---------------------------------
       Background slider animation
@@ -33,30 +30,7 @@ export default function LoginClient() {
   /* ---------------------------------
       AUTH CHECK
   ---------------------------------- */
-  useEffect(() => {
-    let mounted = true;
-
-    async function checkAuth() {
-      const isLogoutRedirect = searchParams.get("loggedOut") === "true";
-      if (isLogoutRedirect) return;
-
-      try {
-        const res = await fetch("/api/me", {
-          method: "GET",
-          credentials: CREDENTIALS,
-          cache: "no-store",
-        });
-
-        if (!mounted) return;
-
-        const data = await res.json().catch(() => null);
-        if (data?.user && pathname !== "/") router.replace("/");
-      } catch {}
-    }
-
-    checkAuth();
-    return () => (mounted = false);
-  }, [router, pathname, searchParams]);
+  
 
   /* ---------------------------------
       EMAIL LOGIN

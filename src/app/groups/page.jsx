@@ -1,10 +1,9 @@
-// /groups/page.jsx
+// /groups/page.jsx  (SERVER COMPONENT)
 
-"use client"; 
+import AppContainer from "./AppContainer";
 
-import React from 'react';
-import AppContainer from './AppContainer'; 
+export const dynamic = "force-dynamic";
 
 export default function GroupsPage() {
-    return <AppContainer />;
+  return <AppContainer />;
 }

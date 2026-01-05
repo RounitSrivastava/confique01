@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { cookies as nextCookies } from "next/headers";
+import { cookies } from "next/headers";
 
 /* ===================================================
    INTERNAL JWT CONFIG
@@ -27,7 +27,7 @@ function getJwtConfig() {
 }
 
 /* ===================================================
-   PASSWORD HELPERS (LOCAL USERS ONLY)
+   PASSWORD HELPERS
 =================================================== */
 export const hashPassword = async (password) => {
   const salt = await bcrypt.genSalt(10);
@@ -39,7 +39,7 @@ export const verifyPassword = async (password, hash) => {
 };
 
 /* ===================================================
-   TOKEN CREATION  ✅ UPDATED
+   TOKEN CREATION
 =================================================== */
 export const createToken = ({ userId, email, provider }) => {
   const { secret, expiresIn } = getJwtConfig();
@@ -48,7 +48,7 @@ export const createToken = ({ userId, email, provider }) => {
     {
       sub: userId,
       email,
-      provider, // ✅ GOOGLE AWARE
+      provider,
     },
     secret,
     { expiresIn }
@@ -58,11 +58,6 @@ export const createToken = ({ userId, email, provider }) => {
 /* ===================================================
    TOKEN VERIFY
 =================================================== */
-export const verifyTokenStrict = (token) => {
-  const { secret } = getJwtConfig();
-  return jwt.verify(token, secret);
-};
-
 export const verifyToken = (token) => {
   try {
     const { secret } = getJwtConfig();
@@ -72,64 +67,30 @@ export const verifyToken = (token) => {
   }
 };
 
-/* ===================================================
-   REQUEST HELPERS
-=================================================== */
-const PRIMARY_COOKIE_NAME = "confique_token";
-
-const getHeaderValue = (req, name) => {
-  try {
-    if (!req || !req.headers) return "";
-
-    if (typeof req.headers.get === "function") {
-      const v = req.headers.get(name);
-      return typeof v === "string" ? v : "";
-    }
-
-    const raw = req.headers[name] ?? req.headers[name.toLowerCase()];
-    if (Array.isArray(raw)) return String(raw[0] || "");
-    return typeof raw === "string" ? raw : "";
-  } catch {
-    return "";
-  }
+export const verifyTokenStrict = (token) => {
+  const { secret } = getJwtConfig();
+  return jwt.verify(token, secret);
 };
 
 /* ===================================================
-   TOKEN EXTRACTION
+   AUTH HELPERS (APP ROUTER SAFE)
 =================================================== */
-export async function extractTokenFromRequest(req) {
-  try {
-    const cookieStore = nextCookies();
-    const token = cookieStore.get(PRIMARY_COOKIE_NAME)?.value;
-    if (token) return token.trim();
-  } catch {}
+const PRIMARY_COOKIE_NAME = "confique_token";
 
-  try {
-    const cookieHeader = getHeaderValue(req, "cookie");
-    if (cookieHeader) {
-      const match = cookieHeader.match(
-        new RegExp(`(?:^|;\\s*)${PRIMARY_COOKIE_NAME}=([^;]+)`)
-      );
-      if (match) return decodeURIComponent(match[1]);
-    }
-  } catch {}
-
-  try {
-    const authHeader = getHeaderValue(req, "authorization");
-    if (authHeader?.toLowerCase().startsWith("bearer ")) {
-      return authHeader.slice(7).trim();
-    }
-  } catch {}
-
-  return null;
+/**
+ * 🔐 Extract JWT token from cookies (App Router safe)
+ */
+export async function extractTokenFromRequest() {
+  const cookieStore = await cookies(); // 🔥 MUST await in App Router
+  return cookieStore.get(PRIMARY_COOKIE_NAME)?.value || null;
 }
 
-/* ===================================================
-   CURRENT USER
-=================================================== */
-export async function getCurrentUser(req) {
+/**
+ * 👤 Get current authenticated user from JWT
+ */
+export async function getCurrentUser() {
   try {
-    const token = await extractTokenFromRequest(req);
+    const token = await extractTokenFromRequest();
     if (!token) return null;
 
     const decoded = verifyToken(token);
@@ -141,7 +102,7 @@ export async function getCurrentUser(req) {
       provider: decoded.provider || "local",
     };
   } catch (err) {
-    console.error("❌ getCurrentUser failed:", err?.message || err);
+    console.error("❌ getCurrentUser failed:", err);
     return null;
   }
 }

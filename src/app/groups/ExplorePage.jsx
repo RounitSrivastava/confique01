@@ -68,8 +68,11 @@ const PROFESSIONAL_GRADIENTS = [
 const fetchMeData = async () => {
     try {
         const res = await apiFetch("/api/me");
+        
+        // 🛡️ FIX: If the response is 401 (or any non-200), return user: null
+        // This triggers the redirect logic in the Wrapper below.
         if (!res.ok) {
-            console.error("Failed to fetch user data and groups");
+            console.error("Session invalid or failed to fetch user data");
             return { user: null, created: [], joined: [] };
         }
         
@@ -78,18 +81,15 @@ const fetchMeData = async () => {
         
         if (!user) return { user: null, created: [], joined: [] };
 
-        // ⚠️ CRITICAL FIX: Match the field names returned by the /api/me/route.js buildUserPayload
-        const created = user.createdGroups || []; // Array of created group objects
-        const joined = user.joinedGroups || []; // Array of explicitly joined group objects
+        const created = user.createdGroups || []; 
+        const joined = user.joinedGroups || []; 
         
-        // Merge created and explicitly joined groups for a full list of user's groups
         const allUserGroupsMap = new Map();
         [...created, ...joined].forEach(group => {
             allUserGroupsMap.set(group.id, group);
         });
         const allUserGroups = [...allUserGroupsMap.values()];
 
-        // Store email locally as the frontend code depends on it
         if (typeof window !== "undefined") {
             localStorage.setItem("userEmail", user.email);
         }
@@ -97,7 +97,7 @@ const fetchMeData = async () => {
         return { 
             user, 
             created: created, 
-            joined: allUserGroups // ALL groups user is a member of (Admin + Explicitly Joined)
+            joined: allUserGroups 
         };
         
     } catch (e) {
@@ -105,7 +105,6 @@ const fetchMeData = async () => {
         return { user: null, created: [], joined: [] };
     }
 };
-
 // --- UI SUBCOMPONENTS (Updated with Admin Menu) ---
 const CategoryPill = ({ name, isSelected, onClick }) => (
     <button
@@ -323,50 +322,53 @@ export default function ExplorePageWrapper() {
     const [loading, setLoading] = React.useState(true);
     const [userGroups, setUserGroups] = React.useState({ created: [], joined: [] });
     const [currentUserEmail, setCurrentUserEmail] = React.useState(null);
-    const router = useRouter(); // ⬅️ Use the router hook
+    const router = useRouter();
 
     React.useEffect(() => {
         const loadUserGroups = async () => {
             const { user, created, joined } = await fetchMeData();
             
-            if (user) {
-                setCurrentUserEmail(user.email); 
-            } else {
-                setCurrentUserEmail(getCurrentUserEmail()); 
+            if (!user) {
+                router.replace("/auth/login"); 
+                return; 
             }
             
+            setCurrentUserEmail(user.email); 
             setUserGroups({ created, joined });
             setLoading(false);
         };
+        
         loadUserGroups();
-    }, []);
+    }, [router]);
 
-    // ⬅️ FIX: Implement actual routing here
+    // 1️⃣ MOVE THESE UP: Define these BEFORE the loading check
     const handleNavigateToCommunity = (community) => {
         if (community.slug) {
             router.push(`/groups/${community.slug}`);
         } else {
             console.error("Cannot navigate: Community slug is missing.", community);
-            // Fallback if your routing component isn't dynamic (optional, depends on your setup)
-            // router.push(`/groups/feed?id=${community.id}`); 
         }
     };
     
     const dummyProps = {
-        onNavigateToCommunity: handleNavigateToCommunity, // ⬅️ Pass the actual router function
+        onNavigateToCommunity: handleNavigateToCommunity,
         onCreateNewCommunity: (c) => console.log("Created", c.name),
         onDeleteCommunity: (c) => console.log("Deleted", c.name),
     };
 
-
-    if (loading) {
+    // 2️⃣ LOADING GUARD: Uses the Full-Screen Black Overlay
+    if (loading || !currentUserEmail) {
         return (
-            <div className="min-h-screen bg-[#0d0d0d] text-white p-6 flex justify-center items-center">
-                Loading communities...
+            <div className="fixed inset-0 z-[9999] bg-[#0d0d0d] flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-gray-400 font-medium animate-pulse"></p>
+                </div>
             </div>
         );
     }
     
+    // 3️⃣ RENDER: Now dummyProps is guaranteed to be defined
     return (
         <ExplorePage 
             {...dummyProps}

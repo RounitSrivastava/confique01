@@ -55,34 +55,38 @@ const buildUserPayload = (u, groups = { created: [], joined: [] }) => {
 /* ===================================================
     GET → Return authenticated user's data + groups
 =================================================== */
+/* ===================================================
+    GET → Return authenticated user's data + groups
+=================================================== */
 export async function GET(req) {
     await dbConnect();
 
     try {
-    
         const actor = await getCurrentUser(); 
 
-       if (!actor?.id) {
-  return NextResponse.json(
-    { user: null },
-    { status: 200, headers: HEADERS }
-  );
-}
-        // 🚨 CRITICAL STABILITY FIX: Force Mongoose to register models
+        // 🛡️ CHANGE: If no actor, return 401 instead of 200
+        if (!actor?.id) {
+            return NextResponse.json(
+                { user: null, error: "Unauthorized" },
+                { status: 401, headers: HEADERS } 
+            );
+        }
+
         const _registeredModels = [User, Group]; 
 
-        // 1. Find User
         const user = await User.findById(actor.id)
             .select("name email username avatar bio location website createdGroups joinedCommunities")
             .lean();
 
-       if (!user) {
-  return NextResponse.json(
-    { user: null },
-    { status: 200, headers: HEADERS }
-  );
-}
+        // 🛡️ CHANGE: If user not found in DB, return 401
+        if (!user) {
+            return NextResponse.json(
+                { user: null, error: "User not found" },
+                { status: 401, headers: HEADERS }
+            );
+        }
 
+        // ... rest of your code ...
         // 2. Identify all unique group IDs
         const groupIds = [
             ...(user.createdGroups || []).map(id => id.toString()),

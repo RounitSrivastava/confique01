@@ -22,6 +22,17 @@ import {
   Clock, MapPin, Calendar, X, Heart, Share2, ChevronRight,
   ChevronLeft, Eye, Home, Users, CalendarDays, Plus, Clipboard, Settings, LogOut,Rocket,
 } from "lucide-react";
+// --- AUTH HELPER ---
+const fetchMeData = async () => {
+    try {
+        const res = await fetch("/api/me", { cache: "no-store" });
+        if (!res.ok) return { user: null }; // Redirects if 401 Unauthorized
+        const data = await res.json();
+        return data;
+    } catch (e) {
+        return { user: null };
+    }
+};
 // --- Featured Carousel Poster Helper ---
 // --- Featured Carousel Poster Helper (STRICT: NO LOGOS EVER) ---
 // --- Featured Carousel Gradient Helper ---
@@ -982,4 +993,43 @@ const upcomingEvents = useMemo(() => {
   );
 };
 
-export default EventsContent;
+// --- SECURITY WRAPPER (THE DEFAULT EXPORT) ---
+export default function EventsPageWrapper({ searchParams }) {
+    const [authLoading, setAuthLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            const data = await fetchMeData();
+            
+            if (!data?.user) {
+                console.log("No session found, redirecting...");
+                router.replace("/auth/login"); // replace prevents user from clicking 'back'
+                return;
+            }
+
+            // User is valid, allow rendering
+            setIsAuthenticated(true);
+            setAuthLoading(false);
+        };
+        checkAuth();
+    }, [router]);
+
+    // 🔥 FLICKER-FREE UI: This fixed overlay covers EVERYTHING (Headers, Sidebars, Gradients)
+    if (authLoading || !isAuthenticated) {
+        return (
+            <div className="fixed inset-0 z-[9999] bg-[#0d0d0d] flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-gray-400 font-medium tracking-wide animate-pulse">
+                       
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // ✅ Only render the actual content if user is authenticated
+    return <EventsContent searchParams={searchParams} />;
+}

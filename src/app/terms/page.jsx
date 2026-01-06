@@ -216,7 +216,7 @@ const TermsPage = () => {
               9. Contact
             </h2>
             <p className="text-gray-400">
-              Legal inquiries: <span className="text-white">support@confique.com</span>
+              Legal inquiries: <span className="text-white">confique01@gmail.com</span>
             </p>
           </section>
 

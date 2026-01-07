@@ -693,6 +693,12 @@ InviteMenu.displayName = "InviteMenu";
 const AuthorProfileModal = ({ email, onClose, userData }) => {
     if (!email && !userData) return null;
     const u = userData || {};
+    const bioText =
+  typeof u?.bio === "string" && !u.bio.startsWith("http")
+    ? u.bio
+    : typeof u?.about === "string"
+    ? u.about
+    : "";
     return (
        <div
   className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
@@ -709,11 +715,11 @@ const AuthorProfileModal = ({ email, onClose, userData }) => {
 
                     <div>
                         <h3 className="text-lg font-bold text-white">{u?.displayName || deriveNameFromEmail(email)}</h3>
-                        <p className="text-sm text-gray-400">{u?.email || email}</p>
+                       <p className="text-sm text-gray-400 mt-1">
+  {bioText || "No bio added yet"}
+</p>
                     </div>
                 </div>
-
-                {u?.bio && <p className="mt-3 text-sm text-gray-300">{u.bio}</p>}
 
                 <div className="mt-4 flex justify-end">
                     <button onClick={onClose} className="px-3 py-2 rounded-md bg-gray-800 text-white">Close</button>
@@ -965,7 +971,7 @@ const mapBackendCommentToFrontend = (comment) => {
 
     const authorImage = rawAvatar
   ? makeAbsoluteUrl(rawAvatar)
-  : null; // ❗ NO DiceBear here
+  : undefined;
 
     return {
         id: comment._id || comment.id,
@@ -1028,6 +1034,37 @@ const CommentItem = ({ comment, allComments, onReply, currentUserEmail, currentU
     );
 };
 
+const enrichCommentAuthors = async (comments, setComments) => {
+  const emails = [
+    ...new Set(comments.map(c => c.authorEmail).filter(Boolean))
+  ];
+
+  await Promise.all(
+    emails.map(async (email) => {
+      try {
+        const res = await apiFetch(
+          `/api/users/by-email?email=${encodeURIComponent(email)}`,
+          { method: "GET" }
+        );
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (!data?.user?.avatar) return;
+
+        setComments(prev =>
+          prev.map(c =>
+            c.authorEmail === email
+              ? { ...c, authorImage: data.user.avatar }
+              : c
+          )
+        );
+      } catch (e) {
+        console.error("Comment avatar fetch failed", e);
+      }
+    })
+  );
+};
+
 const CommentsPage = ({
     post,
     communityInfo,
@@ -1081,6 +1118,7 @@ const CommentsPage = ({
                 });
 
                 setComments(mapped);
+                enrichCommentAuthors(mapped, setComments);
             } catch (e) {
                 console.error("Failed to load comments", e);
             } finally {

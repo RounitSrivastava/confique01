@@ -3,60 +3,43 @@ import { jwtVerify } from "jose";
 
 const AUTH_COOKIE_NAME = "confique_token";
 
-// Pre-encode the secret outside the function for a tiny speed boost
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
 
-  // 1. FAST PATH: Read cookie immediately
-  const token = req.cookies.get(AUTH_COOKIE_NAME)?.value;
-
-  // 2. LOGIC: If on Auth pages and HAS token, skip to Dashboard/Home
-  // This makes the transition back from login instant.
-  if (pathname.startsWith("/auth")) {
-    if (token) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
+  // 1. PUBLIC ROUTES: Allow these without a token
+  if (
+    pathname.startsWith("/auth") || 
+    pathname.startsWith("/api") || 
+    pathname.startsWith("/_next") || 
+    pathname === "/" || // ✅ Allow landing page
+    pathname === "/favicon.ico"
+  ) {
     return NextResponse.next();
   }
 
-  // 3. SECURE PATH: If NO token, redirect to login instantly
+  // 2. READ COOKIE
+  const token = req.cookies.get(AUTH_COOKIE_NAME)?.value;
+
   if (!token) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 
-  /* ===============================
-      3️⃣ VERIFY JWT (Only if token exists)
-  =============================== */
+  // 3. VERIFY JWT
   try {
-    // We verify the signature only. 
-    // Edge runtime is fast, but this is the most expensive part.
-    await jwtVerify(token, SECRET);
+    await jwtVerify(
+      token,
+      new TextEncoder().encode(process.env.JWT_SECRET)
+    );
     return NextResponse.next();
-
   } catch (err) {
-    // Invalid token? Clear it and snap to login
+    // If token is invalid/expired, clear cookie and send to login
     const res = NextResponse.redirect(new URL("/auth/login", req.url));
-    res.cookies.delete(AUTH_COOKIE_NAME);
+    res.cookies.set(AUTH_COOKIE_NAME, "", { path: "/", maxAge: 0 });
     return res;
   }
 }
 
-/* ===============================
-    4️⃣ OPTIMIZED MATCHER
-=============================== */
+// 4. MATCHER: Exclude static files and assets
 export const config = {
-  // We use the matcher to EXCLUDE paths before the middleware even wakes up.
-  // This is much faster than using "if (pathname.startsWith(...))"
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (internal API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, public folder files
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|public|.*\\..*).*)',
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

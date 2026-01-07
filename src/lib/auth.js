@@ -1,29 +1,22 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { SignJWT, jwtVerify } from "jose"; // ✅ Edge-compatible JWT library
 import { cookies } from "next/headers";
+
+const PRIMARY_COOKIE_NAME = "confique_token";
 
 /* ===================================================
    INTERNAL JWT CONFIG
 =================================================== */
-function getJwtConfig() {
+function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
-  const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
-
   if (!secret) {
     if (process.env.NODE_ENV === "production") {
       throw new Error("JWT_SECRET is not defined");
-    } else {
-      console.warn(
-        "⚠️ JWT_SECRET not set — using dev fallback. Set JWT_SECRET in .env.local"
-      );
-      return {
-        secret: "dev_fallback_change_me",
-        expiresIn,
-      };
     }
+    // Fallback for development only
+    return new TextEncoder().encode("dev_fallback_change_me_at_least_32_chars");
   }
-
-  return { secret, expiresIn };
+  return new TextEncoder().encode(secret);
 }
 
 /* ===================================================
@@ -39,49 +32,46 @@ export const verifyPassword = async (password, hash) => {
 };
 
 /* ===================================================
-   TOKEN CREATION
+   TOKEN CREATION (Edge Compatible)
 =================================================== */
-export const createToken = ({ userId, email, provider }) => {
-  const { secret, expiresIn } = getJwtConfig();
+export const createToken = async ({ userId, email, provider }) => {
+  const secret = getJwtSecret();
+  const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
 
-  return jwt.sign(
-    {
-      sub: userId,
-      email,
-      provider,
-    },
-    secret,
-    { expiresIn }
-  );
+  // ✅ SignJWT is asynchronous and works in Middleware/Edge
+  return await new SignJWT({ 
+      sub: userId, 
+      email, 
+      provider 
+    })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(expiresIn)
+    .sign(secret);
 };
 
 /* ===================================================
-   TOKEN VERIFY
+   TOKEN VERIFY (Edge Compatible)
 =================================================== */
-export const verifyToken = (token) => {
+export const verifyToken = async (token) => {
   try {
-    const { secret } = getJwtConfig();
-    return jwt.verify(token, secret);
-  } catch {
+    const secret = getJwtSecret();
+    const { payload } = await jwtVerify(token, secret);
+    return payload;
+  } catch (err) {
     return null;
   }
-};
-
-export const verifyTokenStrict = (token) => {
-  const { secret } = getJwtConfig();
-  return jwt.verify(token, secret);
 };
 
 /* ===================================================
    AUTH HELPERS (APP ROUTER SAFE)
 =================================================== */
-const PRIMARY_COOKIE_NAME = "confique_token";
 
 /**
  * 🔐 Extract JWT token from cookies (App Router safe)
  */
 export async function extractTokenFromRequest() {
-  const cookieStore = await cookies(); // 🔥 MUST await in App Router
+  const cookieStore = await cookies(); 
   return cookieStore.get(PRIMARY_COOKIE_NAME)?.value || null;
 }
 
@@ -93,7 +83,7 @@ export async function getCurrentUser() {
     const token = await extractTokenFromRequest();
     if (!token) return null;
 
-    const decoded = verifyToken(token);
+    const decoded = await verifyToken(token); // ✅ Must await async verify
     if (!decoded?.sub) return null;
 
     return {

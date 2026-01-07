@@ -677,6 +677,21 @@ const EventsContent = ({ searchParams }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // 🔍 Close search when clicking outside
+useEffect(() => {
+  if (!isSearching) return;
+
+  const handleClickOutside = (e) => {
+    if (searchRef.current && !searchRef.current.contains(e.target)) {
+      setIsSearching(false);
+      setSearchQuery("");
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, [isSearching]);
+
   // Load Events from API and merge with Mocks
   useEffect(() => {
     let isMounted = true;
@@ -944,7 +959,7 @@ const upcomingEvents = useMemo(() => {
         </div>
       </header>
 
-      <main>
+      <main className="w-full">
         {renderHostView ? (
           <HostEventPage 
             onEventHosted={handleEventHosted} 

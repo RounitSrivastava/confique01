@@ -1,4 +1,3 @@
-// app/ClientLayout.jsx
 "use client";
 
 import { useState } from "react";
@@ -19,42 +18,52 @@ export default function ClientLayout({ children }) {
 
   const isEventsPage = pathname === "/events";
 
-  // 🔹 Auth pages – full page, normal scroll
+  /* ===============================
+     🔹 AUTH PAGES (FULL PAGE)
+  =============================== */
   if (isAuthPage) {
-    return <div className="min-h-screen bg-[#0d0d0d] text-white">{children}</div>;
+    return (
+      <div className="min-h-screen w-screen bg-[#0d0d0d] text-white">
+        {children}
+      </div>
+    );
   }
 
-  // 🔹 Events page – own layout + middle scroll
+  /* ===============================
+     🔹 EVENTS PAGE (NO GAP FIXED)
+  =============================== */
   if (isEventsPage) {
     return (
-      <div className="h-screen overflow-hidden bg-[#0d0d0d] text-white flex flex-col">
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+      <div className="h-screen w-screen bg-[#0d0d0d] text-white overflow-hidden">
+        {/* ❌ NO padding here → removes corner gaps */}
+        <main className="h-full w-full overflow-y-auto">
           {children}
         </main>
       </div>
     );
   }
 
-  // 🔹 Default 3-column layout
+  /* ===============================
+     🔹 DEFAULT 3-COLUMN LAYOUT
+  =============================== */
   return (
-    <div className="h-screen overflow-hidden bg-[#0d0d0d] text-white flex flex-col">
-      <Topbar
-        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-      />
+    <div className="h-screen w-screen bg-[#0d0d0d] text-white overflow-hidden flex flex-col">
+      <Topbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar (non-scrolling container, scroll only inside if needed) */}
+        {/* Left Sidebar */}
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
 
-        {/* 🌟 ONLY THIS SCROLLS */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        {/* 🌟 MAIN SCROLL AREA */}
+       <main className="flex-1 overflow-y-auto px-4 md:px-6">
+
           {children}
         </main>
 
-        {/* Right sidebar stays fixed in layout */}
+        {/* Right Sidebar */}
         <RightSidebar />
       </div>
     </div>

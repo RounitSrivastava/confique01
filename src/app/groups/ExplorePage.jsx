@@ -1230,7 +1230,7 @@ React.useEffect(() => {
     );
 
     return (
-        <div className="min-h-screen bg-[#0d0d0d] text-white p-4 sm:p-6">
+        <div className="min-h-screen bg-[#0d0d0d] text-white w-full">
 
             {/* MODALS */}
             <CreateCommunityForm
@@ -1258,6 +1258,7 @@ React.useEffect(() => {
                 }}
                 onUpdateSuccess={handleUpdateMedia}
             />
+<div className="w-full py-4 overflow-x-hidden">
 
             {/* HEADER */}
             <header className="mb-6">
@@ -1319,7 +1320,7 @@ React.useEffect(() => {
                     )}
                 </div>
 
-                <div className="flex overflow-x-auto pb-2 -mr-4 scrollbar-hide">
+                <div className="flex overflow-x-auto pb-2 pr-4 scrollbar-hide">
                     {displayTrending.map((community, index) => (
     <TrendingCard
     key={community.id}
@@ -1396,6 +1397,7 @@ React.useEffect(() => {
 
                 {renderCommunityList(displayRecommended)}
             </section>
+        </div>
         </div>
     );
 }

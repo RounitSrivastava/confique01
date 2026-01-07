@@ -107,18 +107,21 @@ const fetchMeData = async () => {
 };
 // --- UI SUBCOMPONENTS (Updated with Admin Menu) ---
 const CategoryPill = ({ name, isSelected, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`px-4 py-2 text-sm rounded-full transition-colors duration-200 whitespace-nowrap
-        ${
-            isSelected
-            ? "bg-purple-600 text-white shadow-lg"
-            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-        }`}
-    >
-        {name}
-    </button>
+  <button
+    onClick={onClick}
+    className={`
+      px-4 py-2 text-sm rounded-full whitespace-nowrap transition-all duration-200
+      ${
+        isSelected
+          ? "bg-purple-600 text-white shadow-[0_0_0_1px_rgba(168,85,247,0.6)]"
+          : "bg-[#1f1f1f] text-gray-300 border border-white/10 hover:bg-[#2a2a2a] hover:text-white"
+      }
+    `}
+  >
+    {name}
+  </button>
 );
+
 
 const TrendingCard = ({ community, gradient, onNavigate }) => {
   const logo = community.iconUrl || community.icon;
@@ -1282,7 +1285,7 @@ React.useEffect(() => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                        className="
   w-full
-  pl-10 pr-4 py-3
+  pl-10 pr-4 py-2.5
   bg-[#121212]
   border border-[#262626]
   rounded-xl

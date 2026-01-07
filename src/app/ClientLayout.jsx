@@ -18,24 +18,19 @@ export default function ClientLayout({ children }) {
 
   const isEventsPage = pathname === "/events";
 
-  /* ===============================
-     🔹 AUTH PAGES (FULL PAGE)
-  =============================== */
+  /* 🔹 AUTH PAGES */
   if (isAuthPage) {
     return (
-      <div className="min-h-screen w-screen bg-[#0d0d0d] text-white">
+      <div className="min-h-screen w-full bg-[#0d0d0d] text-white">
         {children}
       </div>
     );
   }
 
-  /* ===============================
-     🔹 EVENTS PAGE (NO GAP FIXED)
-  =============================== */
+  /* 🔹 EVENTS PAGE */
   if (isEventsPage) {
     return (
-      <div className="h-screen w-screen bg-[#0d0d0d] text-white overflow-hidden">
-        {/* ❌ NO padding here → removes corner gaps */}
+      <div className="h-screen w-full bg-[#0d0d0d] text-white overflow-hidden">
         <main className="h-full w-full overflow-y-auto">
           {children}
         </main>
@@ -43,27 +38,21 @@ export default function ClientLayout({ children }) {
     );
   }
 
-  /* ===============================
-     🔹 DEFAULT 3-COLUMN LAYOUT
-  =============================== */
+  /* 🔹 DEFAULT 3-COLUMN */
   return (
-    <div className="h-screen w-screen bg-[#0d0d0d] text-white overflow-hidden flex flex-col">
+    <div className="h-screen w-full bg-[#0d0d0d] text-white overflow-hidden flex flex-col">
       <Topbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
 
-        {/* 🌟 MAIN SCROLL AREA */}
-       <main className="flex-1 overflow-y-auto px-4 md:px-6">
-
+        <main className="flex-1 overflow-y-auto px-3 md:px-4 pt-3">
           {children}
         </main>
 
-        {/* Right Sidebar */}
         <RightSidebar />
       </div>
     </div>

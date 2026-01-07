@@ -654,10 +654,9 @@ const InviteMenu = React.forwardRef(
            <div
   ref={ref}
   className="
-    z-50 bg-gray-900 rounded-lg shadow-xl p-2 border border-gray-600 w-56
-    fixed left-1/2 bottom-6 -translate-x-1/2
-    sm:absolute sm:right-0 sm:top-10 sm:left-auto sm:bottom-auto sm:translate-x-0
-  "
+  z-50 bg-gray-900 rounded-lg shadow-xl p-2 border border-gray-600 w-56
+  absolute right-0 top-10
+"
 >
 
                 <h4 className="text-sm text-white px-3 py-1 font-semibold border-b border-gray-600 mb-1">
@@ -1354,9 +1353,15 @@ const PostCard = ({
         }
     };
 
-    return (
-        <div className="p-4 mb-4 mx-4">
-            <div className="flex justify-between relative">
+   return (
+  <div className="mx-0">
+    {/* FULL-WIDTH SEPARATOR */}
+   
+
+    {/* POST CONTENT */}
+    <div className="p-4 mx-4">
+      <div className="flex justify-between relative">
+
                 <div className="flex items-center">
                     <button
                         onClick={() => {
@@ -1377,7 +1382,7 @@ const PostCard = ({
                         <Avatar src={avatarSrc} alt={authorLabel} size={24} className="mr-2 flex-shrink-0" />
                         <div className="text-left">
                             <div className="text-sm text-white font-semibold">{authorLabel}</div>
-                            <div className="text-xs text-gray-400">Posted by {authorLabel} · {post.time}</div>
+                            <div className="text-xs text-gray-400"> {post.time}</div>
                         </div>
                     </button>
                 </div>
@@ -1455,12 +1460,14 @@ const PostCard = ({
                         </span>
                     </div>
                 </div>
+                </div>
 
                 <button className="flex items-center text-gray-400 cursor-pointer transition-colors p-1" onClick={() => onCommentsClick(post)}>
                     <MessageSquare className="w-5 h-5 mr-2" />
                     <span className="font-semibold">{post.comments} Comments</span>
                 </button>
             </div>
+             <div className="h-px w-full bg-white/10" />
         </div>
     );
 };

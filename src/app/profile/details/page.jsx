@@ -1,20 +1,20 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Calendar, Users, Edit2, MapPin, Share2, X, Trash2, Check, Download, Copy, CheckCircle,
+  Calendar, Users, Edit2, MapPin, Share2, X, Trash2, Check, Download, Copy, CheckCircle, Image as ImageIcon, Upload
 } from "lucide-react";
 
 // --- AUTH HELPER ---
 const fetchMeData = async () => {
-    try {
-        const res = await fetch("/api/me", { cache: "no-store" });
-        if (!res.ok) return { user: null };
-        return await res.json();
-    } catch (e) {
-        return { user: null };
-    }
+  try {
+    const res = await fetch("/api/me", { cache: "no-store" });
+    if (!res.ok) return { user: null };
+    return await res.json();
+  } catch (e) {
+    return { user: null };
+  }
 };
 
 const presetAvatars = [
@@ -33,7 +33,7 @@ const DEFAULT_AVATAR = "https://img.freepik.com/premium-photo/portrait-successfu
 // 1️⃣ UI COMPONENT
 const ProfileContent = () => {
   const router = useRouter();
-  const pathname = usePathname();
+  const fileInputRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState("posts");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -80,7 +80,6 @@ const ProfileContent = () => {
     } catch (err) {}
   };
 
-  // Logic to process events
   const processEvents = useCallback((allEvents, userEmail, userName) => {
     return allEvents.map(ev => ({
       id: ev._id,
@@ -119,11 +118,9 @@ const ProfileContent = () => {
     link.click();
   };
 
-  // ⚡ SPEED BOOST: Parallel Fetching
   useEffect(() => {
     let mounted = true;
     async function loadAllData() {
-      // Fetch user and events at the same time
       const [userData, eventsRes] = await Promise.all([
         fetchMeData(),
         fetch("/api/events", { method: "GET", cache: "no-store" })
@@ -154,7 +151,8 @@ const ProfileContent = () => {
     return () => { mounted = false; };
   }, [processEvents]);
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (e) => {
+    if (e) e.preventDefault();
     setSaving(true);
     try {
       const res = await fetch("/api/me", {
@@ -186,7 +184,6 @@ const ProfileContent = () => {
     <>
       <div className="min-h-screen bg-[#0d0d0d] text-white">
         <div className="max-w-5xl mx-auto px-4 py-8">
-          {/* Profile Header */}
           <div className="relative bg-black backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 md:p-8 mb-6 shadow-xl">
             <div className="flex flex-col md:flex-row gap-6 items-start">
               <div className="relative">
@@ -263,41 +260,117 @@ const ProfileContent = () => {
         </div>
       </div>
 
+      {/* --- FIXED MOBILE EDIT MODAL --- */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 text-white">
-          <div className="bg-[#1e293b] rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
-              <h3 className="text-2xl font-bold">Edit Profile</h3>
-              <button onClick={() => setIsEditModalOpen(false)}><X className="w-6 h-6 text-slate-400" /></button>
-            </div>
-            <div className="p-6 space-y-6 overflow-y-auto flex-1">
-              <div className="flex items-center gap-4">
-                <img src={editForm.avatar} alt="Preview" className="w-16 h-16 rounded-full object-cover border-2 border-slate-600" />
-                <div><label className="block text-sm font-medium mb-2">New Avatar</label><input type="file" accept="image/*" onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if(file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => setEditForm(p => ({ ...p, avatar: reader.result }));
-                    reader.readAsDataURL(file);
-                  }
-                }} className="text-xs w-full px-3 py-2 bg-[#0f172a] border border-slate-700 rounded-xl" /></div>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md px-4 py-6">
+          <div className="w-full max-w-xl max-h-full rounded-2xl bg-[#0f0f0f] text-white shadow-2xl flex flex-col border border-white/5">
+            
+            {/* Header - Fixed */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+              <div>
+                <h2 className="text-xl font-semibold">Edit profile</h2>
+                <p className="text-sm text-gray-400">Manage your identity on Confique</p>
               </div>
-              <div className="space-y-3">
-                <label className="block text-sm font-medium">Preset Avatars</label>
-                <div className="grid grid-cols-4 gap-3">
+              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body - Scrollable */}
+            <form onSubmit={handleSaveProfile} className="px-6 py-5 space-y-6 overflow-y-auto scrollbar-hide flex-1">
+              
+              <div className="space-y-4">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm(p => ({ ...p, name: e.target.value }))}
+                  placeholder="Your name"
+                  className="w-full bg-transparent border-b border-white/10 focus:border-purple-500 outline-none py-2 text-lg transition-colors"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Bio</label>
+                <input
+                  type="text"
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm(p => ({ ...p, bio: e.target.value }))}
+                  placeholder="Tell us about yourself"
+                  maxLength={120}
+                  className="w-full bg-transparent border-b border-white/10 focus:border-purple-500 outline-none py-2 text-sm placeholder-gray-400 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Location</label>
+                <input
+                  type="text"
+                  value={editForm.location}
+                  onChange={(e) => setEditForm(p => ({ ...p, location: e.target.value }))}
+                  placeholder="Where are you located?"
+                  className="w-full bg-transparent border-b border-white/10 focus:border-purple-500 outline-none py-2 text-sm placeholder-gray-400 transition-colors"
+                />
+              </div>
+
+              {/* Avatar Picker */}
+              <div className="space-y-4 pt-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Choose an Avatar</p>
+                <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
                   {presetAvatars.map((avatar, idx) => (
-                    <button key={idx} type="button" onClick={() => setEditForm(p => ({ ...p, avatar }))} className={`relative rounded-full overflow-hidden border-2 ${editForm.avatar === avatar ? 'border-purple-500' : 'border-slate-600'}`}>
+                    <button 
+                      key={idx} 
+                      type="button" 
+                      onClick={() => setEditForm(p => ({ ...p, avatar }))} 
+                      className={`relative rounded-full overflow-hidden border-2 transition-all ${editForm.avatar === avatar ? 'border-purple-500 scale-105' : 'border-transparent hover:border-white/20'}`}
+                    >
                       <img src={avatar} alt="preset" className="w-full aspect-square object-cover" />
-                      {editForm.avatar === avatar && <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center"><Check className="w-6 h-6 text-white" /></div>}
+                      {editForm.avatar === avatar && (
+                        <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
+
+                <div className="flex gap-4 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500 transition-colors"
+                  >
+                    <Upload className="w-4 h-4 text-purple-400" />
+                    Upload Custom
+                  </button>
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    hidden 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if(file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => setEditForm(p => ({ ...p, avatar: reader.result }));
+                        reader.readAsDataURL(file);
+                      }
+                    }} 
+                  />
+                </div>
               </div>
-              <div className="space-y-3"><label className="block text-sm font-medium">Name</label><input type="text" value={editForm.name} onChange={(e) => setEditForm(p => ({ ...p, name: e.target.value }))} className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl outline-none" /></div>
-              <div className="space-y-3"><label className="block text-sm font-medium">Bio</label><textarea value={editForm.bio} onChange={(e) => setEditForm(p => ({ ...p, bio: e.target.value }))} rows={3} className="w-full px-4 py-3 bg-[#0f172a] border border-slate-700 rounded-xl resize-none" /></div>
-            </div>
-            <div className="flex justify-center p-6 border-t border-slate-700/50">
-              <button onClick={handleSaveProfile} disabled={saving} className="px-6 py-2 bg-purple-500 text-black font-semibold rounded-lg hover:bg-purple-600 disabled:opacity-50">{saving ? "Saving..." : "Save"}</button>
+            </form>
+
+            {/* Footer - Fixed */}
+            <div className="px-6 py-4 border-t border-white/10 bg-[#0f0f0f] shrink-0">
+              <button
+                type="submit"
+                onClick={handleSaveProfile}
+                disabled={saving}
+                className="w-full rounded-full bg-purple-600 hover:bg-purple-700 py-3 text-sm font-semibold transition-all disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save Profile"}
+              </button>
             </div>
           </div>
         </div>
@@ -308,7 +381,6 @@ const ProfileContent = () => {
 
 // 2️⃣ SECURITY WRAPPER
 export default function TechProfilePage() {
-  // ⚡ SPEED FIX: Check localStorage hint for instant render if possible
   const [authLoading, setAuthLoading] = useState(() => {
     if (typeof window !== 'undefined') return !localStorage.getItem("confique_auth_hint");
     return true;
@@ -332,13 +404,11 @@ export default function TechProfilePage() {
     checkAuth();
   }, [router]);
 
-  // If hint exists, show content immediately. Middleware/API handles real security.
   if (authLoading && !isAuthenticated) {
     return (
       <div className="fixed inset-0 z-[9999] bg-[#0d0d0d] flex flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-400 font-medium tracking-wide animate-pulse"></p>
         </div>
       </div>
     );

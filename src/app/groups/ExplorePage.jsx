@@ -126,7 +126,7 @@ const TrendingCard = ({ community, gradient, onNavigate }) => {
   return (
     <div
       onClick={() => onNavigate(community)}
-      className="w-40 min-h-[190px] flex-shrink-0 rounded-xl overflow-hidden mr-4 cursor-pointer bg-black-900 border border-white/8"
+     className="w-40 min-h-[190px] flex-shrink-0 rounded-xl overflow-hidden cursor-pointer bg-black-900 border border-white/8"
 
     >
       {/* COVER IMAGE */}
@@ -1262,7 +1262,7 @@ React.useEffect(() => {
 
             {/* HEADER */}
             <header className="mb-6">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-5">
                     <h1 className="text-3xl font-bold">Explore</h1>
 
                     <button
@@ -1290,7 +1290,7 @@ React.useEffect(() => {
             <section className="mb-8">
                 <h2 className="text-lg font-semibold mb-3">Categories</h2>
 
-                <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex space-x-3 overflow-x-auto pb-2 -mx-3 px-3 scrollbar-hide">
                     {categories.map((c) => (
                         <CategoryPill
                             key={c}
@@ -1320,7 +1320,7 @@ React.useEffect(() => {
                     )}
                 </div>
 
-                <div className="flex overflow-x-auto pb-2 pr-4 scrollbar-hide">
+                <div className="flex gap-4 overflow-x-auto pb-2 -mx-3 px-3 scrollbar-hide">
                     {displayTrending.map((community, index) => (
     <TrendingCard
     key={community.id}

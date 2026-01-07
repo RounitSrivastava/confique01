@@ -493,22 +493,22 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
 const visibleCommunities = (communitiesState || []).slice(0, 3);
 
 return (
-  /* PAGE BACKGROUND */
   <div className="min-h-screen bg-[#0d0d0d]">
 
-
-    {/* container width kept wide so 3 cols fit nicely */}
+  <div className="w-full py-4 flex justify-center">
     <div className="mx-auto max-w-[1300px] px-4">
 
-      {/* Communities */}
-      <section className="py-8">
-       <div className="mb-4">
-   <h2 className="text-2xl font-extrabold text-white">Communities</h2>
+      <section className="pt-0 pb-8">
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-white">
+  Communities
+</h2>
 
-   <p className="mt-1 text-sm text-gray-400 sm:mt-0 sm:text-right">
-    Discover communities you may like
-   </p>
-   </div>
+
+          <p className="mt-1 text-sm text-gray-400 sm:mt-0 sm:text-right">
+            Discover communities you may like
+          </p>
+        </div>
         {/* Single-row layout with exactly 3 cards on large screens */}
         <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleCommunities.map((c, index) => (
@@ -574,6 +574,7 @@ return (
       </section>
 
     </div>
+  </div>
   </div>
 );
 

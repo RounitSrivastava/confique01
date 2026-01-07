@@ -186,7 +186,7 @@ const AdminMenu = ({
     return (
         <div 
             ref={menuRef}
-            className="absolute right-0 top-8 z-10 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl"
+            className="absolute right-0 top-8 z-10 w-48 bg-[#121212] border border-gray-700 rounded-lg shadow-xl"
         >
             <div className="py-1">
                 <button
@@ -240,84 +240,105 @@ const RecommendedItem = ({
     const [showAdminMenu, setShowAdminMenu] = React.useState(false);
 
     return (
-        <div className="flex items-center justify-between py-3 border-b border-gray-700 last:border-b-0 relative">
-            <div
-                className={`flex items-center flex-grow pr-4 rounded-lg -mx-2 px-2 py-1 ${
-                    isJoined ? "cursor-pointer hover:bg-gray-800" : "cursor-default"
-                }`}
-                // CRITICAL: Navigation only proceeds if isJoined is true.
-                onClick={() => onNavigate(community)}
-            >
-                <div className="w-12 h-12 rounded-md mr-3 bg-gray-600 flex items-center justify-center text-lg font-bold overflow-hidden">
-                    {displayIconUrl ? (
-                        <img src={displayIconUrl} className="w-full h-full object-cover rounded-md" />
-                    ) : (
-                        community.name?.charAt(0) || "?"
-                    )}
-                </div>
+  <div
+    className={`flex items-center justify-between py-3 border-b border-gray-700
+      rounded-xl px-3 transition-all
+      ${
+        isJoined
+          ? "cursor-pointer hover:ring-1 hover:ring-purple-500/40 hover:bg-white/[0.02]"
+          : "cursor-default"
+      }
+    `}
+  >
+    {/* LEFT – CLICKABLE CONTENT */}
+    <div
+      className="flex items-center flex-grow pr-4"
+      onClick={() => isJoined && onNavigate(community)}
+    >
+      <div className="w-12 h-12 rounded-md mr-3 bg-gray-700 flex items-center justify-center text-lg font-bold overflow-hidden">
+        {displayIconUrl ? (
+          <img
+            src={displayIconUrl}
+            className="w-full h-full object-cover rounded-md"
+            alt={community.name}
+          />
+        ) : (
+          community.name?.charAt(0) || "?"
+        )}
+      </div>
 
-                <div>
-                    <p className="font-medium text-white">{community.name}</p>
-                    <p className="text-sm text-gray-400">{community.description}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                        {community.membersCount || 0} members
-                    </p>
+      <div>
+        <p className="font-medium text-white">{community.name}</p>
+        <p className="text-sm text-gray-400 line-clamp-1">
+          {community.description}
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          {community.membersCount || 0} members
+        </p>
 
-                    {community.createdByCurrentUser && (
-                        <p className="text-xs text-amber-400 font-semibold mt-1">⭐ You're the admin</p>
-                    )}
-                    {community.category && (
-                        <p className="text-xs text-gray-400 mt-1">Category: {community.category}</p>
-                    )}
-                </div>
-            </div>
+        {community.createdByCurrentUser && (
+          <p className="text-xs text-amber-400 font-semibold mt-1">
+            ⭐ You're the admin
+          </p>
+        )}
 
-            <div className="flex items-center gap-2">
-                {!isJoined && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onJoin();
-                        }}
-                        className="bg-purple-600 hover:bg-purple-700 text-white py-1.5 px-4 rounded-full text-sm"
-                    >
-                        Join
-                    </button>
-                )}
+        {community.category && (
+          <p className="text-xs text-gray-400 mt-1">
+            Category: {community.category}
+          </p>
+        )}
+      </div>
+    </div>
 
-                {isJoined && (
-                    <button className="bg-white text-black py-1.5 px-4 rounded-full text-sm" disabled>
-                        Joined
-                    </button>
-                )}
+    {/* RIGHT – ACTIONS */}
+    <div className="flex items-center gap-2">
+      {!isJoined && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onJoin();
+          }}
+          className="bg-purple-600 hover:bg-purple-700 text-white py-1.5 px-4 rounded-full text-sm"
+        >
+          Join
+        </button>
+      )}
 
-                {/* ADMIN MENU BUTTON */}
-                {canDelete && community.createdByCurrentUser && (
-                    <div className="relative">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setShowAdminMenu(!showAdminMenu);
-                            }}
-                            className="p-1.5 rounded-full hover:bg-gray-700 text-gray-400 hover:text-white"
-                        >
-                            <MoreVertical className="w-5 h-5" />
-                        </button>
-                        
-                        {showAdminMenu && (
-                            <AdminMenu
-                                community={community}
-                                onEdit={() => onEdit(community)}
-                                onEditMedia={() => onEditMedia(community)}
-                                onDelete={() => onDelete(community)}
-                                onClose={() => setShowAdminMenu(false)}
-                            />
-                        )}
-                    </div>
-                )}
-            </div>
+      {isJoined && (
+        <button
+          className="bg-white text-black py-1.5 px-4 rounded-full text-sm"
+          disabled
+        >
+          Joined
+        </button>
+      )}
+
+      {canDelete && community.createdByCurrentUser && (
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowAdminMenu(!showAdminMenu);
+            }}
+            className="p-1.5 rounded-full hover:bg-gray-700 text-gray-400 hover:text-white"
+          >
+            <MoreVertical className="w-5 h-5" />
+          </button>
+
+          {showAdminMenu && (
+            <AdminMenu
+              community={community}
+              onEdit={() => onEdit(community)}
+              onEditMedia={() => onEditMedia(community)}
+              onDelete={() => onDelete(community)}
+              onClose={() => setShowAdminMenu(false)}
+            />
+          )}
         </div>
-    );
+      )}
+    </div>
+  </div>
+);
 };
 
 // --- MODIFIED: Wrapper for data fetching (FIXED NAVIGATION) ---

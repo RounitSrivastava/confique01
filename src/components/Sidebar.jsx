@@ -123,12 +123,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
                 >
                   Create Event
                 </Link>
-                <Link
-                  href="/saved"
-                  className="block rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
-                >
-                  Saved Items
-                </Link>
+                
               </div>
             )}
           </div>
@@ -203,13 +198,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
           >
             Create Event
           </Link>
-          <Link
-            href="/saved"
-            onClick={handleMobileClose}
-            className="block px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300"
-          >
-            Saved Items
-          </Link>
+          
         </div>
       </aside>
 

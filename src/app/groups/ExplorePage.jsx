@@ -1258,8 +1258,8 @@ React.useEffect(() => {
                 }}
                 onUpdateSuccess={handleUpdateMedia}
             />
-<div className="w-full py-4 overflow-x-hidden">
-
+<div className="w-full py-4 flex justify-center">
+  <div className="w-full max-w-[820px] xl:max-w-[860px] px-1">
             {/* HEADER */}
             <header className="mb-6">
                 <div className="flex justify-between items-center mb-5">
@@ -1280,9 +1280,20 @@ React.useEffect(() => {
                         placeholder="Search communities..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-gray-900 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-600"
+                       className="
+  w-full
+  pl-10 pr-4 py-3
+  bg-[#121212]
+  border border-[#262626]
+  rounded-xl
+  text-white
+  placeholder-gray-500
+  focus:outline-none
+  focus:ring-2
+  focus:ring-purple-600/60
+"
                     />
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 </div>
             </header>
 
@@ -1320,7 +1331,7 @@ React.useEffect(() => {
                     )}
                 </div>
 
-                <div className="flex gap-4 overflow-x-auto pb-2 -mx-3 px-3 scrollbar-hide">
+                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                     {displayTrending.map((community, index) => (
     <TrendingCard
     key={community.id}
@@ -1399,5 +1410,6 @@ React.useEffect(() => {
             </section>
         </div>
         </div>
+         </div> 
     );
 }

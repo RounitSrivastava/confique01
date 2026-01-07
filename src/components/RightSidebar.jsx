@@ -108,7 +108,7 @@ export default function RightSidebar() {
 
   return (
     <aside className="hidden xl:flex w-[360px] shrink-0 border-l border-[#262626] bg-[#0d0d0d] overflow-y-auto">
-      <div className="mx-auto w-full max-w-[340px] p-4 space-y-6">
+      <div className="mx-auto w-full max-w-[340px] p-4 pb-10 space-y-6">
         
         {isSettingsPage ? (
           <section className="rounded-2xl bg-[#101010] border border-[#262626] shadow-sm px-6 py-8 text-center">
@@ -126,8 +126,8 @@ export default function RightSidebar() {
         ) : (
           <>
             {/* Top Communities */}
-            <section className="rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm">
-              <div className="px-4 py-3 border-b border-[#262626] font-medium text-white">Top Communities</div>
+            <section className="rounded-xl bg-[#121212] border border-[#262626] shadow-sm">
+              <div className="px-4 py-3 border-b border-[#262626] text-sm font-medium text-white tracking-wide">Top Communities</div>
               <ul className="p-2">
                 {topCommunities.map((c, index) => (
                   <li key={c.id} onClick={() => handleCommunityClick(c)} className="px-3 py-2 rounded-lg hover:bg-[#111] transition flex items-start gap-2 cursor-pointer group">
@@ -142,8 +142,8 @@ export default function RightSidebar() {
             </section>
 
             {/* Popular Events Section */}
-            <section className="rounded-xl bg-[#1a1a1a] border border-[#262626] shadow-sm">
-              <div className="px-4 py-3 border-b border-[#262626] font-medium text-white">Popular Events</div>
+            <section className="rounded-xl bg-[#121212] border border-[#262626] shadow-sm hover:bg-[#151515] transition-colors">
+              <div className="px-4 py-3 border-b border-[#262626] text-sm font-medium text-white tracking-wide"> Events</div>
               <ul className="p-2">
                 {popularEvents.map((e) => (
                   <li 

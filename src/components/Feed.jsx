@@ -495,7 +495,7 @@ const visibleCommunities = (communitiesState || []).slice(0, 3);
 return (
   <div className="min-h-screen bg-[#0d0d0d]">
 
-  <div className="w-full py-4 flex justify-center">
+ <div className="w-full py-4">
     <div className="mx-auto max-w-[1300px] px-4">
 
       <section className="pt-0 pb-8">

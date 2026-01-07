@@ -2384,7 +2384,7 @@ React.useEffect(() => {
                             );
                         })}
 
-                        {sortedAndFilteredPosts.length === 0 && <div className="p-8 text-center text-gray-500">No posts found matching your criteria.</div>}
+                        {sortedAndFilteredPosts.length === 0 && <div className="p-8 text-center text-gray-500">Loading....</div>}
                     </>
                 )}
             </div>

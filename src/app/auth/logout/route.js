@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAuthCookieOptions } from "@/lib/cookie-options";
 
 export const runtime = "nodejs";
 
@@ -10,15 +11,16 @@ export async function POST() {
     message: "Logged out successfully",
   });
 
-  // ✅ CORRECT way to delete cookie
+  // 1. Get standardized name and options
+  const { name, cookieOptions } = getAuthCookieOptions();
+
+  // 2. ✅ Delete cookie by matching the original configuration
+  // We use expires: 0 to tell the browser to remove it immediately.
   response.cookies.set({
-    name: "confique_token",
+    ...cookieOptions,
+    name: name,
     value: "",
-    path: "/",          // MUST match original
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false,      // true only in production (HTTPS)
-    expires: new Date(0),
+    expires: new Date(0), // Set expiration to the past
   });
 
   return response;

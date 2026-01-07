@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Added for client-side navigation
+import { useRouter } from "next/navigation";
 import { GoogleLogin } from "@react-oauth/google";
 
 const slides = ["/auth-slide-1.jpg", "/auth-slide-2.jpg", "/auth-slide-3.jpg"];
@@ -21,6 +21,17 @@ export default function LoginClient() {
     const id = setInterval(() => setIdx((i) => (i + 1) % slides.length), 4500);
     return () => clearInterval(id);
   }, []);
+
+  /**
+   * Helper to notify Topbar and other components that auth state changed
+   */
+  const broadcastAuthChange = (user) => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("confique:auth-changed", { detail: { user } })
+      );
+    }
+  };
 
   /* ---------------------------------
       EMAIL LOGIN
@@ -48,15 +59,17 @@ export default function LoginClient() {
 
       if (!res.ok) {
         setError(data?.error || `Login failed (${res.status})`);
+        setLoading(false);
         return;
       }
 
-      // Force a full page reload to the dashboard/home 
-      // so the middleware re-validates the new cookie immediately
+      // Update UI state globally before redirect
+      broadcastAuthChange(data.user);
+
+      // Force refresh to root to trigger Middleware check
       window.location.href = "/";
     } catch (err) {
       setError("Network error. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -74,7 +87,7 @@ export default function LoginClient() {
         headers: { "Content-Type": "application/json" },
         credentials: CREDENTIALS,
         body: JSON.stringify({
-          idToken: googleRes.credential,
+          idToken: googleRes.credential, // This is the JWT returned by Google
         }),
       });
 
@@ -82,14 +95,17 @@ export default function LoginClient() {
 
       if (!res.ok) {
         setError(data?.error || "Google authentication failed.");
+        setLoading(false);
         return;
       }
+
+      // ✅ CRITICAL: Notify Topbar to refresh profile info immediately
+      broadcastAuthChange(data.user);
 
       // Success! Redirect to protected area
       window.location.href = "/";
     } catch (err) {
       setError("Failed to connect to authentication server.");
-    } finally {
       setLoading(false);
     }
   };
@@ -140,6 +156,7 @@ export default function LoginClient() {
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={() => setError("Google login was cancelled or failed.")}
+                  useOneTap
                   theme="filled_black"
                   shape="pill"
                 />

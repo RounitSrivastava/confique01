@@ -8,7 +8,6 @@ import mongoose from "mongoose";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-
 /* ===================================================
     CONSTANTS & HELPERS
 =================================================== */
@@ -52,6 +51,7 @@ const buildUserPayload = (u, groups = { created: [], joined: [] }) => {
         joinedGroups: groups.joined,
     };
 };
+
 /* ===================================================
     GET → Return authenticated user's data + groups
 =================================================== */
@@ -59,55 +59,59 @@ const buildUserPayload = (u, groups = { created: [], joined: [] }) => {
     GET → Return authenticated user's data + groups
 =================================================== */
 export async function GET(req) {
-    await dbConnect();
-
     try {
+        await dbConnect();
         const actor = await getCurrentUser(); 
+        const userId = actor?.id || actor?.userId;
 
-        // 🛡️ CHANGE: If no actor, return 401 instead of 200
-        if (!actor?.id) {
-            return NextResponse.json(
-                { user: null, error: "Unauthorized" },
-                { status: 401, headers: HEADERS } 
-            );
+        if (!userId) {
+            return NextResponse.json({ user: null, error: "Unauthorized" }, { status: 401, headers: HEADERS });
         }
 
-        const _registeredModels = [User, Group]; 
+        const UserModel = mongoose.models.User || User;
+        const GroupModel = mongoose.models.Group || Group;
 
-        const user = await User.findById(actor.id)
-            .select("name email username avatar bio location website createdGroups joinedCommunities")
-            .lean();
-
-        // 🛡️ CHANGE: If user not found in DB, return 401
+        // 🛡️ FIX: Try to find by ObjectId first, if it fails, find by Email or GoogleId
+        let user;
+        if (mongoose.Types.ObjectId.isValid(userId)) {
+            user = await UserModel.findById(userId).lean();
+        } 
+        
+        // If not found by ID (common for first-time Google logins)
         if (!user) {
+            user = await UserModel.findOne({ 
+                $or: [
+                    { googleId: userId }, 
+                    { email: actor.email }
+                ] 
+            }).lean();
+        }
+
+        if (!user) {
+            // This is likely a new Google user who hasn't been saved to your DB yet
             return NextResponse.json(
-                { user: null, error: "User not found" },
+                { user: null, error: "User not found in database" },
                 { status: 401, headers: HEADERS }
             );
         }
 
-        // ... rest of your code ...
-        // 2. Identify all unique group IDs
-        const groupIds = [
-            ...(user.createdGroups || []).map(id => id.toString()),
-            ...(user.joinedCommunities || []).map(id => id.toString()),
-        ];
-        
-        const uniqueGroupIds = [...new Set(groupIds)].filter(id => 
-            id && mongoose.Types.ObjectId.isValid(id)
-        );
+        // ... rest of your existing groups logic ...
+
+        // Standardize IDs to strings for comparison logic
+        const createdIds = (user.createdGroups || []).map(id => id.toString());
+        const joinedIds = (user.joinedCommunities || []).map(id => id.toString());
+        const uniqueGroupIds = [...new Set([...createdIds, ...joinedIds])].filter(id => mongoose.Types.ObjectId.isValid(id));
 
         let groups = [];
         if (uniqueGroupIds.length > 0) {
-            // 3. Fetch group details
-            groups = await Group.find({ _id: { $in: uniqueGroupIds } })
+            groups = await GroupModel.find({ _id: { $in: uniqueGroupIds } })
                 .select("_id name description ownerEmail members category iconUrl bannerUrl slug")
                 .lean();
         }
 
         const groupsMap = groups.reduce((acc, g) => ({ ...acc, [g._id.toString()]: g }), {});
 
-        const transformGroupData = (g, isCreated = false) => ({
+        const transform = (g, isCreated) => ({
             id: g._id.toString(),
             name: g.name,
             description: g.description,
@@ -116,39 +120,23 @@ export async function GET(req) {
             iconUrl: g.iconUrl || null,
             bannerUrl: g.bannerUrl || null,
             slug: g.slug || null,
-            category: g.category,
             createdByCurrentUser: isCreated,
             role: isCreated ? "admin" : "member" 
         });
 
-        // 4. Separate created and explicitly joined groups
-        const createdGroupIdsSet = new Set((user.createdGroups || []).map(id => id.toString()));
-
-        const userCreatedGroups = (user.createdGroups || [])
-            .map(id => groupsMap[id.toString()])
-            .filter(Boolean)
-            .map(g => transformGroupData(g, true));
-
-        const userJoinedGroups = (user.joinedCommunities || [])
-            .map(id => groupsMap[id.toString()])
-            .filter(Boolean)
-            .filter(g => !createdGroupIdsSet.has(g._id.toString())) 
-            .map(g => transformGroupData(g, false));
-        
         const allUserGroups = {
-            created: userCreatedGroups,
-            joined: userJoinedGroups,
+            created: createdIds.map(id => groupsMap[id]).filter(Boolean).map(g => transform(g, true)),
+            joined: joinedIds.filter(id => !createdIds.includes(id)).map(id => groupsMap[id]).filter(Boolean).map(g => transform(g, false)),
         };
 
-        // 5. Return full payload
         return NextResponse.json(
             { user: buildUserPayload(user, allUserGroups) }, 
             { status: 200, headers: HEADERS }
         );
 
     } catch (err) {
-        console.error("ME ROUTE ERROR (GET):", err);
-        return NextResponse.json({ error: "Server error in /api/me" }, { status: 500, headers: HEADERS });
+        console.error("ME ROUTE ERROR (GET):", err.message);
+        return NextResponse.json({ error: "Server error" }, { status: 500, headers: HEADERS });
     }
 }
 
@@ -156,20 +144,19 @@ export async function GET(req) {
     PATCH → Update user profile
 =================================================== */
 export async function PATCH(req) {
-    await dbConnect();
-    
     try {
-       
+        await dbConnect();
         const actor = await getCurrentUser();
+        const userId = actor?.id || actor?.userId;
 
-      if (!actor?.id) {
-  return NextResponse.json(
-    { error: "Not authenticated" },
-    { status: 401, headers: HEADERS }
-  );
-}
+        if (!userId) {
+            return NextResponse.json(
+                { error: "Not authenticated" },
+                { status: 401, headers: HEADERS }
+            );
+        }
 
-        const userId = actor.id;
+        const UserModel = mongoose.models.User || User;
         const body = await req.json();
         const { name, bio, location, website, avatar, username } = body || {};
 
@@ -186,8 +173,7 @@ export async function PATCH(req) {
                 return NextResponse.json({ error: "Invalid username" }, { status: 400, headers: HEADERS });
             }
 
-            // Check if username is taken by someone else
-            const existing = await User.findOne({
+            const existing = await UserModel.findOne({
                 username: norm,
                 _id: { $ne: userId }
             }).select("_id").lean();
@@ -202,22 +188,22 @@ export async function PATCH(req) {
         }
 
         if (Object.keys(updateData).length === 0) {
-            const user = await User.findById(userId).select("-password").lean();
+            const user = await UserModel.findById(userId).select("-password").lean();
             return NextResponse.json({ user: buildUserPayload(user) }, { status: 200, headers: HEADERS });
         }
 
-        const updatedUser = await User.findByIdAndUpdate(
+        const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
             { $set: updateData },
             { new: true, runValidators: true }
         ).lean();
 
-       if (!updatedUser) {
-    return NextResponse.json(
-        { error: "User not found" },
-        { status: 404, headers: HEADERS }
-    );
-}
+        if (!updatedUser) {
+            return NextResponse.json(
+                { error: "User not found" },
+                { status: 404, headers: HEADERS }
+            );
+        }
 
         return NextResponse.json(
             { user: buildUserPayload(updatedUser) },
@@ -225,13 +211,11 @@ export async function PATCH(req) {
         );
 
     } catch (err) {
-        console.error("ME ROUTE ERROR (PATCH):", err);
-
+        console.error("ME ROUTE ERROR (PATCH):", err.message);
         if (err.name === "ValidationError") {
             const msg = Object.values(err.errors).map((e) => e.message).join(", ");
             return NextResponse.json({ error: msg }, { status: 400, headers: HEADERS });
         }
-
         return NextResponse.json({ error: "Server error updating profile" }, { status: 500, headers: HEADERS });
     }
 }

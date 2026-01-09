@@ -406,6 +406,7 @@ export default function ExplorePageWrapper() {
 // CREATE COMMUNITY FORM (kept as is)
 // ----------------------
 const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
+    const [isCreating, setIsCreating] = React.useState(false);
     const [formData, setFormData] = React.useState({
         name: "",
         description: "",
@@ -441,33 +442,44 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!validate()) return;
+    e.preventDefault();
+    if (!validate()) return;
 
+    setIsCreating(true);
+
+    try {
         const iconBase64 = await fileToBase64(formData.logoFile);
         const bannerBase64 = await fileToBase64(formData.bannerFile);
 
-       const res = await apiFetch("/api/groups", {
-  method: "POST",
-  body: JSON.stringify({
-    name: formData.name.trim(),
-    description: formData.description.trim(),
-    category: formData.category.trim() || "For You",
-    ownerEmail: getCurrentUserEmail(),
-    iconBase64,
-    bannerBase64,
-  }),
-});
+        const res = await apiFetch("/api/groups", {
+            method: "POST",
+            body: JSON.stringify({
+                name: formData.name.trim(),
+                description: formData.description.trim(),
+                category: formData.category.trim() || "For You",
+                ownerEmail: getCurrentUserEmail(),
+                iconBase64,
+                bannerBase64,
+            }),
+        });
 
+        if (!res.ok) throw new Error("Create failed");
 
         const data = await res.json();
+
         onSubmitSuccess({
             ...data.group,
             createdByCurrentUser: true,
         });
 
         onClose();
-    };
+    } catch (err) {
+        console.error("Create community failed:", err);
+        alert("Failed to create community");
+    } finally {
+        setIsCreating(false);
+    }
+};
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
@@ -558,13 +570,14 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
                 {/* Footer */}
                 <div className="flex justify-end px-6 py-4 border-t border-white/10">
-                    <button
-                        type="submit"
-                        onClick={handleSubmit}
-                        className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold"
-                    >
-                        Create
-                    </button>
+                  <button
+    type="submit"
+    onClick={handleSubmit}
+    disabled={isCreating}
+    className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+>
+    {isCreating ? "Creating..." : "Create"}
+</button>
                 </div>
             </div>
         </div>

@@ -104,20 +104,20 @@ export default function LoginClient() {
               bg-white/[0.06]
               backdrop-blur-[44px]
               border border-white/10
-              px-5 py-6 sm:px-6 sm:py-8
+              px-6 py-8
               shadow-[0_30px_80px_rgba(0,0,0,0.6)]
             "
           >
             {/* HEADER */}
-            <h1 className="text-3xl sm:text-4xl font-semibold">
+            <h1 className="text-4xl font-semibold">
               Welcome Back
             </h1>
-            <p className="mt-1 sm:mt-2 text-gray-400 text-sm">
+            <p className="mt-2 text-gray-400 text-sm">
               Sign in to continue
             </p>
 
             {/* GOOGLE */}
-            <div className="mt-4 sm:mt-6">
+            <div className="mt-6">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => setError("Google login failed")}
@@ -127,20 +127,17 @@ export default function LoginClient() {
               />
             </div>
 
-            <div className="my-3 sm:my-5 text-center text-xs text-gray-400">
-              OR
-            </div>
+            <div className="my-5 text-center text-xs text-gray-400">OR</div>
 
             {/* FORM */}
-            <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
               <input
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-full bg-[#2a2a2a]
-                           px-5 py-2.5 sm:py-3
-                           text-sm text-white
+                           px-5 py-3 text-sm text-white
                            placeholder-gray-400 outline-none"
               />
 
@@ -150,8 +147,7 @@ export default function LoginClient() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-full bg-[#2a2a2a]
-                           px-5 py-2.5 sm:py-3
-                           text-sm text-white
+                           px-5 py-3 text-sm text-white
                            placeholder-gray-400 outline-none"
               />
 
@@ -162,8 +158,7 @@ export default function LoginClient() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full py-2.5 sm:py-3
-                           font-medium text-white
+                className="w-full rounded-full py-3 font-medium text-white
                            bg-gradient-to-r from-[#8B5CF6] to-[#5AC8FA]
                            hover:opacity-90 transition"
               >
@@ -171,7 +166,7 @@ export default function LoginClient() {
               </button>
             </form>
 
-            <p className="mt-4 sm:mt-5 text-center text-xs text-gray-400">
+            <p className="mt-5 text-center text-xs text-gray-400">
               Don’t have an account?{" "}
               <Link href="/auth/register" className="text-blue-400">
                 Sign Up

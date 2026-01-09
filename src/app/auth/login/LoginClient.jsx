@@ -1,30 +1,16 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { GoogleLogin } from "@react-oauth/google";
 
-const slides = ["/auth-slide-1.jpg", "/auth-slide-2.jpg", "/auth-slide-3.jpg"];
 const CREDENTIALS = "include";
 
 export default function LoginClient() {
-  const router = useRouter();
-  const [idx, setIdx] = useState(0);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Background slider animation
-  useEffect(() => {
-    const id = setInterval(() => setIdx((i) => (i + 1) % slides.length), 4500);
-    return () => clearInterval(id);
-  }, []);
-
-  /**
-   * Helper to notify Topbar and other components that auth state changed
-   */
   const broadcastAuthChange = (user) => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(
@@ -33,9 +19,6 @@ export default function LoginClient() {
     }
   };
 
-  /* ---------------------------------
-      EMAIL LOGIN
-  ---------------------------------- */
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -46,7 +29,6 @@ export default function LoginClient() {
     }
 
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -55,160 +37,146 @@ export default function LoginClient() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json().catch(() => null);
-
+      const data = await res.json();
       if (!res.ok) {
-        setError(data?.error || `Login failed (${res.status})`);
+        setError(data?.error || "Login failed");
         setLoading(false);
         return;
       }
 
-      // Update UI state globally before redirect
       broadcastAuthChange(data.user);
-
-      // Force refresh to root to trigger Middleware check
       window.location.href = "/";
-    } catch (err) {
-      setError("Network error. Please try again.");
+    } catch {
+      setError("Network error");
       setLoading(false);
     }
   };
 
-  /* ---------------------------------
-      GOOGLE LOGIN
-  ---------------------------------- */
   const handleGoogleSuccess = async (googleRes) => {
     setLoading(true);
-    setError("");
-    
     try {
       const res = await fetch("/api/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: CREDENTIALS,
-        body: JSON.stringify({
-          idToken: googleRes.credential, // This is the JWT returned by Google
-        }),
+        body: JSON.stringify({ idToken: googleRes.credential }),
       });
 
-      const data = await res.json().catch(() => null);
-
+      const data = await res.json();
       if (!res.ok) {
-        setError(data?.error || "Google authentication failed.");
+        setError("Google authentication failed");
         setLoading(false);
         return;
       }
 
-      // ✅ CRITICAL: Notify Topbar to refresh profile info immediately
       broadcastAuthChange(data.user);
-
-      // Success! Redirect to protected area
       window.location.href = "/";
-    } catch (err) {
-      setError("Failed to connect to authentication server.");
+    } catch {
+      setError("Google login error");
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-black text-white relative">
-      {/* Background Image & Overlay */}
+    <main className="relative min-h-screen bg-black text-white overflow-hidden">
+      {/* BACKGROUND */}
       <img
-        src="https://img.freepik.com/premium-photo/portrait-successful-business-woman-suit-gray-isolated-background-serious-office-female-worker-manager-employees-female-employee-young-secretary_545934-23090.jpg"
-        className="fixed inset-0 h-full w-full object-cover opacity-30"
-        alt=""
+        src="/bgconf.jpeg"
+        alt="Background"
+        className="fixed inset-0 h-full w-full object-cover"
       />
-      <div className="fixed inset-0 bg-black/60" />
+      <div className="fixed inset-0 bg-black/40" />
 
-      {/* Loading Overlay */}
+      {/* LOADING */}
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
         </div>
       )}
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
-        <div className="w-full max-w-5xl rounded-3xl border border-white/10 bg-gray-900/70 backdrop-blur-xl overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            
-            {/* LEFT (Slideshow) */}
-            <aside className="relative hidden md:block">
-              {slides.map((src, i) => (
-                <img
-                  key={src}
-                  src={src}
-                  className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-                    i === idx ? "opacity-100" : "opacity-0"
-                  }`}
-                  alt=""
-                />
-              ))}
-              <div className="absolute inset-0 bg-black/45" />
-            </aside>
+      {/* MAIN */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center sm:justify-start px-4 sm:px-0">
+        <div className="w-full max-w-[380px] ml-0 sm:ml-10 lg:ml-14">
+          {/* CARD */}
+          <div
+            className="
+              rounded-3xl
+              bg-white/[0.06]
+              backdrop-blur-[44px]
+              border border-white/10
+              px-5 py-6 sm:px-6 sm:py-8
+              shadow-[0_30px_80px_rgba(0,0,0,0.6)]
+            "
+          >
+            {/* HEADER */}
+            <h1 className="text-3xl sm:text-4xl font-semibold">
+              Welcome Back
+            </h1>
+            <p className="mt-1 sm:mt-2 text-gray-400 text-sm">
+              Sign in to continue
+            </p>
 
-            {/* RIGHT (Form) */}
-            <section className="p-6 sm:p-10">
-              <h1 className="text-3xl font-semibold">Welcome back</h1>
-              <p className="mt-1 text-sm text-gray-400">Sign in to continue</p>
+            {/* GOOGLE */}
+            <div className="mt-4 sm:mt-6">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError("Google login failed")}
+                theme="filled_black"
+                shape="pill"
+                width="100%"
+              />
+            </div>
 
-              {/* GOOGLE LOGIN */}
-              <div className="mt-6 flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => setError("Google login was cancelled or failed.")}
-                  useOneTap
-                  theme="filled_black"
-                  shape="pill"
-                />
-              </div>
+            <div className="my-3 sm:my-5 text-center text-xs text-gray-400">
+              OR
+            </div>
 
-              <div className="my-6 flex items-center gap-3 text-gray-500">
-                <div className="h-px flex-1 bg-gray-700" />
-                <span className="text-xs">OR</span>
-                <div className="h-px flex-1 bg-gray-700" />
-              </div>
+            {/* FORM */}
+            <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-full bg-[#2a2a2a]
+                           px-5 py-2.5 sm:py-3
+                           text-sm text-white
+                           placeholder-gray-400 outline-none"
+              />
 
-              <form onSubmit={handleLogin} className="space-y-5">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
-                  disabled={loading}
-                  className="w-full rounded-xl bg-black border border-gray-700 px-4 py-3 focus:border-purple-500 outline-none transition-colors"
-                />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-full bg-[#2a2a2a]
+                           px-5 py-2.5 sm:py-3
+                           text-sm text-white
+                           placeholder-gray-400 outline-none"
+              />
 
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  disabled={loading}
-                  className="w-full rounded-xl bg-black border border-gray-700 px-4 py-3 focus:border-purple-500 outline-none transition-colors"
-                />
+              {error && (
+                <p className="text-xs text-red-400">{error}</p>
+              )}
 
-                {error && (
-                  <div className="rounded-lg bg-red-500/10 p-3 border border-red-500/20">
-                    <p className="text-sm text-red-400">{error}</p>
-                  </div>
-                )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full py-2.5 sm:py-3
+                           font-medium text-white
+                           bg-gradient-to-r from-[#8B5CF6] to-[#5AC8FA]
+                           hover:opacity-90 transition"
+              >
+                {loading ? "Verifying..." : "Log in"}
+              </button>
+            </form>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full rounded-xl bg-gradient-to-r from-[#6a11cb] to-[#2575fc] py-3 font-medium hover:opacity-90 transition-opacity disabled:grayscale"
-                >
-                  {loading ? "Verifying..." : "Log In"}
-                </button>
-              </form>
-
-              <p className="mt-8 text-sm text-gray-400 text-center">
-                Don’t have an account?{" "}
-                <Link href="/auth/register" className="text-purple-400 hover:underline">
-                  Sign Up
-                </Link>
-              </p>
-            </section>
+            <p className="mt-4 sm:mt-5 text-center text-xs text-gray-400">
+              Don’t have an account?{" "}
+              <Link href="/auth/register" className="text-blue-400">
+                Sign Up
+              </Link>
+            </p>
           </div>
         </div>
       </div>

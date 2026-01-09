@@ -18,13 +18,12 @@ const CategoryButton = ({ name, Icon, isActive, onClick }) => (
       text-sm font-medium rounded-full transition-all
       ${
         isActive
-          ? "bg-purple-600 text-white shadow-lg "
-          : "text-gray-300 bg-[#0d0d0d] hover:bg-[#141414] hover:text-white"
+          ? "bg-purple-600 text-white shadow-lg shadow-purple-500/50"
+          : "text-gray-300 bg-gray-800 hover:bg-gray-700 hover:text-white"
       }
       whitespace-nowrap
     `}
   >
-
     {Icon && <Icon className="w-4 h-4" />}
     <span>{name}</span>
   </button>
@@ -163,7 +162,13 @@ const AllEventsPage = ({
       {/* HEADER */}
       <header>
   <div
-    className="max-w-7xl mx-auto px-4 pt-[env(safe-area-inset-top)] min-h-[64px] flex items-center"
+    className="
+      max-w-7xl mx-auto
+      px-4
+      pt-[env(safe-area-inset-top)]
+      min-h-[64px]
+      flex items-center
+    "
   >
     <button
       onClick={() => window.history.back()}
@@ -174,32 +179,21 @@ const AllEventsPage = ({
     </button>
   </div>
 </header>
+
+
       {/* MAIN */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-10">
         {/* SEARCH */}
         <div className="flex justify-center mb-8">
           <div className="relative w-64 sm:w-80 md:w-[28rem] lg:w-[32rem]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-<input
-  type="text"
-  value={searchQuery}
-  onChange={(e) => setSearchQuery(e.target.value)}
-  placeholder="Search..."
-  className="
-    w-full
-    pl-10 pr-4 py-2.5
-    bg-[#121212]
-    border border-[#262626]
-    rounded-xl
-    text-white
-    text-sm
-    placeholder-gray-500
-    focus:outline-none
-    focus:ring-2
-    focus:ring-purple-600/60
-  "
-/>
-
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className="w-full py-2.5 pl-9 pr-3 rounded-md bg-gray-800 border border-gray-700 text-white text-sm"
+            />
           </div>
         </div>
 

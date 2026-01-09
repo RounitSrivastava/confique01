@@ -8,15 +8,25 @@ import { getCurrentUser } from "@/lib/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/* ======================================================
+   Helper → Normalize Category (SINGLE SOURCE OF TRUTH)
+====================================================== */
+const normalizeCategory = (category) => {
+  return (category || "For You")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/^./, (c) => c.toUpperCase());
+};
 
 /* ==========================================
-    GET → Fetch all groups + user state
+   GET → Fetch all groups + user state
 ========================================== */
 export async function GET() {
   await dbConnect();
 
   try {
-    const actor = await getCurrentUser(); // ✅ FIXED
+    const actor = await getCurrentUser();
 
     let joinedGroupIds = [];
     let createdGroupIds = [];
@@ -40,9 +50,11 @@ export async function GET() {
       .sort({ membersCount: -1 })
       .lean();
 
+    // ✅ Normalize category on READ (critical)
     const responseGroups = groups.map((g) => ({
       ...g,
       id: g._id.toString(),
+      category: normalizeCategory(g.category),
       membersCount: g.members?.length || 0,
       members: undefined,
     }));
@@ -62,13 +74,13 @@ export async function GET() {
 }
 
 /* ==========================================
-    POST → Create a new group
+   POST → Create a new group
 ========================================== */
 export async function POST(req) {
   await dbConnect();
 
   try {
-    const actor = await getCurrentUser(); // ✅ FIXED
+    const actor = await getCurrentUser();
 
     if (!actor?.id || !actor?.email) {
       return NextResponse.json(
@@ -88,6 +100,9 @@ export async function POST(req) {
     }
 
     const slug = name.toLowerCase().trim().replace(/\s+/g, "-");
+
+    // ✅ Normalize category BEFORE saving
+    const normalizedCategory = normalizeCategory(category);
 
     let iconUrl = null;
     let bannerUrl = null;
@@ -113,10 +128,10 @@ export async function POST(req) {
     }
 
     const group = await Group.create({
-      name,
-      description,
+      name: name.trim(),
+      description: description?.trim() || "",
       slug,
-      category,
+      category: normalizedCategory, // ✅ FIX
       ownerEmail: actor.email.toLowerCase(),
       iconUrl,
       iconPublicId,
@@ -135,6 +150,7 @@ export async function POST(req) {
 
     const groupResponse = group.toObject();
     groupResponse.id = group._id.toString();
+    groupResponse.category = normalizedCategory;
     groupResponse.members = undefined;
 
     return NextResponse.json(

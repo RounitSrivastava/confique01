@@ -111,18 +111,19 @@ export async function GET(req) {
 
         const groupsMap = groups.reduce((acc, g) => ({ ...acc, [g._id.toString()]: g }), {});
 
-        const transform = (g, isCreated) => ({
-            id: g._id.toString(),
-            name: g.name,
-            description: g.description,
-            ownerEmail: g.ownerEmail,
-            membersCount: g.members?.length || 0, 
-            iconUrl: g.iconUrl || null,
-            bannerUrl: g.bannerUrl || null,
-            slug: g.slug || null,
-            createdByCurrentUser: isCreated,
-            role: isCreated ? "admin" : "member" 
-        });
+       const transform = (g, isCreated) => ({
+    id: g._id.toString(),
+    name: g.name,
+    description: g.description,
+    category: (g.category || "For You").trim(), // ✅ FIX
+    ownerEmail: g.ownerEmail,
+    membersCount: g.members?.length || 0,
+    iconUrl: g.iconUrl || null,
+    bannerUrl: g.bannerUrl || null,
+    slug: g.slug || null,
+    createdByCurrentUser: isCreated,
+    role: isCreated ? "admin" : "member",
+});
 
         const allUserGroups = {
             created: createdIds.map(id => groupsMap[id]).filter(Boolean).map(g => transform(g, true)),

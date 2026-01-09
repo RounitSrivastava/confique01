@@ -447,17 +447,18 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         const iconBase64 = await fileToBase64(formData.logoFile);
         const bannerBase64 = await fileToBase64(formData.bannerFile);
 
-        const res = await apiFetch("/api/groups", {
-            method: "POST",
-            body: JSON.stringify({
-                name: formData.name,
-                description: formData.description,
-                category: formData.category,
-                ownerEmail: getCurrentUserEmail(),
-                iconBase64,
-                bannerBase64,
-            }),
-        });
+       const res = await apiFetch("/api/groups", {
+  method: "POST",
+  body: JSON.stringify({
+    name: formData.name.trim(),
+    description: formData.description.trim(),
+    category: formData.category.trim() || "For You",
+    ownerEmail: getCurrentUserEmail(),
+    iconBase64,
+    bannerBase64,
+  }),
+});
+
 
         const data = await res.json();
         onSubmitSuccess({
@@ -923,7 +924,10 @@ function ExplorePage({
                     iconUrl: g.iconUrl,
                     bannerUrl: g.bannerUrl,
                     slug: g.slug,
-                    category: g.category,
+                   category: (g.category || "For You")
+  .trim()
+  .toLowerCase()
+  .replace(/^./, c => c.toUpperCase()),
                     ownerEmail: g.ownerEmail,
                 }));
                 
@@ -1013,7 +1017,7 @@ function ExplorePage({
         onNavigateToCommunity(community);
     }
 
-        if (onNavigateToCommunity) onNavigateToCommunity(community); 
+        
     };
 
     // NEW COMMUNITY
@@ -1150,7 +1154,7 @@ React.useEffect(() => {
 
         return selectedCategory === "For You"
             ? sorted
-            : sorted.filter((c) => c.category === selectedCategory);
+            : sorted.filter((c) => c.category?.toLowerCase() === selectedCategory.toLowerCase());
     }, [allCommunities, selectedCategory]);
 
     const explorableViewCommunities = React.useMemo(() => {
@@ -1159,7 +1163,7 @@ React.useEffect(() => {
         );
 
         if (selectedCategory !== "For You") {
-            list = list.filter((c) => c.category === selectedCategory);
+            list = list.filter((c) => c.category?.toLowerCase() === selectedCategory.toLowerCase());
         }
 
         if (invitedSlug) {
@@ -1179,7 +1183,7 @@ React.useEffect(() => {
 
         let base = selectedCategory === "For You"
             ? allCommunities
-            : allCommunities.filter((c) => c.category === selectedCategory);
+            : allCommunities.filter((c) =>c.category?.toLowerCase() === selectedCategory.toLowerCase());
 
         if (!term) {
             return base.filter(

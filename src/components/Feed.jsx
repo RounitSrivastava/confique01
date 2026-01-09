@@ -110,7 +110,7 @@ const normalizeCommunities = (arr = []) =>
 const DEFAULT_BANNER = "https://placehold.co/800x240/111827/ffffff?text=POSTER";
 
 function CommunityCard({ c, index = 0, onOpen, className = "" }) {
-  const bannerImg = c.bannerUrl || null;
+  const bannerImg = null; // banner disabled, logo-first design
 const logoImg = c.iconUrl || null;
   const description = c.description || "";
 

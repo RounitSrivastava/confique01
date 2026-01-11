@@ -44,8 +44,10 @@ export default function LoginClient() {
         return;
       }
 
-      broadcastAuthChange(data.user);
-      window.location.href = "/";
+      localStorage.setItem("userEmail", data.user.email);
+broadcastAuthChange(data.user);
+window.location.href = "/";
+
     } catch {
       setError("Network error");
       setLoading(false);
@@ -69,8 +71,9 @@ export default function LoginClient() {
         return;
       }
 
-      broadcastAuthChange(data.user);
-      window.location.href = "/";
+      localStorage.setItem("userEmail", data.user.email);
+broadcastAuthChange(data.user);
+window.location.href = "/";
     } catch {
       setError("Google login error");
       setLoading(false);

@@ -12,13 +12,47 @@ export async function POST(req) {
 
     const body = await req.json();
 
-    // -------------------------------
-    // 🔒 VALIDATE PAYMENT STRUCTURE
-    // -------------------------------
+    /* ---------------------------------
+       🔢 Normalize numbers (VERY IMPORTANT)
+    ---------------------------------- */
+    body.fixedPrice = Number(body.fixedPrice || 0);
+
+    if (Array.isArray(body.ticketTypes)) {
+      body.ticketTypes = body.ticketTypes.map((t) => ({
+        name: t.name,
+        price: Number(t.price),
+      }));
+    } else {
+      body.ticketTypes = [];
+    }
+
+    /* ---------------------------------
+       🧠 Server is the source of truth
+    ---------------------------------- */
+
+    // If fixed pricing
+    if (body.pricingMode === "fixed" && body.fixedPrice > 0) {
+      body.isFree = false;
+    }
+
+    // If flexible pricing
+    if (body.pricingMode === "flexible" && body.ticketTypes.length > 0) {
+      body.isFree = false;
+    }
+
+    // If event is free → wipe pricing
+    if (body.isFree === true) {
+      body.pricingMode = "free";
+      body.fixedPrice = 0;
+      body.ticketTypes = [];
+    }
+
+    /* ---------------------------------
+       🔒 Validate pricing structure
+    ---------------------------------- */
 
     if (body.isFree === false) {
-
-      // Flexible pricing
+      // Flexible pricing validation
       if (body.pricingMode === "flexible") {
         if (!Array.isArray(body.ticketTypes) || body.ticketTypes.length === 0) {
           return NextResponse.json(
@@ -28,7 +62,7 @@ export async function POST(req) {
         }
 
         const invalid = body.ticketTypes.some(
-          t => !t.name || typeof t.price !== "number" || t.price <= 0
+          (t) => !t.name || typeof t.price !== "number" || t.price <= 0
         );
 
         if (invalid) {
@@ -39,7 +73,7 @@ export async function POST(req) {
         }
       }
 
-      // Fixed pricing
+      // Fixed pricing validation
       if (body.pricingMode === "fixed") {
         if (!body.fixedPrice || body.fixedPrice <= 0) {
           return NextResponse.json(
@@ -50,16 +84,15 @@ export async function POST(req) {
       }
     }
 
-    // -------------------------------
-    // SAVE EVENT
-    // -------------------------------
+    /* ---------------------------------
+       💾 Save event
+    ---------------------------------- */
     const event = await Event.create({
       ...body,
       impressions: Math.floor(Math.random() * (3500 - 1200 + 1)) + 1200,
     });
 
     return NextResponse.json(event, { status: 201 });
-
   } catch (err) {
     console.error("❌ Mongoose Save Error:", err);
     return NextResponse.json(

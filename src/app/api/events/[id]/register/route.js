@@ -1,5 +1,4 @@
-// src/app/api/events/[id]/register/route.js
-import dbConnect from "@/lib/mongoose"; // Changed from { connectDB } to default import dbConnect
+import dbConnect from "@/lib/mongoose";
 import Event from "@/models/Event";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
@@ -7,40 +6,47 @@ import mongoose from "mongoose";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-
-
 export async function POST(req, { params }) {
   try {
-    // ✅ Use the correct exported function name
-    await dbConnect(); 
-    
-    const { id } = params;
-    const body = await req.json(); // This contains { userEmail, formData, paidRef }
+    await dbConnect();
 
-    // 1. Validate ID format
+    const { id } = params;
+    const body = await req.json(); // { userEmail, formData, paidRef }
+
+    // 1️⃣ Validate event ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid Event ID" }, { status: 400 });
     }
 
-    // 2. Optional: Check if user already registered
-    if (body.userEmail) {
-      const existingEvent = await Event.findOne({
-        _id: id,
-        "registrations.userEmail": body.userEmail,
-      });
-      if (existingEvent) {
-        return NextResponse.json(
-          { error: "You are already registered for this event" },
-          { status: 400 }
-        );
-      }
+    if (!body.userEmail) {
+      return NextResponse.json({ error: "User email is required" }, { status: 400 });
     }
 
-    // 3. Update the event
+    // 2️⃣ Prevent duplicate registration (same email)
+    const alreadyRegistered = await Event.findOne({
+      _id: id,
+      "registrations.userEmail": body.userEmail,
+    });
+
+    if (alreadyRegistered) {
+      return NextResponse.json(
+        { error: "You are already registered for this event" },
+        { status: 400 }
+      );
+    }
+
+    // 3️⃣ Save registration
     const event = await Event.findByIdAndUpdate(
       id,
       {
-        $push: { registrations: body },
+        $push: {
+          registrations: {
+            userEmail: body.userEmail,
+            formData: body.formData || {},
+            paidRef: body.paidRef || null,
+            createdAt: new Date(),
+          },
+        },
         $inc: { registrationsCount: 1 },
       },
       { new: true, runValidators: true }
@@ -50,11 +56,14 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
+    // 4️⃣ Send registrations back (for multi-device frontend sync)
     return NextResponse.json({
       success: true,
-      registrationsCount: event.registrationsCount,
       message: "Registration successful!",
+      registrationsCount: event.registrationsCount,
+      registrations: event.registrations,   // 🔥 THIS enables multi-device detection
     });
+
   } catch (err) {
     console.error("❌ Registration API Error:", err);
     return NextResponse.json(

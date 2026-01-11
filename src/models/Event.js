@@ -7,7 +7,9 @@ const RegistrationSchema = new mongoose.Schema(
   {
     userEmail: {
       type: String,
-      default: null,
+      required: true,
+      lowercase: true,
+      trim: true,
     },
 
     // All custom form data (dynamic)
@@ -20,6 +22,13 @@ const RegistrationSchema = new mongoose.Schema(
     paidRef: {
       type: String,
       default: null,
+    },
+
+    // Admin payment verification
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "verified", "rejected"],
+      default: "pending",
     },
 
     createdAt: {
@@ -103,8 +112,8 @@ const EventSchema = new mongoose.Schema(
 
     pricingMode: {
       type: String,
-      enum: ["fixed", "flexible"],
-      default: "fixed",
+      enum: ["free", "fixed", "flexible"],
+      default: "free",
     },
 
     fixedPrice: {
@@ -116,7 +125,7 @@ const EventSchema = new mongoose.Schema(
       {
         name: { type: String, required: true },
         price: { type: Number, required: true },
-      }
+      },
     ],
 
     qrCode: {
@@ -181,6 +190,31 @@ const EventSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+/* ===============================
+   🔒 PREVENT DUPLICATE REGISTRATION
+================================ */
+EventSchema.index(
+  { _id: 1, "registrations.userEmail": 1 },
+  { unique: true }
+);
+
+/* ===============================
+   🔒 PRICING CONSISTENCY GUARD
+================================ */
+EventSchema.pre("save", function () {
+  if (this.pricingMode !== "flexible") {
+    this.ticketTypes = [];
+  }
+
+  if (this.pricingMode !== "fixed") {
+    this.fixedPrice = 0;
+  }
+
+  if (this.pricingMode === "free") {
+    this.isFree = true;
+  }
+});
 
 /* ===============================
    EXPORT SAFE MODEL

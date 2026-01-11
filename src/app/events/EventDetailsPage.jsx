@@ -150,10 +150,41 @@ const EventDetailsPage = ({
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [formData, setFormData] = useState({});
   const [formErrors, setFormErrors] = useState({});
-    useEffect(() => {
+  const [ticketQty, setTicketQty] = useState({});   
+  const [showPaymentBox, setShowPaymentBox] = useState(false);
+  const [showBilling, setShowBilling] = useState(false);
+  const [showBillAfterRef, setShowBillAfterRef] = useState(false);
+  const [canSubmit, setCanSubmit] = useState(false);
+  const [userEmail, setUserEmail] = useState(null);
+  useEffect(() => {
+  // First try localStorage (page refresh support)
+  const stored = localStorage.getItem("userEmail");
+  if (stored) setUserEmail(stored);
+
+  // Listen for login from anywhere in app
+  const handler = (e) => {
+    const email = e.detail?.user?.email;
+    if (email) {
+      localStorage.setItem("userEmail", email);
+      setUserEmail(email);
+    }
+  };
+
+  window.addEventListener("confique:auth-changed", handler);
+
+  return () => {
+    window.removeEventListener("confique:auth-changed", handler);
+  };
+}, []);
+
+
+  useEffect(() => {
     setActiveTab("Details");
   }, [displayEvent?.id]);
 
+  useEffect(() => {
+    setTicketQty({});
+  }, [displayEvent?._id]);
 
   const {
     title,
@@ -170,7 +201,9 @@ const EventDetailsPage = ({
     impressions,
     rounds = [],
     isFree,
-    paymentAmount,
+    pricingMode,        
+    fixedPrice,          
+    ticketTypes = [],   
     venue,
     isOnline,
     customFields = [],
@@ -182,6 +215,13 @@ const EventDetailsPage = ({
   } = displayEvent || {};
 
   const CURRENCY_SYMBOL = "₹";
+  const totalAmount =
+    pricingMode === "flexible"
+      ? ticketTypes.reduce(
+          (sum, t) => sum + (ticketQty[t.name] || 0) * t.price,
+          0
+        )
+      : Number(fixedPrice || 0);
 
   const participationFormat =
     tags.find((tag) => tag.includes("Team") || tag.includes("Solo")) ||
@@ -219,22 +259,53 @@ const EventDetailsPage = ({
   }, [date]);
 
   useEffect(() => {
-    const userEmail = getCurrentUserEmail();
-    
-    if (userEmail && registrations) {
-      const isAlreadyRegistered = registrations.some(
-        (reg) => reg.userEmail === userEmail
-      );
-      
-      if (isAlreadyRegistered) {
-        setRegistrationStatus("Registered");
-        return;
-      }
+  if (!userEmail) return;
+
+  const eventId = displayEvent?.id || displayEvent?._id;
+
+  // 1️⃣ Check backend registrations (global truth)
+  if (displayEvent?.registrations) {
+    const found = displayEvent.registrations.some(
+      (r) => r.userEmail === userEmail
+    );
+
+    if (found) {
+      setRegistrationStatus("Registered");
+
+      // Sync to localStorage
+      try {
+        const raw =
+          localStorage.getItem("confique:user_event_registrations") || "{}";
+        const map = JSON.parse(raw);
+        if (!map[userEmail]) map[userEmail] = [];
+        if (!map[userEmail].includes(eventId)) {
+          map[userEmail].push(eventId);
+        }
+        localStorage.setItem(
+          "confique:user_event_registrations",
+          JSON.stringify(map)
+        );
+      } catch {}
+
+      return;
     }
-    
-    const status = checkEventStatus();
-    setRegistrationStatus(status);
-  }, [registrations, date, checkEventStatus]);
+  }
+
+  // 2️⃣ Fallback to localStorage
+  try {
+    const raw =
+      localStorage.getItem("confique:user_event_registrations") || "{}";
+    const map = JSON.parse(raw);
+    if (map[userEmail]?.includes(eventId)) {
+      setRegistrationStatus("Registered");
+      return;
+    }
+  } catch {}
+
+  // 3️⃣ Otherwise use event date
+  setRegistrationStatus(checkEventStatus());
+}, [userEmail, displayEvent?.registrations, displayEvent?.id, checkEventStatus]);
+
 
   const REG_KEY = "confique:event_registrations";
 
@@ -261,34 +332,53 @@ const EventDetailsPage = ({
 
   const validateForm = () => {
     const errors = {};
-    customFields.forEach((field) => {
-      if (!field.required) return;
-      const value = formData[field.name];
-      if (field.type === "checkbox") {
-        if (!value) errors[field.name] = "This field is required.";
-      } else {
-        if (!value || value.toString().trim() === "")
-          errors[field.name] = "This field is required.";
-      }
-    });
+
+    customFields
+      .filter(f => f.name !== "Payment Ref (Last 4 digits)") 
+      .forEach((field) => {
+        if (!field.required) return;
+
+        const value = formData[field.name];
+
+        if (field.type === "checkbox") {
+          if (!value) errors[field.name] = "This field is required.";
+        } else {
+          if (!value || value.toString().trim() === "")
+            errors[field.name] = "This field is required.";
+        }
+      });
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleRegistrationSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
+
     if (!validateForm()) return;
 
-    const userEmail = getCurrentUserEmail();
+    if (!isFree && !showBillAfterRef) {
+      alert("Please enter the last 4 digits of your payment reference");
+      return;
+    }
+
+    if (!userEmail) {
+  alert("Please login again");
+  return;
+}
 
     try {
       const res = await fetch(`/api/events/${displayEvent.id || displayEvent._id}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userEmail: userEmail,
-          formData: formData,
-          paidRef: formData["Payment Ref (Last 4 digits)"] || null
+  userEmail: userEmail,
+          formData: {
+            ...formData,
+            paidAmount: totalAmount,
+            selectedTickets: ticketQty,
+          },
+          paidRef: formData["Payment Ref (Last 4 digits)"] || null,
         }),
       });
 
@@ -328,7 +418,6 @@ const EventDetailsPage = ({
   };
 
   const handleRegister = () => {
-    // Logic for Registered or Closed states (Do nothing)
     if (registrationStatus === "Registered" || registrationStatus === "Ended") return;
 
     if (isExternalRegistration && registrationUrl) {
@@ -336,11 +425,10 @@ const EventDetailsPage = ({
       return;
     }
 
-    if (!hasCustomForm) {
-      handleRegistrationSubmit();
-      return;
-    }
-
+    setShowBilling(false);
+    setShowBillAfterRef(false);
+    setFormData({});
+    setTicketQty({});
     setShowRegistrationForm(true);
   };
 
@@ -350,7 +438,7 @@ const EventDetailsPage = ({
         text: "Registered",
         className:
           "w-full py-3 bg-green-600 text-white font-bold rounded-lg transition-colors shadow-lg shadow-green-500/30 flex items-center justify-center",
-        disabled: true, // ✅ Disabled once registered
+        disabled: true, 
         Icon: CheckCircle,
       };
     }
@@ -423,83 +511,168 @@ const EventDetailsPage = ({
             onSubmit={handleRegistrationSubmit}
             className="space-y-4 max-h-[70vh] overflow-y-auto pr-1"
           >
-            {customFields.map((field, index) => {
-              const value =
-                formData[field.name] ?? (field.type === "checkbox" ? false : "");
-              const error = formErrors[field.name];
+            {/* Step 1: Show Form Fields */}
+            {!showBilling && customFields
+              .filter(f => f.name !== "Payment Ref (Last 4 digits)")
+              .map((field, index) => {
+                const value = formData[field.name] ?? (field.type === "checkbox" ? false : "");
+                const error = formErrors[field.name];
 
-              let inputEl;
-
-              if (field.type === "checkbox") {
-                inputEl = (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <input
-                      type="checkbox"
-                      id={`field-${index}`}
-                      checked={!!value}
-                      onChange={(e) =>
-                        handleFormChange(
-                          field.name,
-                          field.type,
-                          e.target.value,
-                          e.target.checked
-                        )
-                      }
-                      className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-                    />
-                    <label
-                      htmlFor={`field-${index}`}
-                      className="text-sm text-gray-200"
-                    >
-                      {field.name}{" "}
-                      {field.required && <span className="text-red-500">*</span>}
-                    </label>
+                return (
+                  <div key={index} className="space-y-1">
+                    {field.type === "checkbox" ? (
+                      <div className="flex items-center space-x-2 mt-1">
+                        <input
+                          type="checkbox"
+                          id={`field-${index}`}
+                          checked={!!value}
+                          onChange={(e) =>
+                            handleFormChange(field.name, field.type, e.target.value, e.target.checked)
+                          }
+                          className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                        />
+                        <label htmlFor={`field-${index}`} className="text-sm text-gray-200">
+                          {field.name} {field.required && <span className="text-red-500">*</span>}
+                        </label>
+                      </div>
+                    ) : (
+                      <>
+                        <label className="text-xs font-medium text-gray-300 block mb-1">
+                          {field.name} {field.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type={field.type || "text"}
+                          value={value}
+                          onChange={(e) =>
+                            handleFormChange(field.name, field.type, e.target.value, false)
+                          }
+                          className={`w-full px-3 py-2 rounded-lg bg-gray-800 border text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                            error ? "border-red-500" : "border-gray-700"
+                          }`}
+                          placeholder={field.name}
+                        />
+                      </>
+                    )}
+                    {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
                   </div>
                 );
-              } else {
-                inputEl = (
-                  <>
-                    <label className="text-xs font-medium text-gray-300 block mb-1">
-                      {field.name} {field.required && <span className="text-red-500">*</span>}
-                    </label>
-                    <input
-                      type={field.type || "text"}
-                      value={value}
-                      onChange={(e) =>
-                        handleFormChange(field.name, field.type, e.target.value, false)
-                      }
-                      className={`w-full px-3 py-2 rounded-lg bg-gray-800 border text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                        error ? "border-red-500" : "border-gray-700"
-                      }`}
-                      placeholder={field.name}
-                    />
-                  </>
-                );
-              }
+              })}
 
-              return (
-                <div key={index} className="space-y-1">
-                  {inputEl}
-                  {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+            {/* Step 2: Show Billing Details & Transaction ID Input */}
+            {showBilling && !isFree && (
+              <div className="mt-6 p-4 rounded-xl bg-gray-800 border border-purple-600 space-y-4">
+                <SectionTitle icon={List} className="text-lg">Bill Details</SectionTitle>
+                
+                {pricingMode === "flexible" && ticketTypes.map((t) => (
+                  <div key={t.name} className="flex justify-between items-center text-sm">
+                    <span className="text-white">{t.name} – ₹{t.price}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={ticketQty[t.name] || 0}
+                      onChange={(e) =>
+                        setTicketQty((p) => ({ ...p, [t.name]: Number(e.target.value) }))
+                      }
+                      className="w-16 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-center"
+                    />
+                  </div>
+                ))}
+
+                {pricingMode === "fixed" && (
+                  <p className="text-white font-semibold">Price: ₹{fixedPrice}</p>
+                )}
+
+                <div className="flex justify-between font-bold text-lg border-t border-gray-700 pt-3">
+                  <span>Total Bill</span>
+                  <span className="text-green-400">₹{totalAmount}</span>
                 </div>
-              );
-            })}
+
+              
+
+                {/* Step 3: Show QR Code and Transaction Summary after Ref Number */}
+               {qrCode && (
+  <div className="mt-4 p-4 bg-gray-950 border border-purple-600 rounded-xl space-y-4">
+
+    {/* QR Code */}
+    <div className="flex items-center space-x-4">
+      <img
+        src={qrCode}
+        alt="QR Code"
+        className="w-28 h-28 rounded-md border border-purple-500 bg-white p-2"
+      />
+      <div className="text-sm text-gray-300">
+        <p className="font-bold text-white">Scan & Pay</p>
+        <p>Pay <span className="text-green-400 font-semibold">₹{totalAmount}</span></p>
+        <p className="text-xs text-gray-400 mt-1">
+          Use any UPI app
+        </p>
+      </div>
+    </div>
+
+    {/* Transaction Input BELOW QR */}
+    <div className="pt-4 border-t border-gray-700">
+      <label className="text-xs text-gray-400">
+        Enter Last 4 digits of Transaction ID
+      </label>
+      <input
+        type="text"
+        maxLength="4"
+        value={formData["Payment Ref (Last 4 digits)"] || ""}
+        onChange={(e) => {
+          const val = e.target.value.replace(/\D/g, "");
+          setFormData((p) => ({
+            ...p,
+            "Payment Ref (Last 4 digits)": val,
+          }));
+          setShowBillAfterRef(val.length === 4);
+        }}
+        className="w-full mt-2 px-3 py-2 rounded-lg bg-gray-900 border border-gray-600 text-white text-sm tracking-widest text-center"
+        placeholder="1234"
+      />
+
+      {showBillAfterRef && (
+        <p className="mt-2 text-xs text-green-400">
+          ✔ Transaction captured: {formData["Payment Ref (Last 4 digits)"]}
+        </p>
+      )}
+    </div>
+
+  </div>
+)}
+
+              </div>
+            )}
 
             <div className="flex items-center justify-end space-x-3 pt-2">
-              <button
-                type="button"
-                onClick={handleCloseForm}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white flex items-center justify-center transition-colors"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Submit & Register
-              </button>
+              {!showBilling ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!validateForm()) return;
+                    if (isFree === true) {
+                      handleRegistrationSubmit();
+                    } else {
+                      setShowBilling(true);
+                    }
+                  }}
+                  className="px-6 py-2 rounded-lg text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-all"
+                >
+                  Continue
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!isFree && !showBillAfterRef}
+                  className={`px-6 py-2 rounded-lg text-sm font-semibold text-white flex items-center transition-all ${
+                    (!isFree && !showBillAfterRef) 
+                    ? "bg-gray-700 cursor-not-allowed" 
+                    : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Complete Registration
+                </button>
+              )}
             </div>
           </form>
         </div>
@@ -633,9 +806,9 @@ const EventDetailsPage = ({
           <div className="lg:col-span-8">
             <div className="flex overflow-x-auto border-b border-gray-800 mb-8">
               {[
-  { name: "Details", icon: ClipboardList },
-  { name: "Stages & Timeline", icon: Clock },
-].map((tab) => (
+                { name: "Details", icon: ClipboardList },
+                { name: "Stages & Timeline", icon: Clock },
+              ].map((tab) => (
                 <TabButton
                   key={tab.name}
                   name={tab.name}
@@ -660,16 +833,18 @@ const EventDetailsPage = ({
                   <p className="flex justify-between">Main Date: <span className="text-white">{date ? new Date(date).toLocaleDateString() : "TBD"}</span></p>
                   <p className="flex justify-between">Start Date: <span className="text-white">{regStart}</span></p>
                   <p className="flex justify-between">End Date: <span className="text-white">{regEnd}</span></p>
-                  <p className="flex justify-between">Fees: <span className={isFree ? "text-green-400" : "text-yellow-400"}>{isFree ? "Free" : `${CURRENCY_SYMBOL}${paymentAmount || "TBD"}`}</span></p>
+                  <p className="flex justify-between">
+                    Fees:
+                    <span className={isFree ? "text-green-400" : "text-yellow-400"}>
+                      {isFree
+                        ? "Free"
+                        : pricingMode === "fixed"
+                        ? `${CURRENCY_SYMBOL}${fixedPrice}`
+                        : "Multiple ticket types"}
+                    </span>
+                  </p>
                   <p className="flex justify-between">Format: <span className="text-blue-400">{participationFormat}</span></p>
                 </div>
-
-                {!isFree && qrCode && (
-                  <div className="mt-4 p-3 rounded-lg bg-gray-800 border border-gray-700 flex items-center space-x-4">
-                    <img src={qrCode} alt="QR" className="w-20 h-20 object-contain rounded-md border border-purple-500" />
-                    <div className="text-xs text-gray-300"><p className="font-semibold text-white">Scan to Pay</p><p>Scan this QR to pay. Keep the ref number ready.</p></div>
-                  </div>
-                )}
 
                 <button onClick={handleRegister} disabled={buttonProps.disabled} className={buttonProps.className}>
                   {buttonProps.Icon && <buttonProps.Icon className="w-5 h-5 mr-2" />}

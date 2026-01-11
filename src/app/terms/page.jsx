@@ -1,216 +1,129 @@
-// src/pages/TermsPage.jsx
 import React from "react";
 
 const TermsPage = () => {
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black text-gray-200">
 
-      {/* TOP WARNING BAR */}
-      <div className="sticky top-0 z-50 bg-red-900/90 border-b border-red-700 px-6 py-3">
-        <p className="text-red-200 text-xs tracking-widest uppercase text-center">
+      <div className="sticky top-0 z-50 bg-indigo-950/90 border-b border-indigo-700 px-6 py-3 backdrop-blur">
+        <p className="text-indigo-200 text-xs tracking-widest uppercase text-center">
           ⚠️ LEGALLY BINDING — GOVERNED BY INDIAN LAW — USER ASSUMES ALL RISK ⚠️
         </p>
       </div>
 
       <section className="mx-auto w-full max-w-4xl px-6 sm:px-10 py-20">
 
-        {/* HEADER */}
         <div className="mb-16">
-          <h1 className="text-5xl font-bold text-red-500 tracking-tight mb-4">
+          <h1 className="text-5xl font-bold text-white tracking-tight mb-4">
             Terms & Conditions
           </h1>
           <p className="text-sm text-gray-400 max-w-2xl">
-            This document constitutes a legally enforceable agreement under
-            applicable laws of India. Please read carefully. Ignorance of these
-            Terms does not exempt you from liability.
+            This document constitutes a legally binding agreement between you and Confique under the laws of India. By using this platform, you acknowledge that you have read, understood, and accepted these Terms in full.
           </p>
         </div>
 
-        {/* EXTREME WARNING */}
-        <div className="mb-16 border border-red-800 bg-red-950/40 rounded-lg p-6">
-          <h2 className="text-red-400 font-semibold mb-3 uppercase tracking-wide">
+        <div className="mb-16 border border-indigo-800 bg-indigo-950/40 rounded-lg p-6">
+          <h2 className="text-white font-semibold mb-3 uppercase tracking-wide">
             ⚠️ Extreme Legal Notice
           </h2>
           <p className="text-sm text-gray-300 leading-7">
-            Confique is a student community and event-hosting platform that merely
-            provides digital infrastructure. Confique does not control, verify,
-            supervise, or guarantee users, communities, content, or events.
-            All participation is voluntary and strictly at your own risk.
+            Confique is only a technology platform. We do not organize, supervise, verify, control, or guarantee any communities, events, content, organizers, or users.  
+            <br /><br />
+            Every interaction, transaction, participation, or communication you engage in through Confique is undertaken entirely at your own risk.
           </p>
         </div>
 
-        {/* CONTENT */}
         <div className="space-y-16 text-sm leading-7">
 
-          {/* ACCEPTANCE */}
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">
               1. Acceptance & Legal Binding
             </h2>
             <p>
-              By accessing, registering, hosting events, joining communities,
-              posting content, or otherwise using Confique, you irrevocably agree
-              to be bound by these Terms. If you do not agree, you must immediately
-              discontinue all use of the Platform.
+              By accessing or using Confique in any manner, you enter into a legally enforceable contract with Confique. If you do not agree to these Terms, you are strictly prohibited from using this platform.
             </p>
           </section>
 
-          {/* ELIGIBILITY */}
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">
               2. Eligibility & Capacity
             </h2>
             <p>
-              You confirm that you are at least sixteen (16) years of age and legally
-              competent to enter into binding contracts under Indian law. If acting
-              on behalf of any organization, you personally guarantee authorization
-              and accept full responsibility.
+              You represent and warrant that you are at least sixteen (16) years of age and legally capable of entering into binding agreements under Indian law. Any misuse by a minor is the sole responsibility of the guardian.
             </p>
           </section>
 
-          {/* ACCOUNT */}
-          <section className="border-l-4 border-red-700 pl-6">
-            <h2 className="text-xl font-semibold text-red-400 mb-3">
+          <section className="border-l-4 border-indigo-700 pl-6">
+            <h2 className="text-xl font-semibold text-white mb-3">
               3. Account Security & Absolute Responsibility
             </h2>
             <p>
-              You are solely responsible for safeguarding your login credentials
-              and for all actions performed through your account. Confique shall
-              not be liable for impersonation, misuse, unauthorized access, or
-              resulting damages under any circumstances.
+              You are solely and entirely responsible for all activity performed through your account, whether authorized or not. Confique shall not be liable for account misuse, hacking, impersonation, or data compromise.
             </p>
           </section>
 
-          {/* COMMUNITY RULES */}
-          <section className="bg-zinc-950 border border-red-800 rounded-xl p-6">
-            <h2 className="text-xl font-semibold text-red-400 mb-3">
-              ⚠️ Community Conduct, Misbehavior & Zero Liability
+          <section className="bg-zinc-950 border border-indigo-800 rounded-xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-3">
+              ⚠️ Community Conduct & Zero Liability
             </h2>
-
             <p>
-              Confique provides community spaces solely as a neutral communication
-              platform. Confique does not monitor, moderate, pre-screen, endorse,
-              or control user conduct, discussions, or shared content.
-            </p>
-
-            <p className="mt-3">
-              Any misbehavior, harassment, abuse, threats, defamation, fraud,
-              misinformation, hate speech, illegal activity, or harmful conduct
-              shall be considered the sole and exclusive responsibility of the
-              involved users.
-            </p>
-
-            <ul className="mt-4 list-disc pl-6 space-y-2 text-gray-400">
-              <li>No responsibility for emotional, physical, or financial harm</li>
-              <li>No responsibility for disputes or conflicts between users</li>
-              <li>No guarantee of safety, accuracy, or legality of content</li>
-              <li>No responsibility for offline consequences of online interaction</li>
-            </ul>
-
-            <p className="mt-4 text-red-300">
-              Participation in any community is entirely voluntary and undertaken
-              strictly at your own risk.
-            </p>
-
-            <p className="mt-3 text-xs text-gray-400">
-              Confique reserves the right—but assumes no obligation—to remove content
-              or restrict access. Failure to act does not imply responsibility.
+              Confique does not moderate, monitor, endorse, or control any user-generated content or interactions. All risks, disputes, damages, or losses arising from community participation rest solely with the users involved.
             </p>
           </section>
 
-          {/* EVENTS */}
           <section className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/40">
-            <h2 className="text-xl font-semibold text-red-400 mb-3">
+            <h2 className="text-xl font-semibold text-white mb-3">
               4. Events — Complete Assumption of Risk
             </h2>
             <p>
-              Confique is not an event organizer, sponsor, co-host, or safety authority.
-              All events are hosted and attended entirely at the user’s own risk.
-            </p>
-
-            <ul className="mt-4 list-disc pl-6 space-y-2 text-gray-400">
-              <li>Injury, illness, or death</li>
-              <li>Financial loss, theft, or fraud</li>
-              <li>Legal violations or penalties</li>
-              <li>Misconduct by organizers or attendees</li>
-            </ul>
-
-            <p className="mt-4 text-red-300">
-              Event organizers bear full responsibility for legal compliance,
-              safety, permissions, and regulatory approvals.
+              Confique is not an event organizer or safety authority. All physical, financial, legal, and personal risks related to events are borne entirely by attendees and organizers.
             </p>
           </section>
 
-          {/* CONTENT */}
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">
               5. Content License
             </h2>
             <p>
-              By submitting content, you grant Confique a perpetual, worldwide,
-              royalty-free, sublicensable license to host, display, modify, and
-              distribute such content for platform operations.
+              You grant Confique a perpetual, worldwide, royalty-free right to use, host, modify, and display any content you submit for platform operations and legal compliance.
             </p>
           </section>
 
-          {/* IT ACT & LAW ENFORCEMENT */}
-          <section className="bg-red-950/30 border border-red-800 rounded-xl p-6">
-            <h2 className="text-xl font-semibold text-red-400 mb-3">
-              ⚖️ Indian IT Act, 2000 & Law Enforcement Cooperation
+          <section className="bg-indigo-950/30 border border-indigo-800 rounded-xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-3">
+              ⚖️ Indian IT Act & Law Enforcement
             </h2>
             <p>
-              Confique operates in accordance with the Information Technology Act,
-              2000 and applicable rules thereunder. Confique shall not be held liable
-              for user-generated content under Section 79 of the IT Act.
-            </p>
-            <p className="mt-3">
-              Confique reserves the right to cooperate with law enforcement agencies,
-              courts, or government authorities and may disclose user information,
-              content, or activity logs without notice where required by law.
+              Confique complies with the Information Technology Act, 2000 and reserves the right to disclose user data to law enforcement or courts without notice when legally required.
             </p>
           </section>
 
-          {/* TERMINATION */}
-          <section className="border-l-4 border-red-700 pl-6">
-            <h2 className="text-xl font-semibold text-red-400 mb-3">
-              6. Suspension & Termination Without Notice
+          <section className="border-l-4 border-indigo-700 pl-6">
+            <h2 className="text-xl font-semibold text-white mb-3">
+              6. Suspension & Termination
             </h2>
             <p>
-              Confique may suspend or terminate any account at its sole discretion,
-              without notice, for violations, legal risks, or platform integrity
-              concerns.
+              Confique may suspend or permanently terminate any account at its sole discretion without prior notice, for any legal, safety, or operational reason.
             </p>
           </section>
 
-          {/* LIABILITY */}
-          <section className="bg-red-950/30 border border-red-800 rounded-xl p-6">
-            <h2 className="text-xl font-semibold text-red-400 mb-3">
-              7. Disclaimer, Limitation & Indemnification
+          <section className="bg-indigo-950/30 border border-indigo-800 rounded-xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-3">
+              7. Disclaimer & Liability
             </h2>
             <p>
-              The Platform is provided “AS IS” and “AS AVAILABLE.” Confique disclaims
-              all warranties and shall not be liable for any damages arising from
-              platform use, events, or community interactions.
-            </p>
-            <p className="mt-3">
-              You agree to indemnify and hold harmless Confique from any claims,
-              losses, liabilities, or legal proceedings arising from your actions.
+              Confique shall not be liable for any direct, indirect, incidental, or consequential damages arising from platform use, events, or user interactions.
             </p>
           </section>
 
-          {/* JURISDICTION */}
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">
-              8. Governing Law & Jurisdiction 🇮🇳
+              8. Governing Law 🇮🇳
             </h2>
             <p>
-              These Terms shall be governed by and construed in accordance with the
-              laws of India. All disputes shall be subject to the exclusive
-              jurisdiction of courts located in India.
+              These Terms are governed exclusively by the laws of India. All disputes shall be resolved in Indian courts only.
             </p>
           </section>
 
-          {/* CONTACT */}
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">
               9. Contact

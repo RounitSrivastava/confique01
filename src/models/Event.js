@@ -95,16 +95,29 @@ const EventSchema = new mongoose.Schema(
       default: "",
     },
 
-    /* ---------- REGISTRATION ---------- */
+    /* ---------- PRICING & REGISTRATION ---------- */
     isFree: {
       type: Boolean,
       default: true,
     },
 
-    paymentAmount: {
+    pricingMode: {
       type: String,
-      default: "",
+      enum: ["fixed", "flexible"],
+      default: "fixed",
     },
+
+    fixedPrice: {
+      type: Number,
+      default: 0,
+    },
+
+    ticketTypes: [
+      {
+        name: { type: String, required: true },
+        price: { type: Number, required: true },
+      }
+    ],
 
     qrCode: {
       type: String,

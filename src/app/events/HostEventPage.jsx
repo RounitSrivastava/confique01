@@ -251,9 +251,11 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted, initialData 
     rounds: initialData?.rounds || [
       { title: "Registration Opens", description: "Sign up and form your teams.", date: "" },
     ],
-    isPaymentRequired: initialData?.isPaymentRequired || false,
-    paymentAmount: initialData?.paymentAmount || "",
-    paymentCurrency: CURRENCY_CODE,
+    isPaymentRequired: initialData?.isPaymentRequired || false, // 🔥 NEW pricing system
+pricingMode: initialData?.pricingMode || "fixed",   // fixed | flexible
+fixedPrice: initialData?.fixedPrice || "",
+ticketTypes: initialData?.ticketTypes || [],       // host will create their own
+paymentCurrency: CURRENCY_CODE,
     qrCodePreviewUrl: initialData?.qrCode || "",
     qrCodeFile: initialData?.qrCode || null,
     isExternalRegistration: initialData?.isExternalRegistration || false,
@@ -479,7 +481,9 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted, initialData 
         hostedBy: eventData.hostedBy,
         eligibility: eventData.eligibility,
         isFree: eventData.isFree,
-        paymentAmount: eventData.paymentAmount || "",
+        pricingMode: eventData.pricingMode,
+fixedPrice: eventData.fixedPrice,
+ticketTypes: eventData.ticketTypes,
         qrCode: qrCodeUrl,
         registrationStart: eventData.registrationStart,
         registrationEnd: eventData.registrationEnd,
@@ -555,14 +559,105 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted, initialData 
             <InputField label="Venue (Location or URL)" name="venue" value={eventData.venue} onChange={handleInputChange} placeholder={eventData.isOnline ? "e.g., Zoom Link | Discord Server" : "e.g., KIIT Auditorium | Rose Garden, Campus-18"} required />
 
             {isPaidEvent && (
-              <div className="space-y-2 border-l-4 border-yellow-500 pl-3 pt-2">
-                <label className="text-sm font-medium text-gray-400 block">Registration Fee / Amount (Currency: {CURRENCY_CODE}) <span className="text-red-500">*</span></label>
-                <div className="flex items-center gap-4">
-                  <span className="text-xl text-yellow-300">{CURRENCY_SYMBOL}</span>
-                  <input type="number" name="paymentAmount" value={eventData.paymentAmount} onChange={handleInputChange} placeholder="e.g., 500" required className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors" />
-                </div>
-              </div>
-            )}
+  <div className="space-y-6 border-l-4 border-yellow-500 pl-4 pt-3">
+
+    {/* Pricing mode */}
+    <div className="flex gap-6">
+      <label className="flex items-center gap-2">
+        <input
+          type="radio"
+          checked={eventData.pricingMode === "fixed"}
+          onChange={() => setEventData(p => ({ ...p, pricingMode: "fixed" }))}
+        />
+        Fixed price
+      </label>
+
+      <label className="flex items-center gap-2">
+        <input
+          type="radio"
+          checked={eventData.pricingMode === "flexible"}
+          onChange={() => setEventData(p => ({ ...p, pricingMode: "flexible" }))}
+        />
+        Multiple ticket types
+      </label>
+    </div>
+
+    {/* Fixed price */}
+    {eventData.pricingMode === "fixed" && (
+      <div className="flex items-center gap-4">
+        <span className="text-xl text-yellow-300">{CURRENCY_SYMBOL}</span>
+        <input
+          type="number"
+          value={eventData.fixedPrice}
+          onChange={e => setEventData(p => ({ ...p, fixedPrice: e.target.value }))}
+          placeholder="e.g. 500"
+          className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg"
+        />
+      </div>
+    )}
+
+    {/* Flexible pricing */}
+    {eventData.pricingMode === "flexible" && (
+      <div className="space-y-4">
+
+        {eventData.ticketTypes.length === 0 && (
+          <p className="text-sm text-gray-400">
+            No ticket types added yet. Click below to add.
+          </p>
+        )}
+
+        {eventData.ticketTypes.map((t, i) => (
+          <div key={i} className="flex gap-3">
+            <input
+              placeholder="Ticket name (e.g. Couple, VIP, Kid)"
+              value={t.name}
+              onChange={e => {
+                const list = [...eventData.ticketTypes];
+                list[i].name = e.target.value;
+                setEventData(p => ({ ...p, ticketTypes: list }));
+              }}
+              className="flex-1 bg-gray-800 p-2 rounded"
+            />
+
+            <input
+              type="number"
+              placeholder="Price"
+              value={t.price}
+              onChange={e => {
+                const list = [...eventData.ticketTypes];
+                list[i].price = Number(e.target.value);
+                setEventData(p => ({ ...p, ticketTypes: list }));
+              }}
+              className="w-28 bg-gray-800 p-2 rounded"
+            />
+
+            <button
+              type="button"
+              onClick={() => setEventData(p => ({
+                ...p,
+                ticketTypes: p.ticketTypes.filter((_, x) => x !== i)
+              }))}
+              className="bg-red-600 px-2 rounded"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setEventData(p => ({
+            ...p,
+            ticketTypes: [...p.ticketTypes, { name: "", price: 0 }]
+          }))}
+          className="bg-purple-600 px-3 py-1 rounded"
+        >
+          + Add Ticket Type
+        </button>
+      </div>
+    )}
+  </div>
+)}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
               <ImageUploader label="1. Card Poster (Portrait)" ratioTip="Used for listing cards." name="posterFile" file={eventData.posterFile} previewUrl={eventData.posterPreviewUrl} onFileChange={(e) => handleFileChange(e, "posterFile", "posterPreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "posterFile", "posterPreviewUrl")} />

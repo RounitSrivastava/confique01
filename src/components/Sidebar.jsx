@@ -11,7 +11,7 @@ import {
   X,
   Settings,   // ✅ ADDED
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const nav = [
   { icon: Home, label: "Home", href: "/" },
@@ -20,6 +20,7 @@ const nav = [
 ];
 
 export default function Sidebar({ isOpen = false, onClose = () => {} }) {
+  const router = useRouter();
   const [openQuick, setOpenQuick] = useState(true);
   const [isClientMobile, setIsClientMobile] = useState(false);
   const pathname = usePathname();
@@ -111,18 +112,17 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
 
             {openQuick && (
               <div className="mt-2 space-y-2">
-                <Link
-                  href="/create-post"
-                  className="block rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
-                >
-                  Create Post
-                </Link>
-                <Link
-                  href="/create-event"
-                  className="block rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
-                >
-                  Create Event
-                </Link>
+                <button
+  onClick={() => router.push("/groups?view=create")}
+  className="block w-full text-left rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]">
+  Create Community
+</button>
+                <button
+  onClick={() => router.push("/events?view=host")}
+  className="block w-full text-left rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
+>
+  Create Event
+</button>
                 
               </div>
             )}
@@ -135,7 +135,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
               className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
             >
               <Settings className="h-4 w-4" />   {/* ✅ ICON ADDED */}
-              <span>Settings</span>
+              <span>Help & Support</span>
             </Link>
           </div>
         </div>
@@ -184,21 +184,22 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
         </nav>
 
         <div className="p-4 border-t border-gray-800 space-y-2">
-          <Link
-            href="/create-post"
-            onClick={handleMobileClose}
-            className="block px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300"
-          >
-            Create Post
-          </Link>
-          <Link
-            href="/create-event"
-            onClick={handleMobileClose}
-            className="block px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300"
-          >
-            Create Event
-          </Link>
-          
+          <button
+  onClick={() => {
+    router.push("/groups?view=create");
+    handleMobileClose();
+  }}
+  className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300">
+  Create Community
+</button>
+          <button
+  onClick={() => {
+    router.push("/events?view=host");
+    handleMobileClose();
+  }}
+  className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300">
+  Create Event
+</button>          
         </div>
       </aside>
 

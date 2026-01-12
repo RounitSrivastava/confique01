@@ -1662,6 +1662,7 @@ const showFab = useScrollDirection(scrollRef);
     const [openMenuId, setOpenMenuId] = React.useState(null);
 
     const [posts, setPosts] = React.useState([]);
+    const [postsLoading, setPostsLoading] = React.useState(true);
     const [selectedPost, setSelectedPost] = React.useState(null);
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [previewImageUrl, setPreviewImageUrl] = React.useState(null);
@@ -1887,25 +1888,44 @@ if (authorImage) {
 );
 
     React.useEffect(() => {
-        if (!isDbBackedCommunity || !communityInfo.id) return;
-        async function loadPosts() {
-            try {
-                const res = await apiFetch(`/api/groups/${encodeURIComponent(communityInfo.id)}/posts`, { method: "GET" });
-                if (!res.ok) {
-                    console.error("Failed to load posts for", communityInfo.id, res.status);
-                    return;
-                }
-                const data = await res.json();
-                const postsFromDb = Array.isArray(data.posts) ? data.posts : [];
-                const mapped = postsFromDb.map((p) => mapBackendPostToFrontend(p, communityInfo));
-                setPosts(mapped);
-                enrichAuthors(mapped);
-            } catch (e) {
-                console.error("Error loading posts", e);
+    if (!isDbBackedCommunity || !communityInfo.id) {
+        setPostsLoading(false);
+        return;
+    }
+
+    async function loadPosts() {
+        try {
+            setPostsLoading(true);
+
+            const res = await apiFetch(
+                `/api/groups/${encodeURIComponent(communityInfo.id)}/posts`,
+                { method: "GET" }
+            );
+
+            if (!res.ok) {
+                console.error("Failed to load posts", res.status);
+                setPosts([]);
+                return;
             }
+
+            const data = await res.json();
+            const postsFromDb = Array.isArray(data.posts) ? data.posts : [];
+            const mapped = postsFromDb.map((p) =>
+                mapBackendPostToFrontend(p, communityInfo)
+            );
+
+            setPosts(mapped);
+            enrichAuthors(mapped);
+        } catch (e) {
+            console.error("Error loading posts", e);
+            setPosts([]);
+        } finally {
+            setPostsLoading(false); // ✅ stop loading
         }
-        loadPosts();
-    }, [isDbBackedCommunity, communityInfo.id, enrichAuthors]);
+    }
+
+    loadPosts();
+}, [isDbBackedCommunity, communityInfo.id, enrichAuthors]);
 
     const handleNewPost = async ({ title, content, imageFile, imagePreviewUrl }) => {
         if (!isDbBackedCommunity || !communityInfo.id) {
@@ -2384,7 +2404,16 @@ React.useEffect(() => {
                             );
                         })}
 
-                        {sortedAndFilteredPosts.length === 0 && <div className="p-8 text-center text-gray-500">Loading....</div>}
+                        {postsLoading ? (
+    <div className="p-8 text-center text-gray-500">
+        Loading posts...
+    </div>
+) : sortedAndFilteredPosts.length === 0 ? (
+    <div className="p-8 text-center text-gray-500">
+        No posts yet. Be the first to post 🚀
+    </div>
+) : null}
+
                     </>
                 )}
             </div>

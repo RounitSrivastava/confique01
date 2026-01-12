@@ -50,6 +50,23 @@ const fileToBase64 = (file) =>
         fr.onerror = (err) => reject(err);
         fr.readAsDataURL(file);
     });
+const MAX_IMAGE_SIZE = 3 * 1024 * 1024; // 3 MB
+
+const validateImage = (file) => {
+  if (!file) return false;
+
+  if (!file.type.startsWith("image/")) {
+    alert("Only image files are allowed.");
+    return false;
+  }
+
+  if (file.size > MAX_IMAGE_SIZE) {
+    alert("Image too large. Max allowed size is 3 MB.");
+    return false;
+  }
+
+  return true;
+};
 
     // --- GRADIENT HELPERS ---
 // --- PROFESSIONAL GRADIENTS (SUBTLE & PREMIUM) ---
@@ -123,15 +140,14 @@ const CategoryPill = ({ name, isSelected, onClick }) => (
 );
 
 
-const TrendingCard = ({ community, gradient, onNavigate }) => {
+const TrendingCard = ({ community, gradient, onNavigate, isJoined, onJoin }) => {
   const logo = community.iconUrl || community.icon;
 
   return (
-    <div
-      onClick={() => onNavigate(community)}
-     className="w-40 min-h-[190px] flex-shrink-0 rounded-xl overflow-hidden cursor-pointer bg-black-900 border border-white/8"
-
-    >
+  <div
+  onClick={() => isJoined && onNavigate(community)}
+  className="w-40 min-h-[190px] flex-shrink-0 rounded-xl overflow-hidden bg-black-900 border border-white/8 relative"
+>
       {/* COVER IMAGE */}
       <div className="w-full h-28 bg-gray-800 overflow-hidden">
         {logo ? (
@@ -150,6 +166,7 @@ const TrendingCard = ({ community, gradient, onNavigate }) => {
       </div>
 
       {/* TEXT */}
+            {/* TEXT */}
       <div className="p-3 text-white">
         <p className="font-semibold text-sm truncate">
           {community.name}
@@ -157,6 +174,24 @@ const TrendingCard = ({ community, gradient, onNavigate }) => {
         <p className="text-xs text-gray-400 mt-1">
           {community.membersCount || 0} members
         </p>
+      </div>
+
+      {/* JOIN / JOINED */}
+      <div className="absolute bottom-3 right-3 z-10">
+        {isJoined ? (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white text-black">
+            Joined
+          </span>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onJoin(community);
+            }}
+            className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700">
+            Join
+          </button>
+        )}
       </div>
     </div>
   );
@@ -427,11 +462,13 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         setErrors((p) => ({ ...p, [name]: "" }));
     };
 
-    const handleFileChange = (e) => {
-        const { name, files } = e.target;
-        setFormData((p) => ({ ...p, [name]: files?.[0] || null }));
-    };
-
+ const handleFileChange = (e) => {
+  const { name, files } = e.target;
+  const file = files?.[0];
+  if (!file) return;
+  if (!validateImage(file)) return;
+  setFormData((p) => ({ ...p, [name]: file }));
+};
     const validate = () => {
         const e = {};
         if (!formData.name.trim()) e.name = "Required";
@@ -543,14 +580,15 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
                     {/* Upload Row */}
                     <div className="flex gap-4">
-                        <button
-                            type="button"
-                            onClick={() => logoRef.current.click()}
-                            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500"
-                        >
-                            <Image className="w-4 h-4 text-purple-400" />
-                            {formData.logoFile ? "Logo added" : "Add logo"}
-                        </button>
+                       <button
+  type="button"
+  onClick={() => logoRef.current.click()}
+  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500"
+>
+  <span className="text-red-500">*</span>
+  <Image className="w-4 h-4 text-purple-400" />
+  {formData.logoFile ? "Logo added" : "Add logo (required)"}
+</button>
 
                         <button
                             type="button"
@@ -561,6 +599,9 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
                             {formData.bannerFile ? "Banner added" : "Add banner"}
                         </button>
                     </div>
+<p className="text-xs text-gray-500 mt-2">
+  Logo is required • Max image size: 3 MB
+</p>
 
                     <input ref={logoRef} type="file" hidden accept="image/*"
                         name="logoFile" onChange={handleFileChange} />
@@ -831,7 +872,10 @@ const EditCommunityMediaForm = ({
                         type="file"
                         hidden
                         accept="image/*"
-                        onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                        onChange={(e) => {
+  const file = e.target.files?.[0];
+  if (validateImage(file)) setLogoFile(file);
+}}
                     />
 
                     <input
@@ -839,7 +883,10 @@ const EditCommunityMediaForm = ({
                         type="file"
                         hidden
                         accept="image/*"
-                        onChange={(e) => setBannerFile(e.target.files?.[0] || null)}
+                        onChange={(e) => {
+  const file = e.target.files?.[0];
+  if (validateImage(file)) setBannerFile(file);
+}}
                     />
 
                     {/* Helper text */}
@@ -902,6 +949,14 @@ function ExplorePage({
 
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+    React.useEffect(() => {
+  const view = searchParams.get("view");
+
+  if (view === "create") {
+    setIsCreateModalOpen(true);
+  }
+}, [searchParams?.toString()]);
+
     const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
     const [isEditMediaModalOpen, setIsEditMediaModalOpen] = React.useState(false);
     const [selectedCommunityForEdit, setSelectedCommunityForEdit] = React.useState(null);
@@ -1128,7 +1183,7 @@ React.useEffect(() => {
 
     try {
     const payload = allCommunities.map((c) => ({
-  id: c.id,
+  id: String(c.id || c._id),   // 🔥 normalize id
   name: c.name,
   slug: c.slug,
   description: c.description || "",
@@ -1372,22 +1427,29 @@ React.useEffect(() => {
                     )}
                 </div>
 
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                    {displayTrending.map((community, index) => (
+               <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+  {displayTrending.length > 0 ? (
+    displayTrending.map((community, index) => {
+  const isJoined =
+    joinedCommunities[community.id] || community.createdByCurrentUser;
+
+  return (
     <TrendingCard
-    key={community.id}
-    community={community}
-    gradient={
-      PROFESSIONAL_GRADIENTS[
-        index % PROFESSIONAL_GRADIENTS.length
-      ]
-    }
-    onNavigate={handleNavigate}
-  />
-))}
-
-
-                </div>
+      key={community.id}
+      community={community}
+      gradient={PROFESSIONAL_GRADIENTS[index % PROFESSIONAL_GRADIENTS.length]}
+      onNavigate={handleNavigate}
+      isJoined={isJoined}
+      onJoin={handleJoin}
+    />
+  );
+})
+  ) : (
+    <div className="w-full py-10 text-center text-gray-500">
+      No communities yet. Create one to get started 🚀
+    </div>
+  )}
+</div>
             </section>
 
             <hr className="border-gray-800 my-6" />
@@ -1413,8 +1475,13 @@ React.useEffect(() => {
                         )}
                     </div>
 
-                    {renderCommunityList(displayJoined)}
-
+                    {displayJoined.length > 0 ? (
+  renderCommunityList(displayJoined)
+) : (
+  <p className="text-center text-gray-500 py-8">
+    You haven’t joined any communities yet.
+  </p>
+)}
                     {searchTerm && userJoinedCommunities.length === 0 && (
                         <p className="text-center text-gray-500 py-4">
                             No joined communities match "{searchTerm}"
@@ -1447,7 +1514,13 @@ React.useEffect(() => {
                     )}
                 </div>
 
-                {renderCommunityList(displayRecommended)}
+                {displayRecommended.length > 0 ? (
+  renderCommunityList(displayRecommended)
+) : (
+  <p className="text-center text-gray-500 py-8">
+    No communities found. Create one to get started 🚀
+  </p>
+)}
             </section>
         </div>
         </div>

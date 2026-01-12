@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-
+const WEB3FORMS_KEY = "7d16d42f-1ddc-4c10-8fde-00a2a54a797d";
 export default function SettingsPage() {
   const [feedback, setFeedback] = useState("");
   const [complaint, setComplaint] = useState("");
+  const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null); // { type: "feedback" | "complaint", message: string }
 
   const saveToLocalStorage = (key, value) => {
@@ -46,6 +47,36 @@ export default function SettingsPage() {
       message: "Your issue has been recorded. Confique will look into it quickly.",
     });
   };
+const sendToWeb3Forms = async (type, message) => {
+  setLoading(true);
+
+  try {
+    const res = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_KEY,
+        subject: `Confique ${type}`,
+        from_name: "Confique User",
+        message: message,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert(`${type} sent successfully`);
+      return true;
+    } else {
+      throw new Error("Web3Forms failed");
+    }
+  } catch (err) {
+    alert("Submission failed. Try again.");
+    return false;
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 text-white">
@@ -89,15 +120,18 @@ export default function SettingsPage() {
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
           />
-
-          <button
-  onClick={handleSubmitFeedback}
-  disabled={!feedback.trim()}
-  className="mt-4 w-full py-2.5 rounded-xl text-sm font-medium 
-  bg-gradient-to-r from-purple-500 to-purple-700 transition"
->
-  Submit Feedback
-</button>
+<div className="flex justify-center mt-4">
+  <button
+    disabled={!feedback || loading}
+    onClick={async () => {
+      const ok = await sendToWeb3Forms("Feedback", feedback);
+      if (ok) setFeedback("");
+    }}
+    className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-full disabled:opacity-50"
+  >
+    {loading ? "Sending..." : "Submit Feedback"}
+  </button>
+</div>
 
         </div>
 
@@ -116,16 +150,18 @@ export default function SettingsPage() {
             value={complaint}
             onChange={(e) => setComplaint(e.target.value)}
           />
-
-         <button
-  onClick={handleSubmitComplaint}
-  disabled={!complaint.trim()}
-  className="mt-4 w-full py-2.5 rounded-xl text-sm font-medium 
-  bg-gradient-to-r from-purple-500 to-purple-700 transition"
->
-  Submit Complaint
-</button>
-
+          <div className="flex justify-center mt-4">
+  <button
+    disabled={!complaint || loading}
+    onClick={async () => {
+      const ok = await sendToWeb3Forms("Complaint", complaint);
+      if (ok) setComplaint("");
+    }}
+    className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-full disabled:opacity-50"
+  >
+    {loading ? "Sending..." : "Submit Complaint"}
+  </button>
+</div>
         </div>
       </div>
     </div>

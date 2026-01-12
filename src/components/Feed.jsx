@@ -35,24 +35,38 @@ const CATEGORY_GRADIENT_VARIANTS = {
 /* -------------------------
    Helpers
 ------------------------- */
-const readJsonLocal = (key) => {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+const fetchCommunities = async () => {
+  const res = await fetch("/api/groups", {
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!res.ok) return [];
+
+  const data = await res.json();
+  return data.groups || data;   // ← THIS is the fix
 };
 
-const readCommunitiesFromStorage = () => {
-  const keys = ["confique:allCommunities", "confique:communities", "recommendedCommunities"];
-  for (const k of keys) {
-    const v = readJsonLocal(k);
-    if (Array.isArray(v) && v.length) return v;
-  }
-  return null;
+const fetchJoinedFromMe = async () => {
+  const res = await fetch("/api/me", {
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!res.ok) return {};
+
+  const data = await res.json();
+  const user = data.user;
+
+  if (!user) return {};
+
+  const joined = user.joinedGroups || [];
+  const created = user.createdGroups || [];
+  const map = {};
+  [...joined, ...created].forEach((g) => {
+    map[String(g._id || g.id)] = true;
+  });
+  return map;
 };
 
 const slugify = (s = "") =>
@@ -84,7 +98,7 @@ const normalizeCommunities = (arr = []) =>
     const id = String(c.id ?? c._id ?? `tmp-${idx}`);
     const name = c.name || c.title || `Community ${id}`;
     const membersCount = Number(c.membersCount ?? c.members_count ?? 0);
-    const members = c.members || (membersCount ? `${membersCount.toLocaleString()} members` : c.members || "0 members");
+    const members = `${membersCount.toLocaleString()} members`;
     const bannerUrl = c.bannerUrl || c.hero || c.image || c.banner || null;
     const iconUrl = c.iconUrl || c.icon || null;
     const description = c.description || c.shortDescription || c.desc || "";
@@ -109,7 +123,7 @@ const normalizeCommunities = (arr = []) =>
 ------------------------- */
 const DEFAULT_BANNER = "https://placehold.co/800x240/111827/ffffff?text=POSTER";
 
-function CommunityCard({ c, index = 0, onOpen, className = "" }) {
+function CommunityCard({ c, index = 0, onOpen, onJoin, isJoined, className = "" }) {
   const bannerImg = null; // banner disabled, logo-first design
 const logoImg = c.iconUrl || null;
   const description = c.description || "";
@@ -132,7 +146,7 @@ const logoImg = c.iconUrl || null;
 
   return (
     <article
-      onClick={() => onOpen && onOpen(c)}
+  onClick={() => isJoined && onOpen && onOpen(c)}
 className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-white/15 hover:border-white/30 cursor-pointer transition-all flex flex-col h-full ${className}`}
 
     >
@@ -179,10 +193,27 @@ className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-wh
 
           {description}
         </p>
-
         <p className="mt-3 lg:mt-2 text-sm lg:text-xs text-gray-400 font-medium">
-          {c.members || (typeof c.membersCount === "number" ? `${c.membersCount.toLocaleString()} members` : "0 members")}
-        </p>
+  {c.members || (typeof c.membersCount === "number" ? `${c.membersCount.toLocaleString()} members` : "0 members")}
+</p>
+
+<div className="mt-3 flex justify-end">
+  {isJoined ? (
+    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-white text-black">
+      Joined
+    </span>
+  ) : (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        onJoin(c);
+      }}
+      className="px-3 py-1 text-xs font-semibold rounded-full bg-purple-600 hover:bg-purple-700 text-white"
+    >
+      Join
+    </button>
+  )}
+</div>
       </div>
     </article>
   );
@@ -197,8 +228,8 @@ function FeaturedEventSingle({ event, onViewDetails }) {
 
   return (
     <div className="relative w-full">
-      <div className="rounded-2xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] bg-black">
-        <div className="relative w-full h-[240px] sm:h-[280px] md:h-[300px] lg:h-[320px]">
+      <div className="rounded-[22px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] bg-transparent">
+        <div className="relative w-full h-[240px] sm:h-[280px] md:h-[300px] lg:h-[320px] rounded-[22px] overflow-hidden">
           <img
             src={event.poster}
             alt={event.title}
@@ -283,7 +314,10 @@ const FeaturedCarousel = ({ events = [], interval = 3000, onViewDetails }) => {
   const currentEvent = events[index];
 
   return (
-    <div className="relative overflow-visible" ref={containerRef}>
+   <div
+  ref={containerRef}
+  className="relative overflow-hidden"
+>
       <button aria-label="Previous" onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
         <ChevronLeft className="w-5 h-5" />
       </button>
@@ -291,12 +325,15 @@ const FeaturedCarousel = ({ events = [], interval = 3000, onViewDetails }) => {
         <ChevronRight className="w-5 h-5" />
       </button>
 
-      <div onClick={() => onViewDetails && onViewDetails(currentEvent.id)}>
-        <FeaturedEventSingle event={currentEvent} onViewDetails={onViewDetails} />
-      </div>
+     <div
+  onClick={() => onViewDetails && onViewDetails(currentEvent.id)}
+  className="rounded-[22px] overflow-hidden"
+>
+  <FeaturedEventSingle event={currentEvent} onViewDetails={onViewDetails} />
+</div>
 
       {eventsCount > 1 && (
-        <div className="mt-6 flex justify-center space-x-3">
+         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-3">
           {events.map((_, i) => (
            <button
   key={i}
@@ -347,9 +384,68 @@ const fetchEventsFromAPI = async () => {
   }
 };
 
+function EventCard({ event, onOpen }) {
+  return (
+    <div
+      onClick={() => onOpen(event.id)}
+      className="rounded-2xl overflow-hidden bg-[#0d0d0d] border border-white/10 hover:border-white/25 cursor-pointer transition shadow-lg"
+    >
+      <div className="h-40 w-full overflow-hidden">
+        <img
+          src={event.poster}
+          alt={event.title}
+          className="w-full h-full object-cover"
+          onError={(e) => (e.target.src = "https://placehold.co/600x400")}
+        />
+      </div>
+
+      <div className="p-4">
+        <p className="text-white font-semibold line-clamp-1">
+          {event.title}
+        </p>
+        <p className="text-xs text-gray-400 mt-1">
+          {event.datetime}
+        </p>
+        <p className="text-xs text-gray-500">
+          {event.location}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function EventRow({ event, onOpen }) {
+  return (
+    <div
+      onClick={() => onOpen(event.id)}
+      className="flex gap-4 p-4 rounded-xl bg-[#0d0d0d] border border-white/10 hover:border-white/25 cursor-pointer transition"
+    >
+      <img
+        src={event.poster}
+        className="w-28 h-20 object-cover rounded-lg"
+        onError={(e) => (e.target.src = "https://placehold.co/300x200")}
+      />
+
+      <div className="flex flex-col flex-grow">
+        <p className="font-semibold text-white line-clamp-1">
+          {event.title}
+        </p>
+        <p className="text-xs text-gray-400 mt-1">
+          {event.datetime}
+        </p>
+        <p className="text-xs text-gray-500">
+          {event.location}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function Feed({ communitiesProp = null, eventsProp = null }) {
   const router = useRouter();
+ const [joinedMap, setJoinedMap] = React.useState({});
+  const [threeCardEvents, setThreeCardEvents] = React.useState([]);
+  const [remainingEvents, setRemainingEvents] = React.useState([]);
 
   const [communitiesState, setCommunitiesState] = React.useState(() => {
     if (communitiesProp && Array.isArray(communitiesProp) && communitiesProp.length) {
@@ -359,20 +455,33 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
   });
 
   const [featuredEventsState, setFeaturedEventsState] = React.useState([]);
+  const allEventsRef = React.useRef([]);
+
   React.useEffect(() => {
   let mounted = true;
 
-  const loadEvents = async () => {
-    const allEvents = await fetchEventsFromAPI();
-    if (!mounted) return;
+ const loadEvents = async () => {
+  const allEvents = await fetchEventsFromAPI();
+  if (!mounted) return;
 
-    const featured = allEvents.filter((ev) => ev.isFeatured);
+  allEventsRef.current = allEvents;
 
-    setFeaturedEventsState(
-      featured.length ? featured : allEvents.slice(0, 3)
-    );
-  };
+  const featured = allEvents.filter(ev => ev.isFeatured);
+  const nonFeatured = allEvents.filter(ev => !ev.isFeatured);
 
+  // 🟣 CAROUSEL
+  const carouselEvents =
+    featured.length > 0 ? featured.slice(0, 2) : allEvents.slice(0, 2);
+
+  setFeaturedEventsState(carouselEvents);
+
+  // 🟣 3 CARDS (never from carousel)
+  const carouselIds = new Set(carouselEvents.map(e => String(e.id)));
+  const cards = allEvents.filter(e => !carouselIds.has(String(e.id)));
+
+  setThreeCardEvents(cards.slice(0, 3));
+  setRemainingEvents(cards.slice(3,5));
+};
   loadEvents();
 
   return () => {
@@ -380,104 +489,28 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
   };
 }, []);
 
+React.useEffect(() => {
+  let mounted = true;
 
-  // initial load: prefer confique:allCommunities or other snapshots
-  React.useEffect(() => {
-    if (communitiesState && communitiesState.length) return;
-    const stored = readCommunitiesFromStorage();
-    if (Array.isArray(stored) && stored.length) {
-      setCommunitiesState(normalizeCommunities(stored));
-    } else {
-      // fallback minimal defaults (I added 4 so there are extras to hide)
-      setCommunitiesState(normalizeCommunities([
-        { id: "c1", name: "Fitness Fanatics", description: "Workouts and nutrition advice.", membersCount: 55000, hero: "/community-1.jpg", category: "Sports" },
-        { id: "c2", name: "Crypto Hub", description: "News, trading strategies and research.", membersCount: 32000, hero: null, category: "Tech" },
-        { id: "c3", name: "Tech Innovators", description: "Discussions on next-gen tech.", membersCount: 23700, hero: "/community-3.jpg", category: "Tech" },
-        { id: "c4", name: "Web Dev", description: "webde is a key of success", membersCount: 1, hero: null, category: "Tech" },
-      ]));
-    }
+  const load = async () => {
+   const [groups, joined] = await Promise.all([
+  fetchCommunities(),
+  fetchJoinedFromMe(),
+]);
 
+    if (!mounted) return;
+
+    setCommunitiesState(normalizeCommunities(groups));
+    setJoinedMap(joined || {});
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
     
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // listen to storage & custom events to update (so ExplorePage changes reflect here)
-  React.useEffect(() => {
-    const onStorage = (e) => {
-      if (!e) return;
-      try {
-        if (e.key === "confique:allCommunities" || e.key === "confique:communities" || e.key === "recommendedCommunities") {
-          const parsed = JSON.parse(e.newValue || "[]");
-          if (Array.isArray(parsed)) {
-            setCommunitiesState(normalizeCommunities(parsed));
-          }
-        }
-       
-      } catch {
-        // ignore parse errors
-      }
-    };
-
-    const onCustomCommunities = (evt) => {
-      const payload = evt?.detail;
-      if (!payload) return;
-      const arr = Array.isArray(payload) ? payload : [payload];
-      setCommunitiesState((prev) => {
-        const merged = normalizeCommunities([...prev, ...arr]);
-        // dedupe by slug or id
-        const map = new Map();
-        merged.forEach((c) => map.set(c.slug || c.id, c));
-        return Array.from(map.values());
-      });
-    };
-
-   
-
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("confique:communities-updated", onCustomCommunities);
-    
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("confique:communities-updated", onCustomCommunities);
-    };
-  }, []);
-
-  // POLL: periodically check localStorage for updates (only when tab visible).
-  React.useEffect(() => {
-    let intervalId = null;
-    const POLL_MS = 5000;
-
-    const pollFn = () => {
-      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
-      const stored = readCommunitiesFromStorage();
-      if (!Array.isArray(stored)) return;
-      const normalized = normalizeCommunities(stored);
-
-      // quick shallow compare by length + lastUpdated-like heuristic (ids + descriptions)
-      const cur = communitiesState || [];
-      const sameLength = normalized.length === cur.length;
-      const quickEqual =
-        sameLength &&
-        normalized.every((n, i) => {
-          const c = cur[i];
-          if (!c) return false;
-          return n.id === c.id && (n.description || "") === (c.description || "") && (n.membersCount || 0) === (c.membersCount || 0);
-        });
-
-      if (!quickEqual) {
-        setCommunitiesState(normalized);
-      }
-    };
-
-    intervalId = setInterval(pollFn, POLL_MS);
-    // run once immediately
-    pollFn();
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [communitiesState]);
-
   const goToCommunity = (community) => {
     const slug = community?.slug || slugify(community?.name || "");
     router.push(`/groups?invited=${encodeURIComponent(slug)}`);
@@ -487,8 +520,35 @@ export default function Feed({ communitiesProp = null, eventsProp = null }) {
     if (!eventId) return;
     router.push(`/events?event=${encodeURIComponent(eventId)}`);
   };
-  
+ const handleJoin = async (community) => {
+  const email = localStorage.getItem("userEmail");
+  if (!email) return;
 
+  try {
+    const res = await fetch(`/api/groups/${community.id}/join`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userEmail: email }),
+    });
+
+    if (!res.ok) return;
+
+    // Mark joined
+    setJoinedMap((prev) => ({ ...prev, [community.id]: true }));
+
+    // Increase members locally
+    setCommunitiesState((prev) =>
+      prev.map((c) =>
+        c.id === community.id
+          ? { ...c, membersCount: c.membersCount + 1 }
+          : c
+      )
+    );
+  } catch (e) {
+    console.error("Join failed", e);
+  }
+};
   // <-- IMPORTANT: show only first 3 communities (one row)
 const visibleCommunities = (communitiesState || []).slice(0, 3);
 
@@ -513,16 +573,18 @@ return (
         <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleCommunities.map((c, index) => (
    <CommunityCard
-    key={c.id || c.slug || c.name}
-    c={{
-      ...c,
-      slug: c.slug || slugify(c.name),
-      members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
-      description: c.description || "",
-    }}
-    index={index}
-    onOpen={goToCommunity}
-    />
+  key={c.id || c.slug || c.name}
+  c={{
+    ...c,
+    slug: c.slug || slugify(c.name),
+    members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
+    description: c.description || "",
+  }}
+  index={index}
+  onOpen={goToCommunity}
+  onJoin={handleJoin}
+  isJoined={!!joinedMap[c.id]}
+/>
 ))}
         </div>
 
@@ -530,18 +592,20 @@ return (
         <div className="sm:hidden mt-2">
           <div className="grid grid-flow-col auto-cols-[minmax(240px,1fr)] gap-6 overflow-x-auto pb-4 snap-x snap-mandatory -mx-4 px-4">
             {visibleCommunities.map((c, index) => (
-  <CommunityCard
-    key={c.id || c.slug || index}
-    c={{
-      ...c,
-      slug: c.slug || slugify(c.name),
-      members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
-      description: c.description || "",
-    }}
-    index={index}
-    onOpen={goToCommunity}
-    className="min-h-[300px]"
-  />
+ <CommunityCard
+  key={c.id || c.slug || index}
+  c={{
+    ...c,
+    slug: c.slug || slugify(c.name),
+    members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
+    description: c.description || "",
+  }}
+  index={index}
+  onOpen={goToCommunity}
+  onJoin={handleJoin}
+  isJoined={!!joinedMap[c.id]}
+  className="min-h-[300px]"
+/>
 ))}
 
           </div>
@@ -559,23 +623,43 @@ return (
         </button>
       </div>
 
-      <section className="mb-12">
-        {featuredEventsState && featuredEventsState.length > 0 ? (
-          <FeaturedCarousel
-            events={featuredEventsState}
-            interval={3000}
-            onViewDetails={viewEventDetails}
-          />
-        ) : (
-          <div className="p-6 bg-gray-900 rounded-lg text-center text-gray-400">
-            No featured events right now.
-          </div>
-        )}
-      </section>
+   <section className="mb-12">
+
+  {/* CAROUSEL */}
+  {featuredEventsState.length > 0 && (
+    <div className="mb-12">
+  <FeaturedCarousel
+    events={featuredEventsState}
+    interval={3000}
+    onViewDetails={viewEventDetails}
+  />
+</div>
+  )}
+
+  {/* 3 FEATURED EVENT CARDS */}
+ {/* 3 NON-FEATURED EVENT CARDS */}
+<div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  {threeCardEvents.map((ev) => (
+    <EventCard key={ev.id} event={ev} onOpen={viewEventDetails} />
+  ))}
+</div>
+
+  {/* REMAINING EVENTS (VERTICAL) */}
+  {remainingEvents.length > 0 && (
+    <div className="mt-10 space-y-4">
+      {remainingEvents.map((ev) => (
+        <EventRow
+          key={ev.id}
+          event={ev}
+          onOpen={viewEventDetails}
+        />
+      ))}
+    </div>
+  )}
+</section>
 
     </div>
   </div>
   </div>
 );
-
 }

@@ -81,13 +81,13 @@ window.location.href = "/";
   };
 
   return (
-    <main className="relative min-h-screen bg-black text-white overflow-hidden">
+    <main className="fixed inset-0 bg-black text-white overflow-hidden">
       {/* BACKGROUND */}
       <img
-        src="/bgconf.jpeg"
-        alt="Background"
-        className="fixed inset-0 h-full w-full object-cover"
-      />
+  src="/bgconf.jpeg"
+  alt="Background"
+  className="absolute inset-0 w-full h-full object-cover"
+ />
       <div className="fixed inset-0 bg-black/40" />
 
       {/* LOADING */}
@@ -98,7 +98,7 @@ window.location.href = "/";
       )}
 
       {/* MAIN */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center sm:justify-start px-4 sm:px-0">
+      <div className="relative z-10 h-full flex items-center justify-center sm:justify-start px-4 sm:px-0">
         <div className="w-full max-w-[380px] ml-0 sm:ml-10 lg:ml-14">
           {/* CARD */}
           <div

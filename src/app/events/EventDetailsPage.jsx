@@ -191,6 +191,7 @@ const EventDetailsPage = ({
     date,
     category,
     tagline,
+    description,
     hostedBy,
     eligibility,
     prizes,
@@ -645,21 +646,24 @@ const EventDetailsPage = ({
 
             <div className="flex items-center justify-end space-x-3 pt-2">
               {!showBilling ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!validateForm()) return;
-                    if (isFree === true) {
-                      handleRegistrationSubmit();
-                    } else {
-                      setShowBilling(true);
-                    }
-                  }}
-                  className="px-6 py-2 rounded-lg text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-all"
-                >
-                  Continue
-                </button>
-              ) : (
+  <button
+    type="button"
+    onClick={() => {
+      if (!validateForm()) return;
+
+      // If no payment step → directly submit
+      if (isFree || pricingMode === "free") {
+        handleRegistrationSubmit();
+      } else {
+        setShowBilling(true);
+      }
+    }}
+    className="px-6 py-2 rounded-lg text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-all"
+  >
+    {(isFree || pricingMode === "free") ? "Submit" : "Continue"}
+  </button>
+) : (
+
                 <button
                   type="submit"
                   disabled={!isFree && !showBillAfterRef}
@@ -730,9 +734,9 @@ const EventDetailsPage = ({
         return (
           <div className="space-y-8">
             <SectionTitle icon={ClipboardList}>{title} Overview</SectionTitle>
-            <p className="text-gray-300 text-lg leading-relaxed">
-              {tagline || "No short description provided."}
-            </p>
+           <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
+  {description || "No detailed description provided."}
+</p>
             <p className="text-gray-300 text-lg leading-relaxed">
               The event is scheduled for{" "}
               <span className="font-semibold text-purple-300">

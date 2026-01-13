@@ -241,6 +241,7 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted, initialData 
     tags: initialData?.tags || ["Free"], 
     category: initialData?.category || "",
     tagline: initialData?.tagline || "",
+    description: initialData?.description || "",
     hostedBy: initialData?.hostedBy || "", 
     eligibility: initialData?.eligibility || "",
     isOnline: initialData?.isOnline || false,
@@ -268,6 +269,7 @@ paymentCurrency: CURRENCY_CODE,
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   // ✅ CRITICAL FIX: Update state if initialData changes (ensures form fills after data fetch)
   useEffect(() => {
@@ -283,6 +285,7 @@ paymentCurrency: CURRENCY_CODE,
         tags: initialData.tags || ["Free"],
         category: initialData.category || "",
         tagline: initialData.tagline || "",
+        description: initialData.description || "",
         hostedBy: initialData.hostedBy || "",
         eligibility: initialData.eligibility || "",
         isOnline: initialData.isOnline || false,
@@ -471,6 +474,7 @@ paymentCurrency: CURRENCY_CODE,
       const eventPayload = {
         title: eventData.title,
         tagline: eventData.tagline,
+        description: eventData.description,
         category: eventData.category,
         tags: eventData.tags,
         date: eventData.date,
@@ -536,7 +540,41 @@ ticketTypes: eventData.ticketTypes,
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
             <SectionTitle icon={ClipboardList}>Basic Details</SectionTitle>
             <InputField label="Event Title" name="title" value={eventData.title} onChange={handleInputChange} placeholder="e.g., Global Tech Summit 2026" required />
-            <InputField label="Tagline / Short Description" name="tagline" value={eventData.tagline} onChange={handleInputChange} placeholder="e.g., Where News Gets Twisted and AI Gets Awesome!" />
+            <InputField
+  label="Tagline (Short line for card & header)"
+  name="tagline"
+  value={eventData.tagline}
+  onChange={handleInputChange}
+  placeholder="e.g., India’s Biggest Tech Battle"
+  required
+/>
+
+<div className="space-y-2">
+  <label className="text-sm font-medium text-gray-400 block">
+    Full Event Description
+  </label>
+
+  <div className="relative">
+    <textarea
+      name="description"
+      value={eventData.description}
+      onChange={handleInputChange}
+      placeholder="Write complete details about the event, rules, format, rewards, etc."
+      rows={showFullDescription ? 6 : 1}
+      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none transition-all"
+    />
+
+    {eventData.description.length > 80 && (
+      <button
+        type="button"
+        onClick={() => setShowFullDescription(!showFullDescription)}
+        className="absolute right-3 bottom-2 text-xs text-purple-400 hover:text-purple-300"
+      >
+        {showFullDescription ? "See less ▲" : "See more ▼"}
+      </button>
+    )}
+  </div>
+</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SelectField label="Category" name="category" value={eventData.category} onChange={handleInputChange} options={categories} required />
               <InputField label="Main Event Date" name="date" type="date" value={eventData.date} onChange={handleInputChange} required />

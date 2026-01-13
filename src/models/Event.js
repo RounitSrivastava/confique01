@@ -56,6 +56,10 @@ const EventSchema = new mongoose.Schema(
       default: "",
     },
 
+    description: {              
+  type: String,
+  default: "",
+},
     category: {
       type: String,
       required: true,

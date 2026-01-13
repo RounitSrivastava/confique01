@@ -97,39 +97,53 @@ const RelatedEventCard = ({ event, onDetailsClick }) => (
     className="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-transform duration-300 hover:scale-[1.02] cursor-pointer shadow-lg hover:shadow-purple-500/20"
     onClick={() => onDetailsClick(event.id)}
   >
-    <div className="flex items-center space-x-3 mb-4">
-      <TrendingUp className="w-5 h-5 text-green-400" />
-      <h4 className="text-xl font-extrabold text-white truncate">
-        {event.title}
-      </h4>
+    <div className="flex items-start justify-between mb-4">
+      {/* LEFT: Trending + Title */}
+      <div className="flex items-center space-x-3">
+        <TrendingUp className="w-5 h-5 text-green-400 flex-shrink-0" />
+
+        <h4 className="text-lg font-extrabold text-white truncate max-w-[180px]">
+          {event.title}
+        </h4>
+      </div>
+
+      {/* RIGHT: Event Poster */}
+      <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-800 border border-gray-700 flex-shrink-0">
+        <img
+          src={event.poster || event.banner}
+          alt={event.title}
+          className="w-full h-full object-cover"
+        />
+      </div>
     </div>
 
-    <div className="text-gray-400 text-base space-y-3">
+    {/* Info */}
+    <div className="text-gray-400 text-sm space-y-3">
       <div className="flex items-center">
-        <Calendar className="w-5 h-5 mr-4 flex-shrink-0" />
+        <Calendar className="w-4 h-4 mr-3 flex-shrink-0" />
         <span className="flex justify-between w-full">
-          <span className="w-24 flex-shrink-0">Date:</span>
-          <span className="font-medium text-white text-right">
+          <span>Date:</span>
+          <span className="font-medium text-white">
             {event.date?.split(",")[0]?.trim() || "TBD"}
           </span>
         </span>
       </div>
 
       <div className="flex items-center">
-        <Compass className="w-5 h-5 mr-4 flex-shrink-0" />
+        <Compass className="w-4 h-4 mr-3 flex-shrink-0" />
         <span className="flex justify-between w-full">
-          <span className="w-24 flex-shrink-0">Category:</span>
-          <span className="font-medium text-purple-400 text-right">
+          <span>Category:</span>
+          <span className="font-medium text-purple-400">
             {event.category}
           </span>
         </span>
       </div>
 
       <div className="flex items-center">
-        <Eye className="w-5 h-5 mr-4 flex-shrink-0" />
+        <Eye className="w-4 h-4 mr-3 flex-shrink-0" />
         <span className="flex justify-between w-full">
-          <span className="w-24 flex-shrink-0">Impressions:</span>
-          <span className="font-medium text-white text-right">
+          <span>Impressions:</span>
+          <span className="font-medium text-white">
             {event.impressions?.toLocaleString() || "N/A"}
           </span>
         </span>
@@ -137,6 +151,7 @@ const RelatedEventCard = ({ event, onDetailsClick }) => (
     </div>
   </div>
 );
+
 
 const EventDetailsPage = ({
   event: displayEvent,

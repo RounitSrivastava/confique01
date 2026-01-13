@@ -81,7 +81,7 @@ const sendToWeb3Forms = async (type, message) => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 text-white">
       {/* HEADING */}
-      <h1 className="text-3xl font-bold mb-3">Settings</h1>
+      <h1 className="text-3xl font-bold mb-3">Help & Support</h1>
 
       {/* INFO TEXT */}
       <p className="text-sm text-gray-400 mb-6">

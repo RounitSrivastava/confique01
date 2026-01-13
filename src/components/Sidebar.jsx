@@ -179,7 +179,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
             className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-200"
           >
             <Settings className="h-4 w-4" />   {/* ✅ ICON ADDED */}
-            <span>Settings</span>
+            <span>Help & Support</span>
           </Link>
         </nav>
 

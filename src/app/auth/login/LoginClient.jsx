@@ -84,7 +84,7 @@ window.location.href = "/";
     <main className="fixed inset-0 bg-black text-white overflow-hidden">
       {/* BACKGROUND */}
       <img
-  src="/bgconf.jpeg"
+  src="/website bg.png"
   alt="Background"
   className="absolute inset-0 w-full h-full object-cover"
  />

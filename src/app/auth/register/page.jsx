@@ -94,7 +94,7 @@ export default function RegisterPage() {
     <main className="relative min-h-screen bg-black text-white overflow-hidden">
       {/* BACKGROUND */}
       <img
-        src="/bgconf.jpeg"
+        src="/website bg.png"
         alt="Background"
         className="fixed inset-0 h-full w-full object-cover"
       />

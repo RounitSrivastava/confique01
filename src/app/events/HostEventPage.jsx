@@ -6,6 +6,7 @@ import {
   Calendar, User, Plus, X, ClipboardList, Gift, ChevronDown, ChevronUp,
   CheckCircle, ArrowLeft, MessageSquare, Menu, Upload, ExternalLink, QrCode, Trash2
 } from "lucide-react";
+const HOST_GUIDE_DOC_URL = "https://docs.google.com/document/d/1G4t0GbXgSK4DfZxK8OWpqUrF4AeeRaDr2HXM_ZOFOKk/edit?usp=sharing";
 
 // Re-using the categories
 const categories = [
@@ -535,7 +536,19 @@ ticketTypes: eventData.ticketTypes,
 
         <SectionTitle className="justify-center">{isEditMode ? "Edit Your Event 📝" : "Host Your Event 🚀"}</SectionTitle>
         <p className="text-center text-gray-400 mb-10">Linking this event to your profile: <span className="text-purple-400 font-bold">{eventData.hostedBy || "Syncing profile..."}</span></p>
-
+<div className="flex justify-center mb-10">
+  <a
+    href={HOST_GUIDE_DOC_URL}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center gap-2
+           text-gray-400 hover:text-gray-300 transition"
+  >
+    <BookOpen className="w-5 h-5" />
+    Confique Event Host Guide
+    <ExternalLink className="w-4 h-4" />
+  </a>
+</div>
         <form onSubmit={handleSubmit} className="space-y-10">
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
             <SectionTitle icon={ClipboardList}>Basic Details</SectionTitle>

@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import {
   Zap, Code, Shirt, Medal, Compass, BookOpen, Clock, MapPin,
   Calendar, User, Plus, X, ClipboardList, Gift, ChevronDown, ChevronUp,
-  CheckCircle, ArrowLeft, MessageSquare, Menu, Upload, ExternalLink, QrCode, Trash2
+  CheckCircle, ArrowLeft, MessageSquare, Menu, Upload, ExternalLink, QrCode, Trash2,Briefcase 
 } from "lucide-react";
 const HOST_GUIDE_DOC_URL = "https://docs.google.com/document/d/1G4t0GbXgSK4DfZxK8OWpqUrF4AeeRaDr2HXM_ZOFOKk/edit?usp=sharing";
 
 // Re-using the categories
 const categories = [
   { name: "Tech", icon: Code },
-  { name: "Fashion", icon: Shirt },
+{ name: "Entrepreneurship", icon: Briefcase },
   { name: "Competition", icon: Medal },
   { name: "Cultural", icon: Compass },
   { name: "Seminar", icon: BookOpen },

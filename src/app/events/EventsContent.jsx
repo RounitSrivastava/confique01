@@ -20,7 +20,7 @@ import AllEventsPage from "./AllEventsPage";
 import {
   Search, User, Zap, Code, Shirt, Medal, Compass, BookOpen,
   Clock, MapPin, Calendar, X, Heart, Share2, ChevronRight,
-  ChevronLeft, Eye, Home, Users, CalendarDays, Plus, Clipboard, Settings, LogOut,Rocket,
+  ChevronLeft, Eye, Home, Users, CalendarDays, Plus, Clipboard, Settings, LogOut,Rocket,Briefcase 
 } from "lucide-react";
 // --- AUTH HELPER ---
 const fetchMeData = async () => {
@@ -213,7 +213,7 @@ const MOCK_EVENTS = [
 export const categories = [
   { name: "All Events", icon: Zap },
   { name: "Tech", icon: Code },
-  { name: "Fashion", icon: Shirt },
+  { name: "Entrepreneurship", icon: Briefcase },
   { name: "Competition", icon: Medal },
   { name: "Cultural", icon: Compass },
   { name: "Seminar", icon: BookOpen },

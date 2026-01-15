@@ -260,7 +260,7 @@ const CategoryButton = ({ name, Icon, isActive, onClick }) => (
     onClick={onClick}
     className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 whitespace-nowrap ${
       isActive
-        ? "bg-purple-600 text-white shadow-lg shadow-purple-500/50"
+        ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20"
         : "text-gray-300 bg-gray-800 hover:bg-gray-700 hover:text-white"
     }`}
   >

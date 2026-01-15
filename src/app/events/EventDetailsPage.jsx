@@ -473,7 +473,7 @@ const EventDetailsPage = ({
       return {
         text: "Go to External Registration",
         className:
-          "w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/30 flex items-center justify-center",
+          "w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/15 flex items-center justify-center",
         disabled: false,
         Icon: ExternalLink,
       };

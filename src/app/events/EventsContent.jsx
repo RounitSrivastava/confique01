@@ -23,11 +23,6 @@ import {
   ChevronLeft, Eye, Home, Users, CalendarDays, Plus, Clipboard, Settings, LogOut,Rocket,Briefcase 
 } from "lucide-react";
 // --- AUTH HELPER ---
-const calculateImpressions = (clicks) => {
-  if (clicks === 0) return Math.floor(Math.random() * 500); // 0–500
-  return Math.min(500 + clicks * 40, 50000);
-};
-
 const fetchMeData = async () => {
     try {
         const res = await fetch("/api/me", { cache: "no-store" });
@@ -707,14 +702,10 @@ useEffect(() => {
       const map = new Map();
       merged.forEach(ev => map.set(ev.id, ev));
       
-      const finalEvents = Array.from(map.values()).map(ev => {
-  const clicks = ev.clicks ?? 0;
-  return {
-    ...ev,
-    clicks,
-    impressions: calculateImpressions(clicks),
-  };
-}).sort((a, b) => b.impressions - a.impressions);
+      const finalEvents = Array.from(map.values()).map(ev => ({
+        ...ev,
+        impressions: typeof ev.impressions === 'number' ? ev.impressions : Math.floor(Math.random() * 2000) + 800
+      })).sort((a, b) => b.impressions - a.impressions);
 
       if (isMounted) {
         setDynamicEvents(finalEvents);
@@ -726,7 +717,16 @@ useEffect(() => {
   }, []);
 
   // Impression Ticker
- 
+  useEffect(() => {
+    if (dynamicEvents.length === 0) return;
+    const intervalId = setInterval(() => {
+      setDynamicEvents((prev) => 
+        [...prev].map(ev => ({ ...ev, impressions: ev.impressions + Math.floor(Math.random() * 10) + 1 }))
+        .sort((a, b) => b.impressions - a.impressions)
+      );
+    }, 15000);
+    return () => clearInterval(intervalId);
+  }, [dynamicEvents.length]);
 
   const ALL_EVENTS = useMemo(() => dynamicEvents, [dynamicEvents]);
   const featuredEventIds = useMemo(() => {
@@ -773,22 +773,8 @@ const carouselEvents = useMemo(() => {
   const renderAllEventsView = viewParam === "all";
 
   const handleDetailsClick = (id) => {
-  setDynamicEvents(prev =>
-    prev.map(ev => {
-      if (String(ev.id) !== String(id)) return ev;
-
-      const newClicks = (ev.clicks ?? 0) + 1;
-
-      return {
-        ...ev,
-        clicks: newClicks,
-        impressions: calculateImpressions(newClicks),
-      };
-    })
-  );
-  router.push(`${pathname}?event=${id}`, { scroll: true });
-};
-
+    router.push(`${pathname}?event=${id}`, { scroll: true });
+  };
 
   const handleBackClick = () => router.push(pathname, { scroll: true });
 

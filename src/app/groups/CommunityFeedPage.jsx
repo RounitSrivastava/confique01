@@ -733,10 +733,10 @@ const AuthorProfileModal = ({ email, onClose, userData }) => {
 // Community Header
 // --------------------
 const CommunityHeader = ({
-    community,
-    onCreatePost,
-    isSiteOwner,
-    onDeleteCommunity,
+  community,
+  onCreatePost,
+  isAdmin,
+  onDeleteCommunity,
 }) => {
     const [isInviteMenuOpen, setIsInviteMenuOpen] = React.useState(false);
     const desktopInviteBtnRef = React.useRef(null);
@@ -901,7 +901,7 @@ const mobileInviteMenuRef = React.useRef(null);
 </button>
 
 
-                        {isSiteOwner && (
+                        {isAdmin && (
                             <button
                                 onClick={onDeleteCommunity}
                                 className="ml-2 flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-red-700 text-white hover:bg-red-600"
@@ -2363,7 +2363,12 @@ React.useEffect(() => {
                 </div>
             )}
 
-            <CommunityHeader community={communityInfo} onCreatePost={() => setIsModalOpen(true)} isSiteOwner={isSiteOwner} onDeleteCommunity={handleDeleteCommunityClick} />
+            <CommunityHeader
+  community={communityInfo}
+  onCreatePost={() => setIsModalOpen(true)}
+  isAdmin={isAdmin}
+  onDeleteCommunity={handleDeleteCommunityClick}
+/>
 
             <FilterBar selected={activeFilter} setActiveFilter={setActiveFilter} eventsCount={eventsInCategory.length} />
 

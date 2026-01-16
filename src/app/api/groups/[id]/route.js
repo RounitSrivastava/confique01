@@ -10,6 +10,7 @@ import User from "@/models/User";
 import Vote from "@/models/Vote"; 
 import cloudinary from "@/lib/cloudinary";
 import { getCurrentUser } from "@/lib/auth";
+const SITE_OWNER_EMAIL = "confique01@gmail.com";
 
 /* ===========================
     GET SINGLE GROUP BY ID
@@ -79,12 +80,18 @@ export async function PATCH(req, context) {
             return NextResponse.json({ error: "Group not found" }, { status: 404 });
         }
 
-        if (group.ownerEmail.toLowerCase() !== actor.email.toLowerCase()) {
-            return NextResponse.json(
-                { error: "Forbidden: Only the owner can edit this community" },
-                { status: 403 }
-            );
-        }
+       const isCommunityOwner =
+    group.ownerEmail?.toLowerCase() === actor.email.toLowerCase();
+
+const isSiteOwner =
+    actor.email.toLowerCase() === SITE_OWNER_EMAIL.toLowerCase();
+
+if (!isCommunityOwner && !isSiteOwner) {
+    return NextResponse.json(
+        { error: "Forbidden: Only admins can update this community" },
+        { status: 403 }
+    );
+}
 
         const body = await req.json();
         const { name, description, category, iconBase64, bannerBase64 } = body;
@@ -176,12 +183,18 @@ export async function DELETE(req, context) {
             return NextResponse.json({ error: "Group not found" }, { status: 404 });
         }
 
-        if (group.ownerEmail.toLowerCase() !== actor.email.toLowerCase()) {
-            return NextResponse.json(
-                { error: "Forbidden: Only owner can delete group" },
-                { status: 403 }
-            );
-        }
+        const isCommunityOwner =
+    group.ownerEmail?.toLowerCase() === actor.email.toLowerCase();
+
+const isSiteOwner =
+    actor.email.toLowerCase() === SITE_OWNER_EMAIL.toLowerCase();
+
+if (!isCommunityOwner && !isSiteOwner) {
+    return NextResponse.json(
+        { error: "Forbidden: Only admins can delete this community" },
+        { status: 403 }
+    );
+}
 
         // A. Cloudinary Cleanup
         try {

@@ -736,7 +736,6 @@ const CommunityHeader = ({
   community,
   onCreatePost,
   isAdmin,
-  canDeleteCommunity,
   onDeleteCommunity,
 }) => {
     const [isInviteMenuOpen, setIsInviteMenuOpen] = React.useState(false);
@@ -900,15 +899,17 @@ const mobileInviteMenuRef = React.useRef(null);
 >
   Joined
 </button>
-{canDeleteCommunity && (
-  <button
-    onClick={onDeleteCommunity}
-    className="ml-2 flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-red-700 text-white hover:bg-red-600"
-  >
-    <Trash2 className="w-4 h-4 mr-1" />
-    Delete Community
-  </button>
-)}
+
+
+                        {isAdmin && (
+                            <button
+                                onClick={onDeleteCommunity}
+                                className="ml-2 flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-red-700 text-white hover:bg-red-600"
+                            >
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                Delete Community
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -1719,10 +1720,8 @@ const showFab = useScrollDirection(scrollRef);
     const currentUserDisplayName = (currentUser && (currentUser.displayName || currentUser.name || currentUser.username)) || (currentUserEmail ? deriveNameFromEmail(currentUserEmail) : null);
     const currentUserName = currentUser?.name || null;
     const isSiteOwner = currentUserEmail === SITE_OWNER_EMAIL;
-    const isCommunityOwner = communityInfo?.ownerEmail && currentUserEmail && communityInfo.ownerEmail.toLowerCase() === currentUserEmail.toLowerCase();
+    const isCommunityOwner = communityInfo?.ownerEmail && currentUserEmail && communityInfo.ownerEmail === currentUserEmail;
     const isAdmin = isSiteOwner || isCommunityOwner;
-    const canDeleteCommunity = isCommunityOwner; // UI-only permission
-
 
     let currentUserAvatar = null;
     try {
@@ -2364,13 +2363,13 @@ React.useEffect(() => {
                 </div>
             )}
 
-           <CommunityHeader
+            <CommunityHeader
   community={communityInfo}
   onCreatePost={() => setIsModalOpen(true)}
   isAdmin={isAdmin}
-  canDeleteCommunity={canDeleteCommunity}
   onDeleteCommunity={handleDeleteCommunityClick}
 />
+
             <FilterBar selected={activeFilter} setActiveFilter={setActiveFilter} eventsCount={eventsInCategory.length} />
 
             <div className="pt-4 pb-12">

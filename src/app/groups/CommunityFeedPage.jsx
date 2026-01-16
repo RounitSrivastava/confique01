@@ -1728,6 +1728,7 @@ const showFab = useScrollDirection(scrollRef);
     const isAdmin = isSiteOwner || isCommunityOwner;
     const canDeleteCommunity = isSiteOwner; // 🔥 ONLY site owner
 
+
     let currentUserAvatar = null;
     try {
         currentUserAvatar =

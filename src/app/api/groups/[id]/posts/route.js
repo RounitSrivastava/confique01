@@ -6,6 +6,7 @@ import Group from "@/models/Group";
 import User from "@/models/User";
 import Vote from "@/models/Vote";
 import { getCurrentUser } from "@/lib/auth";
+import cloudinary from "@/lib/cloudinary";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -117,8 +118,8 @@ export async function POST(req, context) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 🔥 imageUrl comes from frontend (Cloudinary upload already done)
-    const { title, content, imageUrl } = await req.json();
+    // 🔥 image uploaded here and stored in Cloudinary
+    const { title, content, imageBase64 } = await req.json();
 
     if (!title?.trim()) {
       return NextResponse.json(
@@ -126,7 +127,12 @@ export async function POST(req, context) {
         { status: 400 }
       );
     }
-
+if (imageBase64 && !imageBase64.startsWith("data:image/")) {
+  return NextResponse.json(
+    { error: "Invalid image format" },
+    { status: 400 }
+  );
+}
     const user = await User.findById(actor.id).select(
       "_id name username avatar email"
     );
@@ -152,15 +158,28 @@ export async function POST(req, context) {
         { status: 403 }
       );
     }
+let imageUrl = null;
+let imagePublicId = null;
+
+if (imageBase64) {
+  const upload = await cloudinary.uploader.upload(imageBase64, {
+    folder: "confique_posts",
+    resource_type: "image",
+  });
+
+  imageUrl = upload.secure_url;
+  imagePublicId = upload.public_id;
+}
 
     const post = await Post.create({
-      group: group._id,
-      title,
-      content,
-      imageUrl: imageUrl || null,
-      author: user._id,
-      upvotes: 1,
-    });
+  group: group._id,
+  title,
+  content,
+  imageUrl,
+  imagePublicId, // 🔥 REQUIRED for delete route
+  author: user._id,
+  upvotes: 1,
+});
 
     // Auto-upvote creator post
     await Vote.create({

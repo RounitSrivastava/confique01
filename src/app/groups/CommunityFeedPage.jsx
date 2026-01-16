@@ -1464,7 +1464,7 @@ const PostCard = ({
 )}
 
 
-            {post.hasImage && post.imageUrl && (
+            {post.imageUrl && (
                 <div className="mt-3 bg-gray-900 rounded-lg overflow-hidden cursor-pointer" onClick={() => onImageClick(post.imageUrl)}>
                     <img
                         src={post.imageUrl}
@@ -1591,7 +1591,7 @@ const mapBackendPostToFrontend = (post, communityInfo) => {
         comments: post.commentsCount || 0,
         community: communityInfo.name,
         authorImage: absAuthorImage,
-        hasImage: !!absImageUrl,
+        hasImage: !!(absImageUrl || post.imageBase64),
         imageUrl: absImageUrl,
         userVote: post.userVote || 0,
         createdAtMs: createdAt ? createdAt.getTime() : Date.now(),
@@ -1993,13 +1993,24 @@ if (authorImage) {
             const { post } = await res.json();
 
             const normalized = {
-                ...post,
-                imageUrl: post.imageUrl ? makeAbsoluteUrl(post.imageUrl) : null,
-                authorImage: post.authorImage ? makeAbsoluteUrl(post.authorImage) : null,
-            };
+  ...post,
+  imageUrl:
+    post.imageUrl
+      ? makeAbsoluteUrl(post.imageUrl)
+      : post.imageBase64 || null, // ✅ allow base64 preview
+  authorImage: post.authorImage
+    ? makeAbsoluteUrl(post.authorImage)
+    : null,
+};
+const mapped = {
+  ...mapBackendPostToFrontend(normalized, communityInfo),
 
-            const mapped = mapBackendPostToFrontend(normalized, communityInfo);
-            setPosts((prev) => [mapped, ...prev]);
+  // 🔥 FORCE IMAGE VISIBILITY
+  imageUrl: imagePreviewUrl || normalized.imageUrl || null,
+  hasImage: !!imagePreviewUrl,
+};
+
+setPosts((prev) => [mapped, ...prev]);
             enrichAuthors([mapped]);
         } catch (e) {
             console.error("Failed to create post", e);

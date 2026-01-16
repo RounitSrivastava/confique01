@@ -736,6 +736,7 @@ const CommunityHeader = ({
   community,
   onCreatePost,
   isAdmin,
+  canDeleteCommunity,
   onDeleteCommunity,
 }) => {
     const [isInviteMenuOpen, setIsInviteMenuOpen] = React.useState(false);
@@ -901,7 +902,7 @@ const mobileInviteMenuRef = React.useRef(null);
 </button>
 
 
-                        {isAdmin && (
+                        {canDeleteCommunity && (
                             <button
                                 onClick={onDeleteCommunity}
                                 className="ml-2 flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-red-700 text-white hover:bg-red-600"
@@ -1722,6 +1723,7 @@ const showFab = useScrollDirection(scrollRef);
     const isSiteOwner = currentUserEmail === SITE_OWNER_EMAIL;
     const isCommunityOwner = communityInfo?.ownerEmail && currentUserEmail && communityInfo.ownerEmail === currentUserEmail;
     const isAdmin = isSiteOwner || isCommunityOwner;
+    const canDeleteCommunity = isSiteOwner; // 🔥 ONLY site owner
 
     let currentUserAvatar = null;
     try {
@@ -2362,11 +2364,11 @@ React.useEffect(() => {
                     />
                 </div>
             )}
-
             <CommunityHeader
   community={communityInfo}
   onCreatePost={() => setIsModalOpen(true)}
-  isAdmin={isAdmin}
+  isAdmin={isAdmin}              // still for moderation
+  canDeleteCommunity={canDeleteCommunity}
   onDeleteCommunity={handleDeleteCommunityClick}
 />
 

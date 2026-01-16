@@ -449,6 +449,8 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         logoFile: null,
         category: "Tech",
     });
+const [logoPreview, setLogoPreview] = React.useState(null);
+const [bannerPreview, setBannerPreview] = React.useState(null);
 
     const [errors, setErrors] = React.useState({});
     const logoRef = React.useRef(null);
@@ -462,12 +464,23 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         setErrors((p) => ({ ...p, [name]: "" }));
     };
 
- const handleFileChange = (e) => {
+const handleFileChange = (e) => {
   const { name, files } = e.target;
   const file = files?.[0];
   if (!file) return;
   if (!validateImage(file)) return;
+
   setFormData((p) => ({ ...p, [name]: file }));
+
+  const previewUrl = URL.createObjectURL(file);
+
+  if (name === "logoFile") {
+    setLogoPreview(previewUrl);
+  }
+
+  if (name === "bannerFile") {
+    setBannerPreview(previewUrl);
+  }
 };
     const validate = () => {
         const e = {};
@@ -580,25 +593,80 @@ const CreateCommunityForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
                     {/* Upload Row */}
                     <div className="flex gap-4">
-                       <button
+                      <button
   type="button"
   onClick={() => logoRef.current.click()}
-  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500"
+  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500 relative"
 >
+  {/* ❌ Cancel Logo */}
+  {logoPreview && (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        setFormData((p) => ({ ...p, logoFile: null }));
+        setLogoPreview(null);
+        if (logoRef.current) logoRef.current.value = "";
+      }}
+      className="absolute top-2 right-2 bg-black/10 hover:bg-black/60 rounded-full p-1 backdrop-blur"
+    >
+      <X className="w-4 h-4 text-white" />
+    </button>
+  )}
+
+  {logoPreview && (
+    <div className="mt-3 flex justify-center">
+      <img
+        src={logoPreview}
+        alt="Logo preview"
+        className="w-20 h-20 rounded-xl object-cover border border-white/10"
+      />
+    </div>
+  )}
+
   <span className="text-red-500">*</span>
   <Image className="w-4 h-4 text-purple-400" />
   {formData.logoFile ? "Logo added" : "Add logo (required)"}
 </button>
 
-                        <button
-                            type="button"
-                            onClick={() => bannerRef.current.click()}
-                            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500"
-                        >
-                            <Upload className="w-4 h-4 text-purple-400" />
-                            {formData.bannerFile ? "Banner added" : "Add banner"}
-                        </button>
+                       <button
+  type="button"
+  onClick={() => bannerRef.current.click()}
+  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500 relative"
+>
+  {/* ❌ Cancel Banner */}
+  {bannerPreview && (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation(); // prevent file picker
+        setFormData((p) => ({ ...p, bannerFile: null }));
+        setBannerPreview(null);
+        if (bannerRef.current) bannerRef.current.value = "";
+      }}
+      className="absolute top-2 right-2 bg-black/10 hover:bg-black/60 rounded-full p-1 backdrop-blur"
+    >
+      <X className="w-4 h-4 text-white" />
+    </button>
+  )}
+
+  {/* 🖼 Banner Preview */}
+  {bannerPreview && (
+    <div className="mt-3 w-full flex justify-center">
+      <img
+        src={bannerPreview}
+        alt="Banner preview"
+        className="w-full h-20 rounded-xl object-cover border border-white/10"
+      />
+    </div>
+  )}
+
+  <Upload className="w-4 h-4 text-purple-400" />
+  {formData.bannerFile ? "Banner added" : "Add banner"}
+</button>
                     </div>
+                    {/* Banner Preview */}
+
 <p className="text-xs text-gray-500 mt-2">
   Logo is required • Max image size: 3 MB
 </p>

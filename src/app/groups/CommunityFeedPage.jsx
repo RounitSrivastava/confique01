@@ -406,6 +406,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
   const [content, setContent] = React.useState("");
   const [imageFile, setImageFile] = React.useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = React.useState(null);
+  const [isPosting, setIsPosting] = React.useState(false);
 
   const { keyboardHeight, isOpen } = useKeyboardMetrics(); // ✅ NEW
 
@@ -430,7 +431,10 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
   }, [imagePreviewUrl]);
 
   const handleSubmit = async () => {
-    if (!title.trim()) return;
+  if (!title.trim() || isPosting) return;
+
+  setIsPosting(true);
+  try {
     await onSubmit({
       title: title.trim(),
       content: content.trim(),
@@ -438,8 +442,10 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
       imagePreviewUrl,
     });
     onClose();
-  };
-
+  } finally {
+    setIsPosting(false);
+  }
+};
   return (
     <div
   className="
@@ -580,19 +586,16 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
           />
 
           <button
-            onClick={handleSubmit}
-            disabled={!title.trim()}
-            className="
-              ml-auto
-              px-6 py-2 rounded-full
-              font-semibold
-              bg-purple-600 text-white
-              disabled:bg-gray-700 disabled:text-gray-400
-              transition active:scale-95
-            "
-          >
-            Post
-          </button>
+  onClick={handleSubmit}
+  disabled={!title.trim() || isPosting}
+  className={`ml-auto px-6 py-2 rounded-full font-semibold transition active:scale-95
+    ${isPosting
+      ? "bg-gray-700 text-gray-300 cursor-not-allowed"
+      : "bg-purple-600 text-white hover:bg-purple-700"}
+  `}
+>
+  {isPosting ? "Posting..." : "Post"}
+</button>
         </div>
       </div>
     </div>

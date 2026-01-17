@@ -36,6 +36,7 @@ const fetchMeData = async () => {
 // --- Featured Carousel Poster Helper ---
 // --- Featured Carousel Poster Helper (STRICT: NO LOGOS EVER) ---
 // --- Featured Carousel Gradient Helper ---
+const isCultural = (event) => event.category === "Cultural";
 const FEATURED_GRADIENTS = [
   "from-purple-700 via-purple-900 to-black",
   "from-indigo-700 via-indigo-900 to-black",
@@ -737,20 +738,21 @@ useEffect(() => {
 const carouselEvents = useMemo(() => {
   if (ALL_EVENTS.length === 0) return [];
 
-  const featured = ALL_EVENTS.filter(event => event.isFeatured === true);
+  const nonCultural = ALL_EVENTS.filter(ev => !isCultural(ev));
+
+  const featured = nonCultural.filter(ev => ev.isFeatured === true);
 
   if (featured.length >= 3) {
     return featured.slice(0, 5);
   }
 
-  const fallback = ALL_EVENTS
-    .filter(event => !featuredEventIds.includes(String(event.id)))
+  const fallback = nonCultural
+    .filter(ev => !featuredEventIds.includes(String(ev.id)))
     .sort((a, b) => b.impressions - a.impressions)
     .slice(0, 5 - featured.length);
 
   return [...featured, ...fallback];
 }, [ALL_EVENTS, featuredEventIds]);
-
 
   const eventDetailData = useMemo(() => {
     if (!eventIdParam) return null;
@@ -839,9 +841,13 @@ const carouselEvents = useMemo(() => {
   };
 
 const upcomingEvents = useMemo(() => {
-  let result = ALL_EVENTS.filter(
-    event => !featuredEventIds.includes(String(event.id))
-  );
+  let result = ALL_EVENTS.filter(event => {
+    // 🚫 Hide Cultural everywhere by default
+    if (selectedCategory !== "Cultural" && isCultural(event)) {
+      return false;
+    }
+    return !featuredEventIds.includes(String(event.id));
+  });
 
   if (selectedCategory !== "All Events") {
     result = result.filter(event => event.category === selectedCategory);
@@ -974,11 +980,14 @@ const upcomingEvents = useMemo(() => {
           />
         ) : renderAllEventsView ? (
           <AllEventsPage 
-            ALL_EVENTS={ALL_EVENTS} 
-            categories={categories} 
-            onDetailsClick={handleDetailsClick} 
-            onShareClick={handleShareClick} 
-          />
+  ALL_EVENTS={ALL_EVENTS.filter(ev => {
+    if (searchParams?.category === "Cultural") return true;
+    return !isCultural(ev);
+  })}
+  categories={categories}
+  onDetailsClick={handleDetailsClick}
+  onShareClick={handleShareClick}
+/>
         ) : (
           <div className="max-w-7xl mx-auto px-4 pt-6">
             {!loading && carouselEvents.length > 0 && (
@@ -995,8 +1004,23 @@ const upcomingEvents = useMemo(() => {
               </div>
             </section>
             <HorizontalScrollSection events={upcomingEvents} title={selectedCategory} onDetailsClick={handleDetailsClick} onShareClick={handleShareClick} onViewAllClick={() => router.push("?view=all")} />
-            <HorizontalScrollSection events={ALL_EVENTS.filter(e => e.category === "Tech")} title="Tech Events" onDetailsClick={handleDetailsClick} onShareClick={handleShareClick} onViewAllClick={() => router.push("?view=all&category=Tech")} />
-            <HorizontalScrollSection events={ALL_EVENTS.slice(0, 5)} title="Popular Events" isPopular={true} onDetailsClick={handleDetailsClick} onShareClick={handleShareClick} onViewAllClick={() => router.push("?view=all")} />
+            <HorizontalScrollSection
+  events={ALL_EVENTS.filter(
+    e => e.category === "Tech" && !isCultural(e)
+  )}
+  title="Tech Events"
+  onDetailsClick={handleDetailsClick}
+  onShareClick={handleShareClick}
+  onViewAllClick={() => router.push("?view=all&category=Tech")}
+/>
+            <HorizontalScrollSection
+  events={ALL_EVENTS.filter(ev => !isCultural(ev)).slice(0, 5)}
+  title="Popular Events"
+  isPopular={true}
+  onDetailsClick={handleDetailsClick}
+  onShareClick={handleShareClick}
+  onViewAllClick={() => router.push("?view=all")}
+/>
           </div>
         )}
       </main>

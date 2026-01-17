@@ -18,6 +18,7 @@ const categories = [
   { name: "Workshop", icon: Clock },
   { name: "Others", icon: Zap },
 ];
+const DEFAULT_BANNER_URL = "/website bg.png"; // put this image inside /public
 
 const TagOptions = ["Team (4)", "Team (3)", "Team (2)", "Solo", "Free", "Paid"];
 
@@ -457,7 +458,7 @@ paymentCurrency: CURRENCY_CODE,
     setSubmissionStatus(null);
 
     // Validation
-    if (!eventData.title || !eventData.venue || !eventData.date || !eventData.category || eventData.tags.length === 0 || !eventData.posterFile || !eventData.bannerFile || !eventData.hostedBy) {
+    if (!eventData.title || !eventData.venue || !eventData.date || !eventData.category || eventData.tags.length === 0 || !eventData.posterFile || !eventData.hostedBy) {
       setSubmissionStatus("error");
       setIsSubmitting(false);
       return;
@@ -465,7 +466,14 @@ paymentCurrency: CURRENCY_CODE,
 
     try {
       const posterUrl = await uploadToCloudinary(eventData.posterFile, "event-posters");
-      const bannerUrl = await uploadToCloudinary(eventData.bannerFile, "event-banners");
+      let bannerUrl = DEFAULT_BANNER_URL;
+
+if (eventData.bannerFile) {
+  bannerUrl = await uploadToCloudinary(
+    eventData.bannerFile,
+    "event-banners"
+  );
+}
       
       let qrCodeUrl = eventData.qrCodePreviewUrl;
       if (showQrCodeFields && eventData.qrCodeFile && eventData.qrCodeFile instanceof File) {
@@ -712,7 +720,18 @@ ticketTypes: eventData.ticketTypes,
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
               <ImageUploader label="1. Card Poster (Portrait)" ratioTip="Used for listing cards." name="posterFile" file={eventData.posterFile} previewUrl={eventData.posterPreviewUrl} onFileChange={(e) => handleFileChange(e, "posterFile", "posterPreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "posterFile", "posterPreviewUrl")} />
-              <ImageUploader label="2. Header Banner (Landscape)" ratioTip="Used for details header." name="bannerFile" file={eventData.bannerFile} previewUrl={eventData.bannerPreviewUrl} onFileChange={(e) => handleFileChange(e, "bannerFile", "bannerPreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "bannerFile", "bannerPreviewUrl")} />
+              <ImageUploader
+  label="2. Header Banner (Landscape) (Optional)"
+  ratioTip="If not uploaded, a default banner will be used."
+  name="bannerFile"
+  file={eventData.bannerFile}
+  previewUrl={eventData.bannerPreviewUrl}
+  onFileChange={(e) => handleFileChange(e, "bannerFile", "bannerPreviewUrl")}
+  onRemove={() =>
+    handleFileChange({ target: { files: [] } }, "bannerFile", "bannerPreviewUrl")
+  }
+  required={false}
+/>
             </div>
           </div>
 

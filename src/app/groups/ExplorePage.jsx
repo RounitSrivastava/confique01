@@ -15,9 +15,9 @@ const categories = [
     "Tech",
     "Entrepreneurship",
     "Gaming",
-    "Sports",
-    "Music",
     "Art",
+    "Music",
+    "Job",
 ];
 
 // --- HELPERS (kept as is) ---

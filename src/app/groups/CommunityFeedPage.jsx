@@ -1353,6 +1353,7 @@ const PostCard = ({
     currentUserDisplayName,
     onVote,
 }) => {
+    const [expanded, setExpanded] = React.useState(false);
     const isMenuOpen = openMenuId === post.id;
     const menuButtonRef = React.useRef(null);
     const menuRef = React.useRef(null);
@@ -1454,19 +1455,29 @@ const PostCard = ({
                 {post.title}
             </h3>
 
-            {post.content && (
-  <p
-    className="
-      text-gray-300 text-sm mt-2
-      whitespace-pre-wrap
-      leading-relaxed
-      line-clamp-3
-    "
-  >
-    {post.content}
-  </p>
-)}
+           {post.content && (
+  <div className="mt-2">
+    <p
+      className={`
+        text-gray-300 text-sm
+        whitespace-pre-wrap
+        leading-relaxed
+        ${expanded ? "" : "line-clamp-3"}
+      `}
+    >
+      {post.content}
+    </p>
 
+    {post.content.length > 180 && (
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="mt-1 text-xs font-semibold text-purple-400 hover:underline"
+      >
+        {expanded ? "See less" : "See more"}
+      </button>
+    )}
+  </div>
+)}
 
             {post.imageUrl && (
                 <div className="mt-3 bg-gray-900 rounded-lg overflow-hidden cursor-pointer" onClick={() => onImageClick(post.imageUrl)}>

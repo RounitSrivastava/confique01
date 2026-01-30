@@ -5,18 +5,6 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 // Fallback communities (in case nothing is stored)
-const FALLBACK_COMMUNITIES = [
-  { id: 103, name: "Crypto Hub", members: "32.0k members", membersCount: 32000, slug: "crypto-hub" },
-  { id: 104, name: "Foodies Delight", members: "15.9k members", membersCount: 15900, slug: "foodies-delight" },
-  { id: 101, name: "Pixel Warriors", members: "12.4k members", membersCount: 12400, slug: "pixel-warriors" },
-  { id: 106, name: "Book Worms HQ", members: "11.2k members", membersCount: 11200, slug: "book-worms" },
-];
-
-// Static fallback events (if API fails or is empty)
-const FALLBACK_POPULAR_EVENTS = [
-  { id: "e1", title: "Design Meetup for Creators", tagline: "A gathering for digital artists and designers." },
-  { id: "e2", title: "AI Tools for Video Editing", tagline: "Learn how to speed up your workflow with AI." },
-];
 
 export default function RightSidebar() {
   const pathname = usePathname();
@@ -34,7 +22,12 @@ export default function RightSidebar() {
       try {
         const raw = localStorage.getItem("confique:allCommunities") || "[]";
         const storedAll = JSON.parse(raw) || [];
-        let list = Array.isArray(storedAll) && storedAll.length ? storedAll : FALLBACK_COMMUNITIES;
+        if (!Array.isArray(storedAll) || storedAll.length === 0) {
+  setTopCommunities([]);
+  return;
+}
+
+let list = [...storedAll];
 
         list = [...list].map((c) => ({ ...c, membersCount: Number(c.membersCount || 0) }));
         list.sort((a, b) => (b.membersCount || 0) - (a.membersCount || 0));
@@ -42,7 +35,7 @@ export default function RightSidebar() {
         setTopCommunities(list.slice(0, 4));
       } catch (err) {
         console.error("Failed to load top communities:", err);
-        setTopCommunities(FALLBACK_COMMUNITIES.slice(0, 4));
+      setTopCommunities([]);
       }
     };
 
@@ -76,11 +69,11 @@ export default function RightSidebar() {
           
           setPopularEvents(sorted);
         } else {
-          setPopularEvents(FALLBACK_POPULAR_EVENTS);
+          setPopularEvents([]);
         }
       } catch (err) {
         console.error("RightSidebar: Error fetching events:", err);
-        setPopularEvents(FALLBACK_POPULAR_EVENTS);
+        setPopularEvents([]);
       }
     };
 
@@ -126,7 +119,8 @@ export default function RightSidebar() {
         ) : (
           <>
             {/* Top Communities */}
-            <section className="rounded-xl bg-[#121212] border border-[#262626] shadow-sm">
+            {topCommunities.length > 0 && (
+  <section className="rounded-xl bg-[#121212] border border-[#262626] shadow-sm">
               <div className="px-4 py-3 border-b border-[#262626] text-sm font-medium text-white tracking-wide">Top Communities</div>
               <ul className="p-2">
                 {topCommunities.map((c, index) => (
@@ -140,9 +134,10 @@ export default function RightSidebar() {
                 ))}
               </ul>
             </section>
-
+)}
             {/* Popular Events Section */}
-            <section className="rounded-xl bg-[#121212] border border-[#262626] shadow-sm hover:bg-[#151515] transition-colors">
+            {popularEvents.length > 0 && (
+  <section className="rounded-xl bg-[#121212] border border-[#262626] shadow-sm hover:bg-[#151515] transition-colors">
               <div className="px-4 py-3 border-b border-[#262626] text-sm font-medium text-white tracking-wide"> Events</div>
               <ul className="p-2">
                 {popularEvents.map((e) => (
@@ -163,6 +158,7 @@ export default function RightSidebar() {
                 ))}
               </ul>
             </section>
+            )}
           </>
         )}
       </div>

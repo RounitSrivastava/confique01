@@ -1080,6 +1080,7 @@ const CommentsPage = ({
 }) => {
     const [commentText, setCommentText] = React.useState("");
     const [comments, setComments] = React.useState([]);
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [replyingTo, setReplyingTo] = React.useState(null);
     const [loadingComments, setLoadingComments] = React.useState(false);
 
@@ -1134,7 +1135,10 @@ const CommentsPage = ({
 
     const handleCommentSubmit = async () => {
         const trimmed = commentText.trim();
-        if (!trimmed) return;
+
+// 🚨 prevents double click + double enter
+if (!trimmed || isSubmitting) return;
+setIsSubmitting(true);
         const parentId = replyingTo ? replyingTo.id : null;
 
         if (isDbBackedCommunity && communityInfo?.id && post?.id) {
@@ -1192,7 +1196,11 @@ const CommentsPage = ({
             } catch (err) {
                 console.error("Error posting comment:", err);
                 alert("Error posting comment.");
-                return;
+                 } finally {
+
+        // ✅ ALWAYS unlock
+        setIsSubmitting(false);
+              
             }
         } else {
             const now = new Date();
@@ -1309,7 +1317,7 @@ const CommentsPage = ({
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
                             onKeyDown={(e) => {
-                                if (e.key === "Enter") {
+                                if (e.key === "Enter" && !isSubmitting){
                                     e.preventDefault();
                                     handleCommentSubmit();
                                 }
@@ -1319,11 +1327,16 @@ const CommentsPage = ({
                         />
                         <button
                             onClick={handleCommentSubmit}
-                            disabled={!commentText.trim()}
-                            className="bg-purple-600 p-2 rounded-full disabled:bg-gray-900 disabled:text-gray-500 text-white hover:bg-purple-700 transition-colors"
+                            disabled={!commentText.trim() || isSubmitting}
+                            className={`
+    p-2 rounded-full text-white transition-colors
+    ${isSubmitting
+        ? "bg-gray-700 cursor-not-allowed"
+        : "bg-purple-600 hover:bg-purple-700"}
+`}
                             aria-disabled={!commentText.trim()}
                         >
-                            <ArrowUp className="w-4 h-4" />
+                            {isSubmitting ? "..." : <ArrowUp className="w-4 h-4" />}
                         </button>
                     </div>
                 </div>

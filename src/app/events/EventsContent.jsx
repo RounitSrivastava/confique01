@@ -870,7 +870,7 @@ const upcomingEvents = useMemo(() => {
       
       <aside className={`fixed top-0 left-0 z-[110] h-full w-64 bg-[#050509] border-r border-[#262626] transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden`}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
-          <span className="text-lg font-extrabold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Confique</span>
+          <span className="text-lg font-extrabold bg-gradient-to-r from-purple-400 to-purple-400 bg-clip-text text-transparent">Confique</span>
           <button onClick={() => setSidebarOpen(false)}><X className="w-7 h-7" /></button>
         </div>
         <nav className="px-3 py-4 space-y-1">

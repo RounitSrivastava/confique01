@@ -1043,10 +1043,14 @@ export default function EventsPageWrapper({ searchParams }) {
             const data = await fetchMeData();
             
             if (!data?.user) {
-                console.log("No session found, redirecting...");
-                router.replace("/auth/login"); // replace prevents user from clicking 'back'
-                return;
-            }
+  const currentUrl =
+    window.location.pathname + window.location.search;
+
+  router.replace(
+    `/auth/login?redirect=${encodeURIComponent(currentUrl)}`
+  );
+  return;
+}
 
             // User is valid, allow rendering
             setIsAuthenticated(true);

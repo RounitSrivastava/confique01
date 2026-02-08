@@ -2,10 +2,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { GoogleLogin } from "@react-oauth/google";
+import { useSearchParams } from "next/navigation";
 
 const CREDENTIALS = "include";
 
 export default function LoginClient() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -46,7 +48,8 @@ export default function LoginClient() {
 
       localStorage.setItem("userEmail", data.user.email);
 broadcastAuthChange(data.user);
-window.location.href = "/";
+const redirect = searchParams.get("redirect");
+window.location.href = redirect || "/";
 
     } catch {
       setError("Network error");
@@ -73,7 +76,8 @@ window.location.href = "/";
 
       localStorage.setItem("userEmail", data.user.email);
 broadcastAuthChange(data.user);
-window.location.href = "/";
+const redirect = searchParams.get("redirect");
+window.location.href = redirect || "/";
     } catch {
       setError("Google login error");
       setLoading(false);

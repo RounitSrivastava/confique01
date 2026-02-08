@@ -44,6 +44,7 @@ export async function POST(req, { params }) {
             userEmail: body.userEmail,
             formData: body.formData || {},
             paidRef: body.paidRef || null,
+            selectedTicketTypes: body.selectedTicketTypes || [],
             createdAt: new Date(),
           },
         },

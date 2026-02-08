@@ -31,6 +31,12 @@ const RegistrationSchema = new mongoose.Schema(
       default: "pending",
     },
 
+    // 🔥 Selected ticket types by user
+selectedTicketTypes: {
+  type: [String],
+  default: [],
+},
+
     createdAt: {
       type: Date,
       default: Date.now,

@@ -226,14 +226,14 @@ const TOP_NAV = [
   { label: "Home", href: "/" },
   { label: "Community", href: "/groups" },
   
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Help & Support", href: "/settings", icon: Settings },
 ];
 
 const MOBILE_NAV = [
   { label: "Home", href: "/", icon: Home },
   { label: "Community", href: "/groups", icon: Users },
  
-   { label: "Settings", href: "/settings", icon: Settings },
+   { label: "Help & Support", href: "/settings", icon: Settings },
 ];
 
 // --- API Helpers ---

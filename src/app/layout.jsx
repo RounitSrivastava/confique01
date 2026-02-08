@@ -6,7 +6,7 @@ import Script from "next/script";
 
 export const metadata = {
   title: "Confique",
-  description: "Event Management Platform",
+  description: "Student community and event hosting platform",
   icons: {
     icon: "/confiquelogo.png",
     shortcut: "/confiquelogo.png",

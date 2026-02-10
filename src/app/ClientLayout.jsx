@@ -6,6 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import RightSidebar from "@/components/RightSidebar";
 import Topbar from "@/components/Topbar";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 export default function ClientLayout({ children }) {
   const pathname = usePathname();
@@ -71,16 +72,22 @@ export default function ClientLayout({ children }) {
     };
 
     // If no client ID is found, Google Login will fail to init
-    if (!googleClientId) {
-      console.warn("Google Client ID is missing. Check your environment variables.");
-      return renderContent();
-    }
+   if (!googleClientId) {
+  console.warn("Google Client ID is missing. Check your environment variables.");
+  return (
+    <>
+      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+      {renderContent()}
+    </>
+  );
+}
 
-    return (
-      <GoogleOAuthProvider clientId={googleClientId}>
-        {renderContent()}
-      </GoogleOAuthProvider>
-    );
+   return (
+  <GoogleOAuthProvider clientId={googleClientId}>
+    <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+    {renderContent()}
+  </GoogleOAuthProvider>
+);
   }, [isAuthPage, isEventsPage, children, sidebarOpen, googleClientId]);
 
   return contentWithAuth;

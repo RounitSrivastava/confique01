@@ -26,13 +26,20 @@ export default function RootLayout({ children }) {
         />
 
         <Script strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
-          `}
-        </Script>
+{`
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  // Grant GA consent explicitly
+  gtag('consent', 'default', {
+    analytics_storage: 'granted',
+    ad_storage: 'granted'
+  });
+
+  gtag('js', new Date());
+  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+`}
+</Script>
       </head>
 
       <body className="min-h-screen bg-black text-white antialiased">

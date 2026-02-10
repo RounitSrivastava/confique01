@@ -3,6 +3,7 @@ import "./globals.css";
 import ClientLayout from "./ClientLayout";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import Script from "next/script";
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Confique",

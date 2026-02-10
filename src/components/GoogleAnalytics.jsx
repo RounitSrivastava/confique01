@@ -8,13 +8,14 @@ export default function GoogleAnalytics({ gaId }) {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (!gaId || !window.gtag) return;
+    if (typeof window === "undefined") return;
+    if (!gaId) return;
+    if (!window.gtag) return;
 
     const url =
       pathname +
       (searchParams.toString() ? `?${searchParams.toString()}` : "");
 
-    // 🔴 THIS IS THE KEY LINE YOU WERE MISSING
     window.gtag("event", "page_view", {
       page_path: url,
       page_location: window.location.href,

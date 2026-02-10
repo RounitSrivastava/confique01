@@ -14,8 +14,11 @@ export default function GoogleAnalytics({ gaId }) {
       pathname +
       (searchParams.toString() ? `?${searchParams.toString()}` : "");
 
-    window.gtag("config", gaId, {
+    // 🔴 THIS IS THE KEY LINE YOU WERE MISSING
+    window.gtag("event", "page_view", {
       page_path: url,
+      page_location: window.location.href,
+      page_title: document.title,
     });
   }, [pathname, searchParams, gaId]);
 

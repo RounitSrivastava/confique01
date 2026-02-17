@@ -816,7 +816,10 @@ const carouselEvents = useMemo(() => {
       const res = await fetch(url, {
         method: method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newHostedEvent),
+        body: JSON.stringify({
+  ...newHostedEvent,
+  date: newHostedEvent.eventStart,
+}),
       });
 
       if (!res.ok) {

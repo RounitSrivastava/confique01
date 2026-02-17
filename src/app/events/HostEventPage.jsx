@@ -20,7 +20,7 @@ const categories = [
 ];
 const DEFAULT_BANNER_URL = "/website bg.png"; // put this image inside /public
 
-const TagOptions = ["Team (4)", "Team (3)", "Team (2)", "Solo", "Free", "Paid"];
+const TagOptions = ["Solo", "Free", "Paid"];
 
 // --- CLOUDINARY UPLOAD HELPER ---
 const uploadToCloudinary = async (file, folder = "events") => {
@@ -233,9 +233,14 @@ const HostEventPage = ({ parentPathname = "/events", onEventHosted, initialData 
   };
 
   const [eventData, setEventData] = useState({
+    teamConfig: initialData?.teamConfig || {
+  enabled: false,
+  maxMembers: 4,
+},
     title: initialData?.title || "",
     venue: initialData?.venue || "",
-    date: formatDate(initialData?.date),
+    eventStart: formatDate(initialData?.eventStart),
+eventEnd: formatDate(initialData?.eventEnd),
     posterPreviewUrl: initialData?.poster || "",
     posterFile: initialData?.poster || null,
     bannerPreviewUrl: initialData?.banner || "",
@@ -275,38 +280,44 @@ paymentCurrency: CURRENCY_CODE,
 
   // ✅ CRITICAL FIX: Update state if initialData changes (ensures form fills after data fetch)
   useEffect(() => {
-    if (initialData) {
-      setEventData({
-        title: initialData.title || "",
-        venue: initialData.venue || "",
-        date: formatDate(initialData.date),
-        posterPreviewUrl: initialData.poster || "",
-        posterFile: initialData.poster || null,
-        bannerPreviewUrl: initialData.banner || "",
-        bannerFile: initialData.banner || null,
-        tags: initialData.tags || ["Free"],
-        category: initialData.category || "",
-        tagline: initialData.tagline || "",
-        description: initialData.description || "",
-        hostedBy: initialData.hostedBy || "",
-        eligibility: initialData.eligibility || "",
-        isOnline: initialData.isOnline || false,
-        isFree: initialData.isFree ?? true,
-        registrationStart: formatDate(initialData.registrationStart),
-        registrationEnd: formatDate(initialData.registrationEnd),
-        prizes: initialData.prizes || "",
-        rounds: initialData.rounds || [],
-        isPaymentRequired: initialData.isPaymentRequired || false,
-        paymentAmount: initialData.paymentAmount || "",
-        paymentCurrency: CURRENCY_CODE,
-        qrCodePreviewUrl: initialData.qrCode || "",
-        qrCodeFile: initialData.qrCode || null,
-        isExternalRegistration: initialData.isExternalRegistration || false,
-        registrationUrl: initialData.registrationUrl || "",
-        customFields: initialData.customFields || [],
-      });
-    }
-  }, [initialData]);
+  if (initialData) {
+    setEventData({
+      teamConfig: initialData.teamConfig || {
+        enabled: false,
+        maxMembers: 4,
+      },
+
+      title: initialData.title || "",
+      venue: initialData.venue || "",
+      eventStart: formatDate(initialData.eventStart),
+eventEnd: formatDate(initialData.eventEnd),
+      posterPreviewUrl: initialData.poster || "",
+      posterFile: initialData.poster || null,
+      bannerPreviewUrl: initialData.banner || "",
+      bannerFile: initialData.banner || null,
+      tags: initialData.tags || ["Free"],
+      category: initialData.category || "",
+      tagline: initialData.tagline || "",
+      description: initialData.description || "",
+      hostedBy: initialData.hostedBy || "",
+      eligibility: initialData.eligibility || "",
+      isOnline: initialData.isOnline || false,
+      isFree: initialData.isFree ?? true,
+      registrationStart: formatDate(initialData.registrationStart),
+      registrationEnd: formatDate(initialData.registrationEnd),
+      prizes: initialData.prizes || "",
+      rounds: initialData.rounds || [],
+      pricingMode: initialData.pricingMode || "fixed",
+      fixedPrice: initialData.fixedPrice || "",
+      ticketTypes: initialData.ticketTypes || [],
+      qrCodePreviewUrl: initialData.qrCode || "",
+      qrCodeFile: initialData.qrCode || null,
+      isExternalRegistration: initialData.isExternalRegistration || false,
+      registrationUrl: initialData.registrationUrl || "",
+      customFields: initialData.customFields || [],
+    });
+  }
+}, [initialData]);
 
   useEffect(() => {
     if (!eventData.hostedBy) {
@@ -458,11 +469,25 @@ paymentCurrency: CURRENCY_CODE,
     setSubmissionStatus(null);
 
     // Validation
-    if (!eventData.title || !eventData.venue || !eventData.date || !eventData.category || eventData.tags.length === 0 || !eventData.posterFile || !eventData.hostedBy) {
+    if (!eventData.title || !eventData.venue || !eventData.eventStart || !eventData.eventEnd || !eventData.category || eventData.tags.length === 0 || !eventData.posterFile || !eventData.hostedBy){
       setSubmissionStatus("error");
       setIsSubmitting(false);
       return;
     }
+      if (new Date(eventData.eventEnd) < new Date(eventData.eventStart)) {
+  alert("Event end date cannot be before start date.");
+  setIsSubmitting(false);
+  return;
+}
+
+if (
+  eventData.registrationStart &&
+  new Date(eventData.registrationStart) > new Date(eventData.eventStart)
+) {
+  alert("Registration must start before event begins.");
+  setIsSubmitting(false);
+  return;
+}
 
     try {
       const posterUrl = await uploadToCloudinary(eventData.posterFile, "event-posters");
@@ -486,7 +511,8 @@ if (eventData.bannerFile) {
         description: eventData.description,
         category: eventData.category,
         tags: eventData.tags,
-        date: eventData.date,
+        eventStart: eventData.eventStart,
+eventEnd: eventData.eventEnd,
         venue: eventData.venue,
         isOnline: eventData.isOnline,
         poster: posterUrl,
@@ -505,6 +531,7 @@ ticketTypes: eventData.ticketTypes,
         customFields: eventData.customFields,
         rounds: eventData.rounds,
         prizes: eventData.prizes,
+        teamConfig: eventData.teamConfig,
       };
 
       if (typeof onEventHosted === "function") {
@@ -596,10 +623,34 @@ ticketTypes: eventData.ticketTypes,
     )}
   </div>
 </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SelectField label="Category" name="category" value={eventData.category} onChange={handleInputChange} options={categories} required />
-              <InputField label="Main Event Date" name="date" type="date" value={eventData.date} onChange={handleInputChange} required />
-            </div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <SelectField
+    label="Category"
+    name="category"
+    value={eventData.category}
+    onChange={handleInputChange}
+    options={categories}
+    required
+  />
+
+  <InputField
+    label="Event Start Date"
+    name="eventStart"
+    type="date"
+    value={eventData.eventStart}
+    onChange={handleInputChange}
+    required
+  />
+
+  <InputField
+    label="Event End Date"
+    name="eventEnd"
+    type="date"
+    value={eventData.eventEnd}
+    onChange={handleInputChange}
+    required
+  />
+</div>
             <TagSelector selectedTags={eventData.tags} onTagToggle={handleTagToggle} />
           </div>
 
@@ -737,11 +788,67 @@ ticketTypes: eventData.ticketTypes,
 
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
             <SectionTitle icon={User}>Organizer & Registration</SectionTitle>
+            {/* TEAM SETTINGS */}
+<div className="bg-gray-800 p-4 rounded-lg border border-purple-500/40 space-y-4">
+
+<h3 className="text-purple-400 font-bold">
+Team Formation
+</h3>
+
+<label className="flex items-center gap-2">
+<input
+ type="checkbox"
+ checked={eventData.teamConfig.enabled}
+ onChange={e =>
+   setEventData(p => ({
+     ...p,
+     teamConfig: {
+       ...p.teamConfig,
+       enabled: e.target.checked
+     }
+   }))
+ }
+/>
+Enable Team Registration
+</label>
+
+{eventData.teamConfig.enabled && (
+
+<div>
+<label className="text-sm text-gray-300">
+Max Members Per Team
+</label>
+
+<input
+ type="number"
+ min="2"
+ max="10"
+ value={eventData.teamConfig.maxMembers}
+ onChange={e =>
+   setEventData(p => ({
+     ...p,
+     teamConfig: {
+       ...p.teamConfig,
+       maxMembers: Number(e.target.value)
+     }
+   }))
+ }
+ className="w-full bg-gray-900 border border-gray-700 rounded p-2"
+/>
+
+<p className="text-xs text-gray-400 mt-1">
+Example: Enter 4 → each team can have max 4 members
+</p>
+</div>
+)}
+
+</div>
+
             <InputField label="Hosted By" name="hostedBy" value={eventData.hostedBy} disabled required />
             <InputField label="Eligibility" name="eligibility" value={eventData.eligibility} onChange={handleInputChange} placeholder="e.g., Open to all" required />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputField label="Start Date" name="registrationStart" type="date" value={eventData.registrationStart} onChange={handleInputChange} />
-              <InputField label="End Date" name="registrationEnd" type="date" value={eventData.registrationEnd} onChange={handleInputChange} />
+              <InputField label="Registration Start Date" name="registrationStart" type="date" value={eventData.registrationStart} onChange={handleInputChange} />
+              <InputField label="Registration End Date" name="registrationEnd" type="date" value={eventData.registrationEnd} onChange={handleInputChange} />
             </div>
             <InputField label="Prizes" name="prizes" value={eventData.prizes} onChange={handleInputChange} placeholder="e.g., Cash" />
           </div>

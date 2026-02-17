@@ -98,25 +98,45 @@ const ProfileContent = () => {
   }, []);
 
   const downloadRegistrations = (event) => {
-    if (!event.rawRegistrations || event.rawRegistrations.length === 0) {
-      alert("No participants registered.");
-      return;
+  if (!event.rawRegistrations || event.rawRegistrations.length === 0) {
+    alert("No participants registered.");
+    return;
+  }
+
+  const dynamicKeys = new Set();
+
+  event.rawRegistrations.forEach(reg => {
+    if (reg.formData) {
+      Object.keys(reg.formData).forEach(k => dynamicKeys.add(k));
     }
-    const dynamicKeys = new Set();
-    event.rawRegistrations.forEach(reg => { if (reg.formData) Object.keys(reg.formData).forEach(k => dynamicKeys.add(k)); });
-    const headers = ["Email", "Date", ...Array.from(dynamicKeys)];
-    const rows = event.rawRegistrations.map(reg => {
-      const row = [reg.userEmail, reg.registeredAt ? new Date(reg.registeredAt).toLocaleString() : "N/A"];
-      Array.from(dynamicKeys).forEach(key => row.push(`"${String(reg.formData?.[key] || "N/A").replace(/"/g, '""')}"`));
-      return row.join(",");
+  });
+
+  // ✅ Added Team Name & Team Code columns
+  const headers = ["Email", "Date", "Team Name", "Team Code", ...Array.from(dynamicKeys)];
+
+  const rows = event.rawRegistrations.map(reg => {
+    const row = [
+      reg.userEmail,
+      reg.createdAt ? new Date(reg.createdAt).toLocaleString() : "N/A", // ✅ FIXED date field
+      reg.teamName || "",
+      reg.teamCode || ""
+    ];
+
+    Array.from(dynamicKeys).forEach(key => {
+      row.push(`"${String(reg.formData?.[key] || "").replace(/"/g, '""')}"`);
     });
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Participants_${event.title}.csv`;
-    link.click();
-  };
+
+    return row.join(",");
+  });
+
+  const csvContent = [headers.join(","), ...rows].join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `Participants_${event.title}.csv`;
+  link.click();
+};
 
   useEffect(() => {
     let mounted = true;

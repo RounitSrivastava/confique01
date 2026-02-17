@@ -41,6 +41,16 @@ selectedTicketTypes: {
       type: Date,
       default: Date.now,
     },
+    // Team info (optional)
+teamCode: {
+  type: String,
+  default: null,
+},
+
+teamName: {
+  type: String,
+  default: null,
+},
   },
   { _id: false }
 );
@@ -168,6 +178,16 @@ const EventSchema = new mongoose.Schema(
       type: [Object],
       default: [],
     },
+teamConfig: {
+  enabled: {
+    type: Boolean,
+    default: false,
+  },
+  maxMembers: {
+    type: Number,
+    default: 1,
+  },
+},
 
     /* ---------- EVENT FLOW ---------- */
     rounds: {
@@ -195,6 +215,15 @@ const EventSchema = new mongoose.Schema(
       type: [RegistrationSchema],
       default: [],
     },
+    teams: [
+  {
+    name: String,
+    code: String,
+    leader: String,
+    members: [String],
+    createdAt: Date,
+  },
+],
   },
   {
     timestamps: true,
@@ -208,7 +237,13 @@ EventSchema.index(
   { _id: 1, "registrations.userEmail": 1 },
   { unique: true }
 );
-
+/* ===============================
+   🔒 UNIQUE TEAM CODES
+================================ */
+EventSchema.index(
+  { "teams.code": 1 },
+  { sparse: true }
+);
 /* ===============================
    🔒 PRICING CONSISTENCY GUARD
 ================================ */

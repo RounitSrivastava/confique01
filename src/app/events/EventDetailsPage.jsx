@@ -65,6 +65,30 @@ const sendRegistrationNotification = (eventTitle) => {
   window.dispatchEvent(new Event("confique:new-notification"));
 };
 
+const getRegistrationStatus = (start, end) => {
+  const now = new Date();
+
+  if (!start || !end) return { status: "open" };
+
+  const s = new Date(start);
+  const e = new Date(end);
+
+  // normalize times (date-only fix)
+  s.setHours(0,0,0,0);
+  e.setHours(23,59,59,999);
+
+  if (now < s) {
+    const diffMs = s - now;
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+
+    return { status: "notStarted", daysLeft: days };
+  }
+
+  if (now > e) return { status: "closed" };
+
+  return { status: "open" };
+};
+
 const SectionTitle = ({ children, icon: Icon, className = "" }) => (
   <h2
     className={`text-2xl font-bold text-white mb-6 border-b border-gray-800 pb-3 flex items-center ${className}`}
@@ -171,6 +195,12 @@ const EventDetailsPage = ({
   const [showBillAfterRef, setShowBillAfterRef] = useState(false);
   const [canSubmit, setCanSubmit] = useState(false);
   const [userEmail, setUserEmail] = useState(null);
+  const [teamMode, setTeamMode] = useState("create"); // default create
+const [teamName, setTeamName] = useState("");
+const [teamCode, setTeamCode] = useState("");
+const [createdTeamCode, setCreatedTeamCode] = useState(null);
+const [teamMembersCount, setTeamMembersCount] = useState(1);
+const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
   // First try localStorage (page refresh support)
   const stored = localStorage.getItem("userEmail");
@@ -228,8 +258,9 @@ const EventDetailsPage = ({
     registrationStart,
     registrationEnd,
     registrations = [],
+    teamConfig,
   } = displayEvent || {};
-
+const regInfo = getRegistrationStatus(registrationStart, registrationEnd);
   const CURRENCY_SYMBOL = "₹";
   const totalAmount =
     pricingMode === "flexible"
@@ -261,21 +292,10 @@ const EventDetailsPage = ({
     Array.isArray(customFields) &&
     customFields.length > 0;
 
-  const checkEventStatus = useCallback(() => {
-    try {
-      const eventDate = new Date(date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (eventDate < today) return "Ended";
-      return "Open";
-    } catch {
-      return "Open";
-    }
-  }, [date]);
 
   useEffect(() => {
   if (!userEmail) return;
+  
 
   const eventId = displayEvent?.id || displayEvent?._id;
 
@@ -319,8 +339,21 @@ const EventDetailsPage = ({
   } catch {}
 
   // 3️⃣ Otherwise use event date
-  setRegistrationStatus(checkEventStatus());
-}, [userEmail, displayEvent?.registrations, displayEvent?.id, checkEventStatus]);
+  setRegistrationStatus(regInfo.status);
+}, [userEmail, displayEvent?.registrations, displayEvent?.id, regInfo.status]);
+// 🔄 Restore team info after refresh
+useEffect(() => {
+  if (!userEmail || !displayEvent?.teams) return;
+
+  const myTeam = displayEvent.teams.find(t =>
+    Array.isArray(t.members) && t.members.includes(userEmail)
+  );
+
+  if (myTeam) {
+    setCreatedTeamCode(myTeam.code);
+    setTeamMembersCount(myTeam.members.length);
+  }
+}, [userEmail, displayEvent?.teams]);
 
 
   const REG_KEY = "confique:event_registrations";
@@ -347,39 +380,79 @@ const EventDetailsPage = ({
   };
 
   const validateForm = () => {
-    const errors = {};
+  const errors = {};
 
-    customFields
-      .filter(f => f.name !== "Payment Ref (Last 4 digits)") 
-      .forEach((field) => {
-        if (!field.required) return;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^\d{10}$/;
 
-        const value = formData[field.name];
+  customFields
+    .filter(f => f.name !== "Payment Ref (Last 4 digits)")
+    .forEach((field) => {
+      if (!field.required) return;
 
-        if (field.type === "checkbox") {
-          if (!value) errors[field.name] = "This field is required.";
-        } else {
-          if (!value || value.toString().trim() === "")
-            errors[field.name] = "This field is required.";
-        }
-      });
+      const value = formData[field.name];
 
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+      // Empty check
+      if (!value || value.toString().trim() === "") {
+        errors[field.name] = "This field is required.";
+        return;
+      }
 
+      // 📧 Email validation
+      if (field.type === "email" && !emailRegex.test(value)) {
+        errors[field.name] = "Please enter a valid email address.";
+      }
+
+      // 📱 Phone / Number validation (10 digits)
+      if (
+        (field.type === "number" || field.type === "tel") &&
+        !phoneRegex.test(value.toString())
+      ) {
+        errors[field.name] = "Please enter a valid 10-digit number.";
+      }
+
+      // Checkbox
+      if (field.type === "checkbox" && !value) {
+        errors[field.name] = "This field is required.";
+      }
+    });
+
+  setFormErrors(errors);
+  return Object.keys(errors).length === 0;
+};
   const handleRegistrationSubmit = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
+   if (e && e.preventDefault) e.preventDefault();
 
-    if (!validateForm()) return;
+if (isSubmitting) return;
+setIsSubmitting(true);
 
+if (!validateForm()) {
+  setIsSubmitting(false);
+  return;
+}
+// TEAM VALIDATION (FINAL AUTHORITY)
+if (teamConfig?.enabled) {
+  if (teamMode === "create" && !teamName.trim()) {
+    alert("Please enter a team name");
+    setIsSubmitting(false);
+    return;
+  }
+
+  if (teamMode === "join" && !teamCode.trim()) {
+    alert("Please enter a valid team code");
+    setIsSubmitting(false);
+    return;
+  }
+}
     if (!isFree && !showBillAfterRef) {
-      alert("Please enter the last 4 digits of your payment reference");
-      return;
-    }
+  alert("Please enter the last 4 digits of your payment reference");
+  setIsSubmitting(false);
+  return;
+}
 
-    if (!userEmail) {
+   if (!userEmail) {
   alert("Please login again");
+  setIsSubmitting(false);
   return;
 }
 
@@ -388,21 +461,32 @@ const EventDetailsPage = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-  userEmail: userEmail,
-          formData: {
-            ...formData,
-            paidAmount: totalAmount,
-            selectedTickets: ticketQty,
-          },
-          paidRef: formData["Payment Ref (Last 4 digits)"] || null,
-        }),
+  userEmail,
+  teamMode: teamConfig?.enabled ? teamMode : null,
+  teamName: teamConfig?.enabled ? teamName : null,
+  teamCode: teamConfig?.enabled ? teamCode : null,
+  formData: {
+    ...formData,
+    paidAmount: totalAmount,
+    selectedTickets: ticketQty,
+  },
+  paidRef: formData["Payment Ref (Last 4 digits)"] || null,
+}),
       });
 
       const result = await res.json();
+     if (result.teamCode) {
+  setCreatedTeamCode(result.teamCode);
+  setTeamMembersCount(result.membersCount || 1);
+}
       if (!res.ok) throw new Error(result.error || "Registration failed");
 
       setRegistrationStatus("Registered");
-      setShowRegistrationForm(false);
+
+// ❗ DO NOT close modal if team just created
+if (!(teamMode === "create" && result.teamCode)) {
+  setShowRegistrationForm(false);
+}
 
       try {
         const eventKey = displayEvent?.id ?? displayEvent?.title ?? Date.now();
@@ -422,10 +506,13 @@ const EventDetailsPage = ({
       }
 
       sendRegistrationNotification(title);
-    } catch (err) {
-      console.error("Registration Error:", err);
-      alert(err.message);
-    }
+      
+   } catch (err) {
+  console.error("Registration Error:", err);
+  alert(err.message);
+} finally {
+  setIsSubmitting(false);
+}
   };
 
   const handleCloseForm = () => {
@@ -434,7 +521,7 @@ const EventDetailsPage = ({
   };
 
   const handleRegister = () => {
-    if (registrationStatus === "Registered" || registrationStatus === "Ended") return;
+    if (registrationStatus === "Registered" || regInfo.status !== "open") return;
 
     if (isExternalRegistration && registrationUrl) {
       window.open(registrationUrl, "_blank");
@@ -448,45 +535,55 @@ const EventDetailsPage = ({
     setShowRegistrationForm(true);
   };
 
-  const getButtonProps = () => {
-    if (registrationStatus === "Registered") {
-      return {
-        text: "Registered",
-        className:
-          "w-full py-3 bg-green-600 text-white font-bold rounded-lg transition-colors shadow-lg shadow-green-500/30 flex items-center justify-center",
-        disabled: true, 
-        Icon: CheckCircle,
-      };
-    }
-
-    if (registrationStatus === "Ended") {
-      return {
-        text: "Event Ended",
-        className:
-          "w-full py-3 bg-gray-600 text-gray-400 font-bold rounded-lg cursor-not-allowed shadow-none flex items-center justify-center",
-        disabled: true,
-        Icon: Clock,
-      };
-    }
-
-    if (isExternalRegistration) {
-      return {
-        text: "Go to External Registration",
-        className:
-          "w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/15 flex items-center justify-center",
-        disabled: false,
-        Icon: ExternalLink,
-      };
-    }
-
+ const getButtonProps = () => {
+  if (registrationStatus === "Registered") {
     return {
-      text: "Register Now",
+      text: "Registered",
       className:
-        "w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/30 flex items-center justify-center",
-      disabled: false,
-      Icon: ClipboardList,
+        "w-full py-3 bg-green-600 text-white font-bold rounded-lg shadow-lg flex items-center justify-center",
+      disabled: true,
+      Icon: CheckCircle,
     };
+  }
+
+  if (regInfo.status === "notStarted") {
+    return {
+      text: `Opens in ${regInfo.daysLeft} day${regInfo.daysLeft > 1 ? "s" : ""}`,
+      className:
+        "w-full py-3 bg-gray-700 text-gray-300 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
+      disabled: true,
+      Icon: Clock,
+    };
+  }
+
+  if (regInfo.status === "closed") {
+    return {
+      text: "Registration Closed",
+      className:
+        "w-full py-3 bg-gray-700 text-gray-400 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
+      disabled: true,
+      Icon: Clock,
+    };
+  }
+
+  if (isExternalRegistration) {
+    return {
+      text: "Go to External Registration",
+      className:
+        "w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 flex items-center justify-center",
+      disabled: false,
+      Icon: ExternalLink,
+    };
+  }
+
+  return {
+    text: "Register Now",
+    className:
+      "w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 flex items-center justify-center",
+    disabled: false,
+    Icon: ClipboardList,
   };
+};
 
   const buttonProps = getButtonProps();
 
@@ -527,6 +624,81 @@ const EventDetailsPage = ({
             onSubmit={handleRegistrationSubmit}
             className="space-y-4 max-h-[70vh] overflow-y-auto pr-1"
           >
+            {/* TEAM SECTION */}
+{teamConfig?.enabled && !showBilling && (
+  <div className="space-y-4 p-4 bg-gray-800 rounded-xl border border-purple-600">
+
+    <p className="text-purple-400 font-semibold text-sm">
+      Team Registration (Max {teamConfig.maxMembers} Members)
+    </p>
+
+    <div className="flex gap-3">
+      <button
+        type="button"
+        onClick={() => setTeamMode("create")}
+        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+          teamMode === "create"
+            ? "bg-purple-600 text-white"
+            : "bg-gray-700 text-gray-300"
+        }`}
+      >
+        Create Team
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setTeamMode("join")}
+        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+          teamMode === "join"
+            ? "bg-purple-600 text-white"
+            : "bg-gray-700 text-gray-300"
+        }`}
+      >
+        Join Team
+      </button>
+    </div>
+
+    {teamMode === "create" && (
+      <input
+        type="text"
+        placeholder="Enter Team Name"
+        value={teamName}
+        onChange={(e) => setTeamName(e.target.value)}
+        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+      />
+    )}
+{createdTeamCode && (
+  <div className="bg-green-900/40 border border-green-500 rounded-lg p-3 text-sm text-green-300 mt-3">
+
+    <p className="font-semibold text-center">
+      ✅ Team Created Successfully
+    </p>
+
+    <div
+      className="mt-2 font-bold text-white text-center tracking-widest text-lg cursor-pointer"
+      onClick={() => navigator.clipboard.writeText(createdTeamCode)}
+    >
+      {createdTeamCode}
+    </div>
+
+    <p className="text-xs text-gray-400 mt-1 text-center">
+      Tap to copy & share with teammates
+    </p>
+
+  </div>
+)}
+
+    {teamMode === "join" && (
+      <input
+        type="text"
+        placeholder="Enter Team Code"
+        value={teamCode}
+        onChange={(e) => setTeamCode(e.target.value)}
+        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
+      />
+    )}
+  </div>
+)}
             {/* Step 1: Show Form Fields */}
             {!showBilling && customFields
               .filter(f => f.name !== "Payment Ref (Last 4 digits)")
@@ -661,36 +833,55 @@ const EventDetailsPage = ({
 
             <div className="flex items-center justify-end space-x-3 pt-2">
               {!showBilling ? (
-  <button
-    type="button"
-    onClick={() => {
-      if (!validateForm()) return;
+ <button
+  type="button"
+  disabled={isSubmitting}
+  onClick={() => {
+    if (isSubmitting) return;
 
-      // If no payment step → directly submit
-      if (isFree || pricingMode === "free") {
-        handleRegistrationSubmit();
-      } else {
-        setShowBilling(true);
-      }
-    }}
-    className="px-6 py-2 rounded-lg text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-all"
-  >
-    {(isFree || pricingMode === "free") ? "Submit" : "Continue"}
-  </button>
+    if (!validateForm()) return;
+
+    if (isFree || pricingMode === "free") {
+      setIsSubmitting(true);
+      handleRegistrationSubmit();
+    } else {
+      setShowBilling(true);
+    }
+  }}
+  className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
+    isSubmitting
+      ? "bg-gray-700 cursor-not-allowed"
+      : "bg-purple-600 hover:bg-purple-700 text-white"
+  }`}
+>
+  {isSubmitting
+    ? "Submitting..."
+    : (isFree || pricingMode === "free")
+    ? "Submit"
+    : "Continue"}
+</button>
 ) : (
 
                 <button
-                  type="submit"
-                  disabled={!isFree && !showBillAfterRef}
-                  className={`px-6 py-2 rounded-lg text-sm font-semibold text-white flex items-center transition-all ${
-                    (!isFree && !showBillAfterRef) 
-                    ? "bg-gray-700 cursor-not-allowed" 
-                    : "bg-green-600 hover:bg-green-700"
-                  }`}
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Complete Registration
-                </button>
+  type="submit"
+  disabled={
+    isSubmitting ||
+    !!createdTeamCode ||
+    (!isFree && !showBillAfterRef)
+  }
+  className={`px-6 py-2 rounded-lg text-sm font-semibold text-white flex items-center transition-all ${
+    isSubmitting || (!isFree && !showBillAfterRef)
+      ? "bg-gray-700 cursor-not-allowed"
+      : "bg-green-600 hover:bg-green-700"
+  }`}
+>
+  <CheckCircle className="w-4 h-4 mr-2" />
+  {isSubmitting
+    ? "Submitting..."
+    : createdTeamCode
+    ? "Registered"
+    : "Complete Registration"}
+</button>
               )}
             </div>
           </form>
@@ -863,6 +1054,24 @@ const EventDetailsPage = ({
                     </span>
                   </p>
                   <p className="flex justify-between">Format: <span className="text-blue-400">{participationFormat}</span></p>
+                  {createdTeamCode && regInfo.status === "open" && (
+  <div className="mt-3 p-3 rounded-lg bg-green-900/40 border border-green-500">
+
+    <p className="text-green-300 text-center font-semibold">
+      Team Code
+    </p>
+
+    <p className="text-white text-lg font-bold text-center tracking-widest">
+      {createdTeamCode}
+    </p>
+
+    <p className="text-gray-300 text-center mt-1">
+      Members: {teamMembersCount} / {teamConfig?.maxMembers}
+    </p>
+
+  </div>
+)}
+
                 </div>
 
                 <button onClick={handleRegister} disabled={buttonProps.disabled} className={buttonProps.className}>

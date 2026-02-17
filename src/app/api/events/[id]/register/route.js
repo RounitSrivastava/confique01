@@ -11,22 +11,37 @@ export async function POST(req, { params }) {
     await dbConnect();
 
     const { id } = params;
-    const body = await req.json(); // { userEmail, formData, paidRef }
+    const body = await req.json();
 
-    // 1️⃣ Validate event ID
+    const {
+      userEmail,
+      teamMode,
+      teamName,
+      teamCode,
+      formData,
+      paidRef
+    } = body;
+
+    // Validate Event ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid Event ID" }, { status: 400 });
     }
 
-    if (!body.userEmail) {
+    if (!userEmail) {
       return NextResponse.json({ error: "User email is required" }, { status: 400 });
     }
 
-    // 2️⃣ Prevent duplicate registration (same email)
-    const alreadyRegistered = await Event.findOne({
-      _id: id,
-      "registrations.userEmail": body.userEmail,
-    });
+    // Fetch Event
+    const event = await Event.findById(id);
+
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    // Prevent duplicate registration
+    const alreadyRegistered = event.registrations.some(
+      r => r.userEmail === userEmail
+    );
 
     if (alreadyRegistered) {
       return NextResponse.json(
@@ -35,35 +50,85 @@ export async function POST(req, { params }) {
       );
     }
 
-    // 3️⃣ Save registration
-    const event = await Event.findByIdAndUpdate(
-      id,
-      {
-        $push: {
-          registrations: {
-            userEmail: body.userEmail,
-            formData: body.formData || {},
-            paidRef: body.paidRef || null,
-            selectedTicketTypes: body.selectedTicketTypes || [],
-            createdAt: new Date(),
-          },
-        },
-        $inc: { registrationsCount: 1 },
-      },
-      { new: true, runValidators: true }
-    );
+    let assignedTeamCode = null;
+    let assignedTeamName = null;
+    let membersCount = 1;
 
-    if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    // CREATE TEAM
+    if (event.teamConfig?.enabled && teamMode === "create") {
+
+      if (!teamName) {
+        return NextResponse.json({ error: "Team name required" }, { status: 400 });
+      }
+
+      const generatedCode = Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase();
+
+      event.teams = event.teams || [];
+
+      event.teams.push({
+        name: teamName,
+        code: generatedCode,
+        leader: userEmail,
+        members: [userEmail],
+        createdAt: new Date()
+      });
+
+      assignedTeamCode = generatedCode;
+      assignedTeamName = teamName;
+      membersCount = 1;
     }
 
-    // 4️⃣ Send registrations back (for multi-device frontend sync)
-    return NextResponse.json({
-      success: true,
-      message: "Registration successful!",
-      registrationsCount: event.registrationsCount,
-      registrations: event.registrations,   // 🔥 THIS enables multi-device detection
+    // JOIN TEAM
+    if (event.teamConfig?.enabled && teamMode === "join") {
+
+      const team = event.teams?.find(t => t.code === teamCode);
+
+      if (!team) {
+        return NextResponse.json({ error: "Invalid team code" }, { status: 400 });
+      }
+
+      if (team.members.includes(userEmail)) {
+        return NextResponse.json({ error: "Already in team" }, { status: 400 });
+      }
+
+      if (team.members.length >= event.teamConfig.maxMembers) {
+        return NextResponse.json({ error: "Team is full" }, { status: 400 });
+      }
+
+      team.members.push(userEmail);
+
+      assignedTeamCode = team.code;
+      assignedTeamName = team.name;
+      membersCount = team.members.length;
+    }
+
+    // Save Registration
+    event.registrations.push({
+      userEmail,
+      formData: formData || {},
+      paidRef: paidRef || null,
+      teamCode: assignedTeamCode,
+      teamName: assignedTeamName,
+      createdAt: new Date()
     });
+
+    event.registrationsCount += 1;
+
+    await event.save();
+
+    return NextResponse.json({
+  success: true,
+  message: "Registration successful!",
+  registrationsCount: event.registrationsCount,
+  registrations: event.registrations,
+  teamCode: assignedTeamCode,
+  teamName: assignedTeamName,
+  membersCount
+});
+
 
   } catch (err) {
     console.error("❌ Registration API Error:", err);

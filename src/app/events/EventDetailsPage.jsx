@@ -73,16 +73,38 @@ const getRegistrationStatus = (start, end) => {
   const s = new Date(start);
   const e = new Date(end);
 
-  // normalize times (date-only fix)
   s.setHours(0,0,0,0);
   e.setHours(23,59,59,999);
 
   if (now < s) {
-    const diffMs = s - now;
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+  const diffMs = s - now;
 
-    return { status: "notStarted", daysLeft: days };
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  // Less than 1 hour → show minutes
+  if (hours === 0) {
+    return {
+      status: "notStarted",
+      minutesLeft: minutes || 1, // never show 0
+    };
   }
+
+  // Less than 24 hours → show hours
+  if (hours < 24) {
+    return {
+      status: "notStarted",
+      hoursLeft: hours,
+    };
+  }
+
+  // Otherwise → show days
+  return {
+    status: "notStarted",
+    daysLeft: Math.ceil(hours / 24),
+  };
+}
 
   if (now > e) return { status: "closed" };
 
@@ -201,6 +223,7 @@ const [teamCode, setTeamCode] = useState("");
 const [createdTeamCode, setCreatedTeamCode] = useState(null);
 const [teamMembersCount, setTeamMembersCount] = useState(1);
 const [isSubmitting, setIsSubmitting] = useState(false);
+const [, forceUpdate] = useState(0);
   useEffect(() => {
   // First try localStorage (page refresh support)
   const stored = localStorage.getItem("userEmail");
@@ -221,7 +244,13 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     window.removeEventListener("confique:auth-changed", handler);
   };
 }, []);
+useEffect(() => {
+  const timer = setInterval(() => {
+    forceUpdate(n => n + 1);
+  }, 60000);
 
+  return () => clearInterval(timer);
+}, []);
 
   useEffect(() => {
     setActiveTab("Details");
@@ -546,15 +575,25 @@ if (!(teamMode === "create" && result.teamCode)) {
     };
   }
 
-  if (regInfo.status === "notStarted") {
-    return {
-      text: `Opens in ${regInfo.daysLeft} day${regInfo.daysLeft > 1 ? "s" : ""}`,
-      className:
-        "w-full py-3 bg-gray-700 text-gray-300 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
-      disabled: true,
-      Icon: Clock,
-    };
+ if (regInfo.status === "notStarted") {
+  let label;
+
+  if (regInfo.minutesLeft) {
+    label = `Opens in ${regInfo.minutesLeft} minute${regInfo.minutesLeft > 1 ? "s" : ""}`;
+  } else if (regInfo.hoursLeft) {
+    label = `Opens in ${regInfo.hoursLeft} hour${regInfo.hoursLeft > 1 ? "s" : ""}`;
+  } else {
+    label = `Opens in ${regInfo.daysLeft} day${regInfo.daysLeft > 1 ? "s" : ""}`;
   }
+
+  return {
+    text: label,
+    className:
+      "w-full py-3 bg-gray-700 text-gray-300 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
+    disabled: true,
+    Icon: Clock,
+  };
+}
 
   if (regInfo.status === "closed") {
     return {

@@ -3,7 +3,10 @@ import { Cashfree } from "cashfree-pg";
 // Set credentials (v5 way)
 Cashfree.XClientId = process.env.CASHFREE_APP_ID;
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
-Cashfree.XEnvironment = Cashfree.Environment.SANDBOX; 
+Cashfree.XEnvironment =
+  process.env.CASHFREE_ENV === "PRODUCTION"
+    ? Cashfree.Environment.PRODUCTION
+    : Cashfree.Environment.SANDBOX;
 // change to Cashfree.Environment.PRODUCTION after KYC
 
 export async function POST(req) {

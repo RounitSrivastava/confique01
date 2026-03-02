@@ -5,8 +5,8 @@ Cashfree.XClientId = process.env.CASHFREE_APP_ID;
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
 Cashfree.XEnvironment =
   process.env.CASHFREE_ENV === "PRODUCTION"
-    ? Cashfree.Environment.PRODUCTION
-    : Cashfree.Environment.SANDBOX;
+    ? "PRODUCTION"
+    : "SANDBOX";
 // change to Cashfree.Environment.PRODUCTION after KYC
 
 export async function POST(req) {

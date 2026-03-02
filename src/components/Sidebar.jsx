@@ -114,12 +114,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
 
             {openQuick && (
               <div className="mt-2 space-y-2">
-                <button
-  onClick={() => router.push("/quizzes/create")}
-  className="block w-full text-left rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
->
-  Create Quiz
-</button>
+              
                 <button
   onClick={() => router.push("/groups?view=create")}
   className="block w-full text-left rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]">

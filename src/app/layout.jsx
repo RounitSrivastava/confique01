@@ -7,6 +7,12 @@ import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  icons: {
+    icon: "/confiquelogo.png",
+  },
+};
+
 export default function RootLayout({ children }) {
   const pathname = headers().get("x-pathname") || "";
 

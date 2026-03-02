@@ -24,6 +24,29 @@ const RegistrationSchema = new mongoose.Schema(
       default: null,
     },
 
+    // qr | gateway
+paymentMethod: {
+  type: String,
+  enum: ["qr", "gateway"],
+  default: "qr",
+},
+
+// Cashfree Order ID (gateway only)
+orderId: {
+  type: String,
+  default: null,
+},
+
+// Final paid amount
+paidAmount: {
+  type: Number,
+  default: 0,
+},
+// 🔥 Cloudinary Screenshot URL
+screenshotUrl: {
+  type: String,
+  default: null,
+},
     // Admin payment verification
     paymentStatus: {
       type: String,
@@ -32,8 +55,28 @@ const RegistrationSchema = new mongoose.Schema(
     },
 
     // 🔥 Selected ticket types by user
-selectedTicketTypes: {
-  type: [String],
+ticketSelection: {
+  type: [
+    {
+      type: {
+        type: String,
+        required: true,
+      },
+      price: {
+        type: Number,
+        required: true,
+      },
+      quantity: {
+        type: Number,
+        required: true,
+        min: 1,
+      },
+      subtotal: {
+        type: Number,
+        required: true,
+      },
+    },
+  ],
   default: [],
 },
 
@@ -124,6 +167,11 @@ const EventSchema = new mongoose.Schema(
       default: "",
     },
 
+    // ✅ NEW FIELD
+groupLink: {
+  type: String,
+  default: "",
+},
     /* ---------- PRICING & REGISTRATION ---------- */
     isFree: {
       type: Boolean,
@@ -135,6 +183,12 @@ const EventSchema = new mongoose.Schema(
       enum: ["free", "fixed", "flexible"],
       default: "free",
     },
+
+    paymentMethod: {
+  type: String,
+  enum: ["qr", "gateway"],
+  default: "qr",
+},
 
     fixedPrice: {
       type: Number,
@@ -174,10 +228,38 @@ const EventSchema = new mongoose.Schema(
     },
 
     /* ---------- CUSTOM FORM ---------- */
-    customFields: {
-      type: [Object],
+    customFields: [
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    type: {
+      type: String,
+      enum: ["text", "number", "email", "date", "checkbox", "file"],
+      required: true,
+    },
+
+    required: {
+      type: Boolean,
+      default: false,
+    },
+
+    options: {
+      type: [String],
       default: [],
     },
+
+    // ✅ NEW FIELD (for single / multiple)
+    selectionType: {
+      type: String,
+      enum: ["single", "multiple"],
+      default: "multiple",
+    },
+  },
+],
 teamConfig: {
   enabled: {
     type: Boolean,

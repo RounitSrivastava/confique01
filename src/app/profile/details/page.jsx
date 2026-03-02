@@ -91,53 +91,115 @@ const ProfileContent = () => {
       displayDate: ev.date ? new Date(ev.date).toLocaleDateString() : "TBD",
       location: ev.venue,
       registrationsCount: ev.registrationsCount || 0,
-      rawRegistrations: ev.registrations || [], 
+      rawRegistrations: ev.registrations || [],
+teams: ev.teams || [],
       isHosted: ev.hostedBy?.trim().toLowerCase() === userName?.trim().toLowerCase(),
       isRegistered: ev.registrations?.some(reg => reg.userEmail === userEmail)
     }));
   }, []);
 
-  const downloadRegistrations = (event) => {
+const downloadRegistrations = (event) => {
   if (!event.rawRegistrations || event.rawRegistrations.length === 0) {
     alert("No participants registered.");
     return;
   }
 
-  const dynamicKeys = new Set();
+  const registrations = [...event.rawRegistrations];
 
-  event.rawRegistrations.forEach(reg => {
+  // Collect dynamic form keys
+  const dynamicKeys = new Set();
+  registrations.forEach(reg => {
     if (reg.formData) {
       Object.keys(reg.formData).forEach(k => dynamicKeys.add(k));
     }
   });
 
-  // ✅ Added Team Name & Team Code columns
-  const headers = ["Email", "Date", "Team Name", "Team Code", ...Array.from(dynamicKeys)];
-
-  const rows = event.rawRegistrations.map(reg => {
-    const row = [
-      reg.userEmail,
-      reg.createdAt ? new Date(reg.createdAt).toLocaleString() : "N/A", // ✅ FIXED date field
-      reg.teamName || "",
-      reg.teamCode || ""
-    ];
-
-    Array.from(dynamicKeys).forEach(key => {
-      row.push(`"${String(reg.formData?.[key] || "").replace(/"/g, '""')}"`);
-    });
-
-    return row.join(",");
+  // Sort by team
+  registrations.sort((a, b) => {
+    const teamA = a.teamName || "";
+    const teamB = b.teamName || "";
+    return teamA.localeCompare(teamB);
   });
 
-  const csvContent = [headers.join(","), ...rows].join("\n");
+  const headers = [
+    "Team Name",
+    "Team Code",
+    "Team Leader Email",
+    "Participant Email",
+    "Registration Date",
+    "Payment Status",
+    "Paid Amount",
+    "Payment Method",
+    "Tickets",
+    "Payment Screenshot URL",   // clearer naming
+    ...Array.from(dynamicKeys)
+  ];
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const escapeValue = (value) => {
+    if (value === null || value === undefined) return '""';
+    return `"${String(value).replace(/"/g, '""')}"`;
+  };
+
+  const rows = [];
+  let lastTeam = null;
+
+  registrations.forEach(reg => {
+
+    if (lastTeam && lastTeam !== reg.teamName) {
+      rows.push("");
+    }
+
+    lastTeam = reg.teamName;
+
+    const teamLeader =
+      event.teams?.find(t => t.code === reg.teamCode)?.leader || "";
+
+   // ✅ Convert ticketSelection array into readable string
+const ticketInfo = Array.isArray(reg.ticketSelection)
+  ? reg.ticketSelection
+      .map(t => `${t.type} (x${t.quantity})`)
+      .join(" | ")
+  : "";
+
+const rowData = [
+  reg.teamName || "Solo",
+  reg.teamCode || "",
+  teamLeader,
+  reg.userEmail,
+  reg.createdAt
+    ? new Date(reg.createdAt).toLocaleString()
+    : "N/A",
+  reg.paymentStatus || "pending",
+  reg.paidAmount || 0,
+  reg.paymentMethod || "qr",
+  ticketInfo,                     // ✅ NEW DATA
+  reg.screenshotUrl || "",
+  ...Array.from(dynamicKeys).map(
+    key => reg.formData?.[key] || ""
+  )
+];
+
+    rows.push(rowData.map(escapeValue).join(","));
+  });
+
+  const csvContent = [
+    headers.map(escapeValue).join(","),
+    ...rows
+  ].join("\n");
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;"
+  });
+
+  const safeFileName = event.title
+    .replace(/[^a-z0-9]/gi, "_")
+    .toLowerCase();
+
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `Participants_${event.title}.csv`;
+  link.download = `Participants_${safeFileName}.csv`;
   link.click();
 };
-
   useEffect(() => {
     let mounted = true;
     async function loadAllData() {

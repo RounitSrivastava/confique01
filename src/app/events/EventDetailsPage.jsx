@@ -19,6 +19,7 @@ import {
   TrendingUp,
   X as CloseIcon,
 } from "lucide-react";
+import confetti from "canvas-confetti";
 
 // ───────── HELPERS (email + notifications) ─────────
 const getCurrentUserEmail = () => {
@@ -224,6 +225,42 @@ const [createdTeamCode, setCreatedTeamCode] = useState(null);
 const [teamMembersCount, setTeamMembersCount] = useState(1);
 const [isSubmitting, setIsSubmitting] = useState(false);
 const [, forceUpdate] = useState(0);
+const [paymentMethod, setPaymentMethod] = useState("qr");
+const [teamParticipants, setTeamParticipants] = useState([]);
+const [teamCreator, setTeamCreator] = useState(null);
+const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
+useEffect(() => {
+  if (!showSuccessPopup) return;
+
+  const duration = 2000;
+  const end = Date.now() + duration;
+
+  const interval = setInterval(() => {
+    if (Date.now() > end) {
+      clearInterval(interval);
+      return;
+    }
+
+    confetti({
+      particleCount: 40,
+      spread: 70,
+      origin: { x: Math.random(), y: 0.6 },
+    });
+  }, 250);
+
+  return () => clearInterval(interval);
+}, [showSuccessPopup]);
+
+useEffect(() => {
+  if (window.Cashfree) return;
+
+  const script = document.createElement("script");
+  script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
+  script.async = true;
+  document.body.appendChild(script);
+}, []);
+
   useEffect(() => {
   // First try localStorage (page refresh support)
   const stored = localStorage.getItem("userEmail");
@@ -256,9 +293,11 @@ useEffect(() => {
     setActiveTab("Details");
   }, [displayEvent?.id]);
 
-  useEffect(() => {
-    setTicketQty({});
-  }, [displayEvent?._id]);
+ useEffect(() => {
+  if (displayEvent?.paymentMethod) {
+    setPaymentMethod(displayEvent.paymentMethod);
+  }
+}, [displayEvent]);
 
   const {
     title,
@@ -269,6 +308,7 @@ useEffect(() => {
     hostedBy,
     eligibility,
     prizes,
+    groupLink,  
     isExternalRegistration,
     registrationUrl,
     poster,
@@ -289,6 +329,7 @@ useEffect(() => {
     registrations = [],
     teamConfig,
   } = displayEvent || {};
+  
 const regInfo = getRegistrationStatus(registrationStart, registrationEnd);
   const CURRENCY_SYMBOL = "₹";
   const totalAmount =
@@ -336,6 +377,7 @@ const regInfo = getRegistrationStatus(registrationStart, registrationEnd);
 
     if (found) {
       setRegistrationStatus("Registered");
+      
 
       // Sync to localStorage
       try {
@@ -381,9 +423,18 @@ useEffect(() => {
   if (myTeam) {
     setCreatedTeamCode(myTeam.code);
     setTeamMembersCount(myTeam.members.length);
+
+    // ✅ FIXED: use leader instead of creator
+    setTeamCreator(myTeam.leader);
+
+    setTeamParticipants(
+      myTeam.members.map((email) => ({
+        name: email.split("@")[0],
+        email,
+      }))
+    );
   }
 }, [userEmail, displayEvent?.teams]);
-
 
   const REG_KEY = "confique:event_registrations";
 
@@ -402,11 +453,43 @@ useEffect(() => {
   };
 
   const handleFormChange = (fieldName, fieldType, value, checked) => {
-    setFormData((prev) => ({
+  setFormData((prev) => {
+    // Multi-checkbox
+   if (fieldType === "checkbox") {
+  const fieldConfig = customFields.find(f => f.name === fieldName);
+
+  // SINGLE SELECT (radio behaviour)
+  if (fieldConfig?.selectionType === "single") {
+    return {
       ...prev,
-      [fieldName]: fieldType === "checkbox" ? checked : value,
-    }));
-  };
+      [fieldName]: value,
+    };
+  }
+
+  // MULTIPLE SELECT
+  const currentValues = Array.isArray(prev[fieldName])
+    ? prev[fieldName]
+    : [];
+
+  if (checked) {
+    return {
+      ...prev,
+      [fieldName]: [...currentValues, value],
+    };
+  } else {
+    return {
+      ...prev,
+      [fieldName]: currentValues.filter((v) => v !== value),
+    };
+  }
+}
+    // Normal fields
+    return {
+      ...prev,
+      [fieldName]: value,
+    };
+  });
+};
 
   const validateForm = () => {
   const errors = {};
@@ -422,10 +505,17 @@ useEffect(() => {
       const value = formData[field.name];
 
       // Empty check
-      if (!value || value.toString().trim() === "") {
-        errors[field.name] = "This field is required.";
-        return;
-      }
+     if (field.type === "checkbox") {
+  if (field.selectionType === "single") {
+    if (!value) {
+      errors[field.name] = "Please select an option.";
+    }
+  } else {
+    if (!Array.isArray(value) || value.length === 0) {
+      errors[field.name] = "Please select at least one option.";
+    }
+  }
+}
 
       // 📧 Email validation
       if (field.type === "email" && !emailRegex.test(value)) {
@@ -441,12 +531,16 @@ useEffect(() => {
       }
 
       // Checkbox
-      if (field.type === "checkbox" && !value) {
-        errors[field.name] = "This field is required.";
-      }
+      
     });
+    if (!isFree && paymentMethod === "qr" && showBilling) {
+  if (!formData.paymentScreenshot) {
+    errors.paymentScreenshot = "Please upload payment screenshot.";
+  }
+}
 
   setFormErrors(errors);
+  console.log("FORM ERRORS:", errors);
   return Object.keys(errors).length === 0;
 };
   const handleRegistrationSubmit = async (e) => {
@@ -456,6 +550,12 @@ if (isSubmitting) return;
 setIsSubmitting(true);
 
 if (!validateForm()) {
+  setIsSubmitting(false);
+  return;
+}
+// ✅ Flexible pricing validation (FINAL STEP)
+if (pricingMode === "flexible" && totalAmount === 0) {
+  alert("Please select at least one ticket before completing registration.");
   setIsSubmitting(false);
   return;
 }
@@ -473,7 +573,11 @@ if (teamConfig?.enabled) {
     return;
   }
 }
-    if (!isFree && !showBillAfterRef) {
+   if (
+  !isFree &&
+  paymentMethod === "qr" &&
+  (formData["Payment Ref (Last 4 digits)"] || "").length !== 4
+){
   alert("Please enter the last 4 digits of your payment reference");
   setIsSubmitting(false);
   return;
@@ -486,22 +590,44 @@ if (teamConfig?.enabled) {
 }
 
     try {
-      const res = await fetch(`/api/events/${displayEvent.id || displayEvent._id}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-  userEmail,
-  teamMode: teamConfig?.enabled ? teamMode : null,
-  teamName: teamConfig?.enabled ? teamName : null,
-  teamCode: teamConfig?.enabled ? teamCode : null,
-  formData: {
-    ...formData,
-    paidAmount: totalAmount,
-    selectedTickets: ticketQty,
-  },
-  paidRef: formData["Payment Ref (Last 4 digits)"] || null,
-}),
-      });
+      const payload = new FormData();
+
+payload.append("userEmail", userEmail);
+payload.append("teamMode", teamConfig?.enabled ? teamMode : "");
+payload.append("teamName", teamConfig?.enabled ? teamName : "");
+payload.append("teamCode", teamConfig?.enabled ? teamCode : "");
+payload.append("paidRef", formData["Payment Ref (Last 4 digits)"] || "");
+payload.append("paidAmount", totalAmount);
+payload.append("paymentMethod", paymentMethod);
+if (pricingMode === "flexible") {
+  const selectedTickets = ticketTypes
+    .filter((t) => (ticketQty[t.name] || 0) > 0)
+    .map((t) => ({
+      type: t.name,
+      price: t.price,
+      quantity: ticketQty[t.name],
+      subtotal: t.price * ticketQty[t.name],
+    }));
+
+  payload.append("ticketSelection", JSON.stringify(selectedTickets));
+}
+
+// Append normal fields
+Object.entries(formData).forEach(([key, value]) => {
+  if (value instanceof File) {
+    payload.append(key, value); // screenshot
+  } else {
+    payload.append(key, JSON.stringify(value));
+  }
+});
+
+const res = await fetch(
+  `/api/events/${displayEvent.id || displayEvent._id}/register`,
+  {
+    method: "POST",
+    body: payload, // ❗ NO headers
+  }
+);
 
       const result = await res.json();
      if (result.teamCode) {
@@ -516,6 +642,9 @@ if (teamConfig?.enabled) {
 if (!(teamMode === "create" && result.teamCode)) {
   setShowRegistrationForm(false);
 }
+setTimeout(() => {
+  setShowSuccessPopup(true);
+}, 300);
 
       try {
         const eventKey = displayEvent?.id ?? displayEvent?.title ?? Date.now();
@@ -563,6 +692,52 @@ if (!(teamMode === "create" && result.teamCode)) {
     setTicketQty({});
     setShowRegistrationForm(true);
   };
+
+ const handleRemoveParticipant = async (emailToRemove) => {
+  if (!createdTeamCode) return;
+
+  try {
+    const res = await fetch(
+      `/api/events/${displayEvent.id || displayEvent._id}/remove-member`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teamCode: createdTeamCode,
+          email: emailToRemove,
+          requester: userEmail,
+        }),
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    // 🗑 CASE 1: Team deleted (last member left)
+    if (data.teamDeleted) {
+      setCreatedTeamCode(null);
+      setTeamParticipants([]);
+      setTeamMembersCount(0);
+      setTeamCreator(null);
+      return;
+    }
+
+    // Remove member from UI
+    setTeamParticipants(prev =>
+      prev.filter(p => p.email !== emailToRemove)
+    );
+
+    setTeamMembersCount(prev => prev - 1);
+
+    // 🔄 CASE 2: Leadership transferred
+    if (data.newCreator) {
+      setTeamCreator(data.newCreator);
+    }
+
+  } catch (err) {
+    alert(err.message);
+  }
+};
 
  const getButtonProps = () => {
   if (registrationStatus === "Registered") {
@@ -739,45 +914,103 @@ if (!(teamMode === "create" && result.teamCode)) {
   </div>
 )}
             {/* Step 1: Show Form Fields */}
-            {!showBilling && customFields
-              .filter(f => f.name !== "Payment Ref (Last 4 digits)")
-              .map((field, index) => {
-                const value = formData[field.name] ?? (field.type === "checkbox" ? false : "");
-                const error = formErrors[field.name];
+           {!showBilling && customFields
+  .filter(f =>
+    f.name !== "Payment Ref (Last 4 digits)" &&
+    f.type !== "file"
+  )
+  .map((field, index) => {
+    const value =
+      formData[field.name] ??
+      (field.type === "checkbox" ? false : "");
+    const error = formErrors[field.name];
 
                 return (
                   <div key={index} className="space-y-1">
-                    {field.type === "checkbox" ? (
-                      <div className="flex items-center space-x-2 mt-1">
-                        <input
-                          type="checkbox"
-                          id={`field-${index}`}
-                          checked={!!value}
-                          onChange={(e) =>
-                            handleFormChange(field.name, field.type, e.target.value, e.target.checked)
-                          }
-                          className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-                        />
-                        <label htmlFor={`field-${index}`} className="text-sm text-gray-200">
-                          {field.name} {field.required && <span className="text-red-500">*</span>}
-                        </label>
-                      </div>
-                    ) : (
+                    {field.type === "checkbox" && Array.isArray(field.options) && field.options.length > 0 ? (
+  <div className="space-y-2">
+    <label className="text-xs font-medium text-gray-300 block mb-1">
+      {field.name} {field.required && <span className="text-red-500">*</span>}
+    </label>
+
+    {field.options.map((option, optIndex) => {
+      const selectedValues = formData[field.name] || [];
+
+      return (
+        <div key={optIndex} className="flex items-center space-x-2">
+          <input
+  type={
+    field.selectionType === "single"
+      ? "radio"
+      : "checkbox"
+  }
+  name={field.name}
+            id={`${field.name}-${optIndex}`}
+            value={option}
+            checked={
+  field.selectionType === "single"
+    ? formData[field.name] === option
+    : (formData[field.name] || []).includes(option)
+}
+            onChange={(e) =>
+              handleFormChange(
+                field.name,
+                "checkbox",
+                option,
+                e.target.checked
+              )
+            }
+            className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+          />
+          <label
+            htmlFor={`${field.name}-${optIndex}`}
+            className="text-sm text-gray-200"
+          >
+            {option}
+          </label>
+        </div>
+      );
+    })}
+  </div>
+) : (
                       <>
                         <label className="text-xs font-medium text-gray-300 block mb-1">
                           {field.name} {field.required && <span className="text-red-500">*</span>}
                         </label>
-                        <input
-                          type={field.type || "text"}
-                          value={value}
-                          onChange={(e) =>
-                            handleFormChange(field.name, field.type, e.target.value, false)
-                          }
-                          className={`w-full px-3 py-2 rounded-lg bg-gray-800 border text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                            error ? "border-red-500" : "border-gray-700"
-                          }`}
-                          placeholder={field.name}
-                        />
+                        {field.type === "file" ? (
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) =>
+      handleFormChange(
+        field.name,
+        "file",
+        e.target.files[0],
+        false
+      )
+    }
+    className={`w-full px-3 py-2 rounded-lg bg-gray-800 border text-sm text-white ${
+      error ? "border-red-500" : "border-gray-700"
+    }`}
+  />
+) : (
+  <input
+    type={field.type || "text"}
+    value={value}
+    onChange={(e) =>
+      handleFormChange(
+        field.name,
+        field.type,
+        e.target.value,
+        false
+      )
+    }
+    className={`w-full px-3 py-2 rounded-lg bg-gray-800 border text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+      error ? "border-red-500" : "border-gray-700"
+    }`}
+    placeholder={field.name}
+  />
+)}
                       </>
                     )}
                     {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
@@ -786,6 +1019,7 @@ if (!(teamMode === "create" && result.teamCode)) {
               })}
 
             {/* Step 2: Show Billing Details & Transaction ID Input */}
+           
             {showBilling && !isFree && (
               <div className="mt-6 p-4 rounded-xl bg-gray-800 border border-purple-600 space-y-4">
                 <SectionTitle icon={List} className="text-lg">Bill Details</SectionTitle>
@@ -817,7 +1051,7 @@ if (!(teamMode === "create" && result.teamCode)) {
               
 
                 {/* Step 3: Show QR Code and Transaction Summary after Ref Number */}
-               {qrCode && (
+               {paymentMethod === "qr" && qrCode && (
   <div className="mt-4 p-4 bg-gray-950 border border-purple-600 rounded-xl space-y-4">
 
     {/* QR Code */}
@@ -851,12 +1085,49 @@ if (!(teamMode === "create" && result.teamCode)) {
             ...p,
             "Payment Ref (Last 4 digits)": val,
           }));
-          setShowBillAfterRef(val.length === 4);
         }}
         className="w-full mt-2 px-3 py-2 rounded-lg bg-gray-900 border border-gray-600 text-white text-sm tracking-widest text-center"
         placeholder="1234"
       />
+{/* Screenshot Upload */}
+{/* Screenshot Upload */}
+<div className="mt-4">
+  <label className="text-xs text-gray-400">
+    Upload Payment Screenshot <span className="text-red-500">*</span>
+  </label>
 
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) => {
+      const file = e.target.files[0];
+
+      setFormData((p) => ({
+        ...p,
+        paymentScreenshot: file,
+      }));
+
+      // 🔥 clear error instantly when file selected
+      if (file) {
+        setFormErrors((prev) => ({
+          ...prev,
+          paymentScreenshot: undefined,
+        }));
+      }
+    }}
+    className={`w-full mt-2 px-3 py-2 rounded-lg bg-gray-900 border text-white text-sm ${
+      formErrors.paymentScreenshot
+        ? "border-red-500"
+        : "border-gray-600"
+    }`}
+  />
+
+  {formErrors.paymentScreenshot && (
+    <p className="text-xs text-red-400 mt-1">
+      {formErrors.paymentScreenshot}
+    </p>
+  )}
+</div>
       {showBillAfterRef && (
         <p className="mt-2 text-xs text-green-400">
           ✔ Transaction captured: {formData["Payment Ref (Last 4 digits)"]}
@@ -875,18 +1146,58 @@ if (!(teamMode === "create" && result.teamCode)) {
  <button
   type="button"
   disabled={isSubmitting}
-  onClick={() => {
-    if (isSubmitting) return;
+  onClick={async () => {
+  if (isSubmitting) return;
 
-    if (!validateForm()) return;
+ if (!validateForm()) {
+  console.log("FORM INVALID");
+  setIsSubmitting(false);
+  return;
+}
 
-    if (isFree || pricingMode === "free") {
-      setIsSubmitting(true);
-      handleRegistrationSubmit();
-    } else {
-      setShowBilling(true);
-    }
-  }}
+  // FREE EVENT
+  if (isFree || pricingMode === "free") {
+    handleRegistrationSubmit();
+    return;
+  }
+
+  // GATEWAY PAYMENT
+if (paymentMethod === "gateway") {
+  setIsSubmitting(true);
+
+  const res = await fetch("/api/create-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventId: displayEvent.id || displayEvent._id,
+      amount: totalAmount,
+      email: userEmail,
+    }),
+  });
+
+  const data = await res.json();
+
+  // 🔴 Safety check
+  if (!data.payment_session_id) {
+    alert("Failed to create payment session");
+    console.error("Create order failed:", data);
+    setIsSubmitting(false);
+    return;
+  }
+
+  // ✅ Open Cashfree checkout
+ // ✅ Open Cashfree checkout
+const cashfree = new window.Cashfree({ mode: "production" });
+
+cashfree.checkout({
+  paymentSessionId: data.payment_session_id,
+});
+
+return;
+}
+  // QR PAYMENT
+  setShowBilling(true);
+}}
   className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
     isSubmitting
       ? "bg-gray-700 cursor-not-allowed"
@@ -904,15 +1215,35 @@ if (!(teamMode === "create" && result.teamCode)) {
                 <button
   type="submit"
   disabled={
-    isSubmitting ||
-    !!createdTeamCode ||
-    (!isFree && !showBillAfterRef)
-  }
+  isSubmitting ||
+  !!createdTeamCode ||
+
+  // ✅ NEW: No ticket selected
+  (pricingMode === "flexible" && totalAmount === 0) ||
+
+  (
+    paymentMethod === "qr" &&
+    !isFree &&
+    (
+      (formData["Payment Ref (Last 4 digits)"] || "").length !== 4 ||
+      !formData.paymentScreenshot
+    )
+  )
+}
   className={`px-6 py-2 rounded-lg text-sm font-semibold text-white flex items-center transition-all ${
-    isSubmitting || (!isFree && !showBillAfterRef)
-      ? "bg-gray-700 cursor-not-allowed"
-      : "bg-green-600 hover:bg-green-700"
-  }`}
+  isSubmitting ||
+  (pricingMode === "flexible" && totalAmount === 0) ||
+  (
+    paymentMethod === "qr" &&
+    !isFree &&
+    (
+      (formData["Payment Ref (Last 4 digits)"] || "").length !== 4 ||
+      !formData.paymentScreenshot
+    )
+  )
+    ? "bg-gray-700 cursor-not-allowed"
+    : "bg-green-600 hover:bg-green-700"
+}`}
 >
   <CheckCircle className="w-4 h-4 mr-2" />
   {isSubmitting
@@ -1093,8 +1424,8 @@ if (!(teamMode === "create" && result.teamCode)) {
                     </span>
                   </p>
                   <p className="flex justify-between">Format: <span className="text-blue-400">{participationFormat}</span></p>
-                  {createdTeamCode && regInfo.status === "open" && (
-  <div className="mt-3 p-3 rounded-lg bg-green-900/40 border border-green-500">
+                  {createdTeamCode && (
+  <div className="mt-3 p-4 rounded-lg bg-green-900/40 border border-green-500 space-y-3">
 
     <p className="text-green-300 text-center font-semibold">
       Team Code
@@ -1104,9 +1435,47 @@ if (!(teamMode === "create" && result.teamCode)) {
       {createdTeamCode}
     </p>
 
-    <p className="text-gray-300 text-center mt-1">
+    <p className="text-gray-300 text-center">
       Members: {teamMembersCount} / {teamConfig?.maxMembers}
     </p>
+
+    {/* PARTICIPANTS LIST */}
+    <div className="mt-3 space-y-2">
+      {teamParticipants.map((member, idx) => (
+        <div
+          key={idx}
+          className="flex justify-between items-center bg-gray-800 px-3 py-2 rounded-md"
+        >
+          <div>
+            <p className="text-sm text-white font-medium">
+              {member.name}
+            </p>
+            <p className="text-xs text-gray-400">
+              {member.email}
+            </p>
+          </div>
+
+         {/* Removal Rules:
+    - Creator → can remove anyone except himself
+    - Member → can remove only himself
+*/}
+{(
+  // Leader can remove anyone (including himself)
+  userEmail === teamCreator ||
+
+  // Non-leader can remove only himself
+  member.email === userEmail
+) && (
+            <button
+              onClick={() => handleRemoveParticipant(member.email)}
+              className="text-red-400 hover:text-red-500 text-xs font-semibold"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
 
   </div>
 )}
@@ -1147,6 +1516,54 @@ if (!(teamMode === "create" && result.teamCode)) {
           )}
         </div>
       </div>
+     {showSuccessPopup && (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 overflow-hidden">
+
+    <div className="relative z-10 w-full max-w-md bg-gradient-to-br from-gray-900 to-gray-950 border border-green-500/30 rounded-3xl p-8 text-center shadow-2xl">
+
+      {/* Close Button */}
+      <button
+        onClick={() => setShowSuccessPopup(false)}
+        className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
+      >
+        <CloseIcon className="w-5 h-5" />
+      </button>
+
+      {/* Success Icon */}
+      <div className="flex justify-center mb-6">
+        <div className="bg-green-500/20 p-5 rounded-full">
+          <CheckCircle className="w-12 h-12 text-green-400" />
+        </div>
+      </div>
+
+      {/* Heading */}
+      <h2 className="text-3xl font-bold text-white mb-3">
+        Registration Successful 🎉
+      </h2>
+
+      {/* Description */}
+      <p className="text-gray-300 mb-6 leading-relaxed">
+        You are successfully registered for <br />
+        <span className="text-purple-400 font-semibold">
+          {title}
+        </span>
+      </p>
+
+      {/* WhatsApp Button */}
+      {groupLink && (
+        <a
+          href={groupLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-3 bg-green-600 hover:bg-green-700 rounded-xl font-semibold transition shadow-lg"
+        >
+          🔗 Join WhatsApp Group
+        </a>
+      )}
+
+    </div>
+  </div>
+)}
       {renderRegistrationFormModal()}
     </div>
   );

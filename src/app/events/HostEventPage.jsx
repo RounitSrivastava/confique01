@@ -110,9 +110,24 @@ const SelectField = ({
         disabled ? "opacity-50 cursor-not-allowed" : ""
       }`}
     >
-      <option value="" disabled>
-        Select {label}
-      </option>
+      <select
+  name={name}
+  value={value}
+  onChange={onChange}
+  required={required}
+  disabled={disabled}
+  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer"
+>
+  {options.map((option) => (
+    <option
+      key={option.name || option}
+      value={option.name || option}
+      className="bg-gray-800 text-white"
+    >
+      {option.name || option}
+    </option>
+  ))}
+</select>
       {options.map((option) => (
         <option
           key={option.name || option}
@@ -218,6 +233,7 @@ const ImageUploader = ({
 const HostEventPage = ({ parentPathname = "/events", onEventHosted, initialData }) => {
   const router = useRouter();
   const PAYMENT_REF_FIELD_NAME = "Payment Ref (Last 4 digits)";
+  const PAYMENT_SS_FIELD_NAME = "Payment Screenshot";
   const CURRENCY_SYMBOL = "₹";
   const CURRENCY_CODE = "INR";
   const isEditMode = !!initialData;
@@ -256,6 +272,7 @@ eventEnd: formatDate(initialData?.eventEnd),
     registrationStart: formatDate(initialData?.registrationStart),
     registrationEnd: formatDate(initialData?.registrationEnd),
     prizes: initialData?.prizes || "",
+    groupLink: initialData?.groupLink || "",
     rounds: initialData?.rounds || [
       { title: "Registration Opens", description: "Sign up and form your teams.", date: "" },
     ],
@@ -264,19 +281,86 @@ pricingMode: initialData?.pricingMode || "fixed",   // fixed | flexible
 fixedPrice: initialData?.fixedPrice || "",
 ticketTypes: initialData?.ticketTypes || [],       // host will create their own
 paymentCurrency: CURRENCY_CODE,
+paymentMethod: initialData?.paymentMethod || "qr", // qr | gateway
     qrCodePreviewUrl: initialData?.qrCode || "",
     qrCodeFile: initialData?.qrCode || null,
     isExternalRegistration: initialData?.isExternalRegistration || false,
     registrationUrl: initialData?.registrationUrl || "",
+    requirePaymentScreenshot: initialData?.requirePaymentScreenshot || false,
     customFields: initialData?.customFields || [
-      { name: "Team Leader Name", type: "text", required: true },
-      { name: "Team Leader Email", type: "email", required: true },
-    ],
+  { name: "Team Leader Name", type: "text", required: true, options: [] },
+  { name: "Team Leader Email", type: "email", required: true, options: [] },
+],
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
+useEffect(() => {
+  setEventData(prev => {
+    let updatedFields = [...prev.customFields];
+
+    const refExists = updatedFields.some(
+      f => f.name === PAYMENT_REF_FIELD_NAME
+    );
+
+    const ssExists = updatedFields.some(
+      f => f.name === PAYMENT_SS_FIELD_NAME
+    );
+
+    // Paid + QR + Internal Registration
+    if (
+      !prev.isFree &&
+      prev.paymentMethod === "qr" &&
+      !prev.isExternalRegistration
+    ) {
+
+      // Add Payment Ref
+      if (!refExists) {
+        updatedFields.push({
+          name: PAYMENT_REF_FIELD_NAME,
+          type: "number",
+          required: true,
+          options: []
+        });
+      }
+
+      // Add Screenshot if enabled
+      if (prev.requirePaymentScreenshot && !ssExists) {
+        updatedFields.push({
+          name: PAYMENT_SS_FIELD_NAME,
+          type: "file",
+          required: true,
+          options: []
+        });
+      }
+
+      // Remove Screenshot if toggle off
+      if (!prev.requirePaymentScreenshot && ssExists) {
+        updatedFields = updatedFields.filter(
+          f => f.name !== PAYMENT_SS_FIELD_NAME
+        );
+      }
+
+      return { ...prev, customFields: updatedFields };
+    }
+
+    // If not QR or not paid → remove both
+    updatedFields = updatedFields.filter(
+      f =>
+        f.name !== PAYMENT_REF_FIELD_NAME &&
+        f.name !== PAYMENT_SS_FIELD_NAME
+    );
+
+    return { ...prev, customFields: updatedFields };
+
+  });
+}, [
+  eventData.paymentMethod,
+  eventData.isFree,
+  eventData.isExternalRegistration,
+  eventData.requirePaymentScreenshot
+]);
 
   // ✅ CRITICAL FIX: Update state if initialData changes (ensures form fills after data fetch)
   useEffect(() => {
@@ -306,15 +390,20 @@ eventEnd: formatDate(initialData.eventEnd),
       registrationStart: formatDate(initialData.registrationStart),
       registrationEnd: formatDate(initialData.registrationEnd),
       prizes: initialData.prizes || "",
+      groupLink: initialData.groupLink || "",
       rounds: initialData.rounds || [],
       pricingMode: initialData.pricingMode || "fixed",
       fixedPrice: initialData.fixedPrice || "",
       ticketTypes: initialData.ticketTypes || [],
+      paymentMethod: initialData.paymentMethod || "qr",
       qrCodePreviewUrl: initialData.qrCode || "",
       qrCodeFile: initialData.qrCode || null,
       isExternalRegistration: initialData.isExternalRegistration || false,
       registrationUrl: initialData.registrationUrl || "",
-      customFields: initialData.customFields || [],
+      customFields: (initialData.customFields || []).map(f => ({
+  ...f,
+  options: f.options || []
+})),
     });
   }
 }, [initialData]);
@@ -339,7 +428,10 @@ eventEnd: formatDate(initialData.eventEnd),
   }, []);
 
   const isPaidEvent = !eventData.isFree;
-  const showQrCodeFields = isPaidEvent && !eventData.isExternalRegistration;
+  const showQrCodeFields =
+  isPaidEvent &&
+  eventData.paymentMethod === "qr" &&
+  !eventData.isExternalRegistration;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -383,9 +475,13 @@ eventEnd: formatDate(initialData.eventEnd),
     const tagsWithoutPricing = eventData.tags.filter((t) => t !== "Free" && t !== "Paid");
     const newTag = checked ? "Free" : "Paid";
     const filteredCustomFields = checked ? eventData.customFields.filter((f) => f.name !== PAYMENT_REF_FIELD_NAME) : eventData.customFields;
-    const updatedCustomFields = !checked && !eventData.isExternalRegistration && !filteredCustomFields.some((f) => f.name === PAYMENT_REF_FIELD_NAME)
-        ? [...filteredCustomFields, { name: PAYMENT_REF_FIELD_NAME, type: "number", required: true }]
-        : filteredCustomFields;
+    const updatedCustomFields =
+  !checked &&
+  eventData.paymentMethod === "qr" &&
+  !eventData.isExternalRegistration &&
+  !filteredCustomFields.some((f) => f.name === PAYMENT_REF_FIELD_NAME)
+    ? [...filteredCustomFields, { name: PAYMENT_REF_FIELD_NAME, type: "number", required: true, options: [] }]
+    : filteredCustomFields;
 
     setEventData((prev) => ({
       ...prev,
@@ -402,7 +498,7 @@ eventEnd: formatDate(initialData.eventEnd),
     const checked = e.target.checked;
     const fieldsWithoutPaymentRef = eventData.customFields.filter((f) => f.name !== PAYMENT_REF_FIELD_NAME);
     const fieldsWithPaymentRef = isPaidEvent && !checked && !fieldsWithoutPaymentRef.some((f) => f.name === PAYMENT_REF_FIELD_NAME)
-        ? [...fieldsWithoutPaymentRef, { name: PAYMENT_REF_FIELD_NAME, type: "number", required: true }]
+        ? [...fieldsWithoutPaymentRef, { name: PAYMENT_REF_FIELD_NAME, type: "number", required: true, options: [] }]
         : fieldsWithoutPaymentRef;
 
     setEventData((prev) => ({
@@ -438,17 +534,30 @@ eventEnd: formatDate(initialData.eventEnd),
   };
 
   const handleCustomFieldChange = (index, field, value) => {
-    const newFields = [...eventData.customFields];
-    newFields[index][field] = value;
-    setEventData((prev) => ({ ...prev, customFields: newFields }));
-  };
+  const newFields = [...eventData.customFields];
 
-  const addCustomField = () => {
-    setEventData((prev) => ({
-      ...prev,
-      customFields: [...prev.customFields, { name: "", type: "text", required: false }],
-    }));
-  };
+  if (field === "type") {
+    newFields[index].type = value;
+
+    // If switching to checkbox → ensure options array exists
+   if (value === "checkbox") {
+  newFields[index].options = newFields[index].options || [];
+  newFields[index].selectionType = "multiple"; // default
+}
+
+    // If switching away from checkbox → clear options
+    if (value !== "checkbox") {
+      newFields[index].options = [];
+    }
+  } else {
+    newFields[index][field] = value;
+  }
+
+  setEventData(prev => ({
+    ...prev,
+    customFields: newFields
+  }));
+};
 
   const removeCustomField = (index) => {
     setEventData((prev) => ({
@@ -456,7 +565,21 @@ eventEnd: formatDate(initialData.eventEnd),
       customFields: prev.customFields.filter((_, i) => i !== index),
     }));
   };
-
+const addCustomField = () => {
+  setEventData(prev => ({
+    ...prev,
+    customFields: [
+      ...prev.customFields,
+      {
+        name: "",
+        type: "text",
+        required: false,
+        options: [],
+        selectionType: "multiple" // default
+      }
+    ]
+  }));
+};
   const handleCancelHost = () => {
     if (window.confirm(`Are you sure you want to cancel ${isEditMode ? "editing" : "hosting"}? All unsaved data will be lost.`)) {
       router.replace(parentPathname, { scroll: true });
@@ -506,6 +629,7 @@ if (eventData.bannerFile) {
       }
 
       const eventPayload = {
+        requirePaymentScreenshot: eventData.requirePaymentScreenshot,
         title: eventData.title,
         tagline: eventData.tagline,
         description: eventData.description,
@@ -523,6 +647,7 @@ eventEnd: eventData.eventEnd,
         pricingMode: eventData.pricingMode,
 fixedPrice: eventData.fixedPrice,
 ticketTypes: eventData.ticketTypes,
+paymentMethod: eventData.paymentMethod,
         qrCode: qrCodeUrl,
         registrationStart: eventData.registrationStart,
         registrationEnd: eventData.registrationEnd,
@@ -531,6 +656,7 @@ ticketTypes: eventData.ticketTypes,
         customFields: eventData.customFields,
         rounds: eventData.rounds,
         prizes: eventData.prizes,
+        groupLink: eventData.groupLink,
         teamConfig: eventData.teamConfig,
       };
 
@@ -675,22 +801,49 @@ ticketTypes: eventData.ticketTypes,
     <div className="flex gap-6">
       <label className="flex items-center gap-2">
         <input
-          type="radio"
-          checked={eventData.pricingMode === "fixed"}
-          onChange={() => setEventData(p => ({ ...p, pricingMode: "fixed" }))}
-        />
+  type="radio"
+  name="pricingMode"
+  checked={eventData.pricingMode === "fixed"}
+  onChange={() => setEventData(p => ({ ...p, pricingMode: "fixed" }))}
+ />
         Fixed price
       </label>
 
       <label className="flex items-center gap-2">
         <input
-          type="radio"
-          checked={eventData.pricingMode === "flexible"}
-          onChange={() => setEventData(p => ({ ...p, pricingMode: "flexible" }))}
-        />
+  type="radio"
+  name="pricingMode"
+  checked={eventData.pricingMode === "flexible"}
+  onChange={() => setEventData(p => ({ ...p, pricingMode: "flexible" }))}
+ />
         Multiple ticket types
       </label>
     </div>
+<div className="flex gap-6 mt-4">
+  <label className="flex items-center gap-2">
+    <input
+  type="radio"
+  name="paymentMethod"
+  checked={eventData.paymentMethod === "qr"}
+  onChange={() =>
+    setEventData(p => ({ ...p, paymentMethod: "qr" }))
+  }
+/>
+    QR Payment
+  </label>
+
+  <label className="flex items-center gap-2">
+    <input
+  type="radio"
+  name="paymentMethod"
+  checked={eventData.paymentMethod === "gateway"}
+  onChange={() =>
+    setEventData(p => ({ ...p, paymentMethod: "gateway" }))
+  }
+/>
+    Online Gateway
+  </label>
+</div>
 
     {/* Fixed price */}
     {eventData.pricingMode === "fixed" && (
@@ -851,6 +1004,14 @@ Example: Enter 4 → each team can have max 4 members
               <InputField label="Registration End Date" name="registrationEnd" type="date" value={eventData.registrationEnd} onChange={handleInputChange} />
             </div>
             <InputField label="Prizes" name="prizes" value={eventData.prizes} onChange={handleInputChange} placeholder="e.g., Cash" />
+            <InputField
+  label="WhatsApp / Community Group Link (Optional)"
+  name="groupLink"
+  type="url"
+  value={eventData.groupLink}
+  onChange={handleInputChange}
+  placeholder="https://chat.whatsapp.com/..."
+/>
           </div>
 
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
@@ -882,20 +1043,152 @@ Example: Enter 4 → each team can have max 4 members
                     <div className="p-4 bg-yellow-900/30 border border-yellow-500/50 space-y-4 rounded-lg">
                       <SectionTitle icon={QrCode}>QR Code Payment</SectionTitle>
                       <ImageUploader label="Upload QR" name="qrCodeFile" file={eventData.qrCodeFile} previewUrl={eventData.qrCodePreviewUrl} onFileChange={(e) => handleFileChange(e, "qrCodeFile", "qrCodePreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "qrCodeFile", "qrCodePreviewUrl")} />
+                        <div className="flex items-center gap-2 mt-4">
+  <input
+    type="checkbox"
+    checked={eventData.requirePaymentScreenshot}
+    onChange={(e) =>
+      setEventData(prev => ({
+        ...prev,
+        requirePaymentScreenshot: e.target.checked
+      }))
+    }
+  />
+  <label className="text-sm text-yellow-200">
+    Require Payment Screenshot from participants
+  </label>
+</div>
                     </div>
                   )}
                   {eventData.customFields.map((field, index) => (
                     <div key={index} className="p-4 rounded-lg border bg-gray-800 border-gray-700 space-y-3 relative">
                       {field.name !== PAYMENT_REF_FIELD_NAME && <button type="button" onClick={() => removeCustomField(index)} className="absolute top-4 right-4 p-1 rounded-full bg-red-600 text-white"><X className="w-4 h-4" /></button>}
-                      <InputField label="Field Label" value={field.name} onChange={(e) => handleCustomFieldChange(index, "name", e.target.value)} required disabled={field.name === PAYMENT_REF_FIELD_NAME} />
-                      <div className="grid grid-cols-2 gap-4">
-                        <SelectField label="Type" value={field.type} onChange={(e) => handleCustomFieldChange(index, "type", e.target.value)} options={[{name:"text"},{name:"number"},{name:"email"},{name:"date"},{name:"checkbox"}]} required disabled={field.name === PAYMENT_REF_FIELD_NAME} />
-                        <div className="pt-8 flex items-center space-x-2">
-                          <input type="checkbox" checked={field.required} onChange={(e) => handleCustomFieldChange(index, "required", e.target.checked)} disabled={field.name === PAYMENT_REF_FIELD_NAME} />
-                          <label>Required</label>
-                        </div>
+                     <InputField
+  label="Field Label"
+  value={field.name}
+  onChange={(e) =>
+    handleCustomFieldChange(index, "name", e.target.value)
+  }
+  required
+  disabled={field.name === PAYMENT_REF_FIELD_NAME}
+/>
+
+<div className="grid grid-cols-2 gap-4">
+  <SelectField
+    label="Type"
+    value={field.type}
+    onChange={(e) =>
+      handleCustomFieldChange(index, "type", e.target.value)
+    }
+    options={[
+  { name: "text" },
+  { name: "number" },
+  { name: "email" },
+  { name: "date" },
+  { name: "checkbox" },
+  { name: "file" } // ADD THIS
+]}
+    required
+    disabled={field.name === PAYMENT_REF_FIELD_NAME}
+  />
+
+  <div className="pt-8 flex items-center space-x-2">
+    <input
+      type="checkbox"
+      checked={field.required}
+      onChange={(e) =>
+        handleCustomFieldChange(index, "required", e.target.checked)
+      }
+      disabled={field.name === PAYMENT_REF_FIELD_NAME}
+    />
+    <label>Required</label>
+  </div>
+</div>
+
+{/* ✅ MOVE CHECKBOX OPTIONS OUTSIDE GRID */}
+{field.type === "checkbox" && (
+  <>
+    {/* Single / Multiple Selector */}
+    <div className="flex gap-6 mb-3">
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="radio"
+          name={`selection-${index}`}
+          checked={field.selectionType !== "multiple"}
+          onChange={() => {
+            const updated = [...eventData.customFields];
+            updated[index].selectionType = "single";
+            setEventData(p => ({ ...p, customFields: updated }));
+          }}
+        />
+        Single Select
+      </label>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="radio"
+          name={`selection-${index}`}
+          checked={field.selectionType === "multiple"}
+          onChange={() => {
+            const updated = [...eventData.customFields];
+            updated[index].selectionType = "multiple";
+            setEventData(p => ({ ...p, customFields: updated }));
+          }}
+        />
+        Multiple Select
+      </label>
+    </div>
+
+    {/* Checkbox Options */}
+    <div className="space-y-2 mt-4">
+      <label className="text-sm text-gray-400">
+        Checkbox Options
+      </label>
+
+      {field.options?.map((opt, optIndex) => (
+        <div key={optIndex} className="flex gap-2">
+          <input
+            type="text"
+            value={opt}
+            onChange={(e) => {
+              const updated = [...eventData.customFields];
+              updated[index].options[optIndex] = e.target.value;
+              setEventData(p => ({ ...p, customFields: updated }));
+            }}
+            className="flex-1 bg-gray-900 border border-gray-700 rounded p-2"
+            placeholder="Option label"
+          />
+<button
+  type="button"
+  onClick={() => {
+    const updated = [...eventData.customFields];
+    updated[index].options =
+      updated[index].options.filter((_, i) => i !== optIndex);
+    setEventData(p => ({ ...p, customFields: updated }));
+  }}
+  className="w-8 h-8 flex items-center justify-center rounded-full transition"
+>
+  <X className="w-4 h-4 text-white" />
+</button>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={() => {
+          const updated = [...eventData.customFields];
+          updated[index].options = [...(updated[index].options || []), ""];
+          setEventData(p => ({ ...p, customFields: updated }));
+        }}
+        className="bg-purple-600 px-3 py-1 rounded text-sm"
+      >
+        + Add Option
+      </button>
+    </div>
+  </>
+)}
+       
                       </div>
-                    </div>
                   ))}
                   <button type="button" onClick={addCustomField} className="w-full bg-gray-700 text-white py-2 rounded-lg"><Plus className="w-5 h-5 mr-2 inline" /> Add Field</button>
                 </>

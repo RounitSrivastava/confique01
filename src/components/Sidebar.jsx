@@ -10,6 +10,7 @@ import {
   ChevronDown,
   X,
   Settings,   // ✅ ADDED
+  Brain, 
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -17,6 +18,7 @@ const nav = [
   { icon: Home, label: "Home", href: "/" },
   { icon: Users, label: "Commmunity", href: "/groups" },
   { icon: CalendarDays, label: "Events", href: "/events" },
+  { icon: Brain, label: "Quizzes", href: "/quizzes" },
 ];
 
 export default function Sidebar({ isOpen = false, onClose = () => {} }) {
@@ -113,6 +115,12 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
             {openQuick && (
               <div className="mt-2 space-y-2">
                 <button
+  onClick={() => router.push("/quizzes/create")}
+  className="block w-full text-left rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]"
+>
+  Create Quiz
+</button>
+                <button
   onClick={() => router.push("/groups?view=create")}
   className="block w-full text-left rounded-xl px-3 py-2 text-sm text-gray-300 hover:bg-[#1a1a1a] border border-[#262626]">
   Create Community
@@ -184,6 +192,15 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
         </nav>
 
         <div className="p-4 border-t border-gray-800 space-y-2">
+          <button
+  onClick={() => {
+    router.push("/quizzes/create");
+    handleMobileClose();
+  }}
+  className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300"
+>
+  Create Quiz
+</button>
           <button
   onClick={() => {
     router.push("/groups?view=create");

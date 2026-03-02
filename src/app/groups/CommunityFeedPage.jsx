@@ -23,7 +23,6 @@ import {
     MapPin,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-
 const SITE_OWNER_EMAIL = "confique01@gmail.com";
 
 // -------------------------
@@ -690,6 +689,22 @@ const InviteMenu = React.forwardRef(
     }
 );
 InviteMenu.displayName = "InviteMenu";
+const CreateMenu = React.forwardRef(({ onSelect, onClose }, ref) => (
+  <div
+    ref={ref}
+    className="absolute right-0 top-10 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50"
+  >
+    <button
+      onClick={() => {
+        onSelect("poll");
+        onClose();
+      }}
+      className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800"
+    >
+      Create Poll
+    </button>
+  </div>
+));
 
 // --------------------
 // Author Profile Modal (new)
@@ -743,6 +758,9 @@ const CommunityHeader = ({
   onDeleteCommunity,
 }) => {
     const [isInviteMenuOpen, setIsInviteMenuOpen] = React.useState(false);
+    const [isCreateMenuOpen, setIsCreateMenuOpen] = React.useState(false);
+const createBtnRef = React.useRef(null);
+const createMenuRef = React.useRef(null);
     const desktopInviteBtnRef = React.useRef(null);
 const desktopInviteMenuRef = React.useRef(null);
 
@@ -752,37 +770,47 @@ const mobileInviteMenuRef = React.useRef(null);
 
    React.useEffect(() => {
   const handleClickOutside = (e) => {
-    if (!isInviteMenuOpen) return;
 
-    const isDesktop = window.matchMedia("(min-width: 640px)").matches;
+    // INVITE MENU
+    if (isInviteMenuOpen) {
+      const isDesktop = window.matchMedia("(min-width: 640px)").matches;
 
-    // DESKTOP LOGIC
-    if (isDesktop) {
-      if (
-        desktopInviteBtnRef.current &&
-        desktopInviteMenuRef.current &&
-        !desktopInviteBtnRef.current.contains(e.target) &&
-        !desktopInviteMenuRef.current.contains(e.target)
-      ) {
-        setIsInviteMenuOpen(false);
+      if (isDesktop) {
+        if (
+          desktopInviteBtnRef.current &&
+          desktopInviteMenuRef.current &&
+          !desktopInviteBtnRef.current.contains(e.target) &&
+          !desktopInviteMenuRef.current.contains(e.target)
+        ) {
+          setIsInviteMenuOpen(false);
+        }
+      } else {
+        if (
+          mobileInviteBtnRef.current &&
+          mobileInviteMenuRef.current &&
+          !mobileInviteBtnRef.current.contains(e.target) &&
+          !mobileInviteMenuRef.current.contains(e.target)
+        ) {
+          setIsInviteMenuOpen(false);
+        }
       }
-      return;
     }
 
-    // MOBILE LOGIC
+    // CREATE MENU
     if (
-      mobileInviteBtnRef.current &&
-      mobileInviteMenuRef.current &&
-      !mobileInviteBtnRef.current.contains(e.target) &&
-      !mobileInviteMenuRef.current.contains(e.target)
+      isCreateMenuOpen &&
+      createBtnRef.current &&
+      createMenuRef.current &&
+      !createBtnRef.current.contains(e.target) &&
+      !createMenuRef.current.contains(e.target)
     ) {
-      setIsInviteMenuOpen(false);
+      setIsCreateMenuOpen(false);
     }
   };
 
   document.addEventListener("mousedown", handleClickOutside);
   return () => document.removeEventListener("mousedown", handleClickOutside);
-}, [isInviteMenuOpen]);
+}, [isInviteMenuOpen, isCreateMenuOpen]);
 
     const membersLabel = community.members
         ? community.members
@@ -878,7 +906,29 @@ const mobileInviteMenuRef = React.useRef(null);
     <UserPlus className="w-4 h-4 mr-1" />
     Invite
   </button>
+<div className="relative sm:hidden ml-2">
+  <button
+    ref={createBtnRef}
+    onClick={() => setIsCreateMenuOpen((p) => !p)}
+    className="p-2 rounded-full hover:bg-gray-800"
+  >
+    <MoreHorizontal className="w-5 h-5 text-white" />
+  </button>
 
+  {isCreateMenuOpen && (
+    <>
+      <div
+        className="fixed inset-0 z-40"
+        onClick={() => setIsCreateMenuOpen(false)}
+      />
+      <CreateMenu
+        ref={createMenuRef}
+        onSelect={(type) => onCreatePost(type)}
+        onClose={() => setIsCreateMenuOpen(false)}
+      />
+    </>
+  )}
+</div>
   {isInviteMenuOpen && (
     <>
       <div
@@ -903,7 +953,23 @@ const mobileInviteMenuRef = React.useRef(null);
 >
   Joined
 </button>
+<div className="relative hidden sm:block">
+  <button
+    ref={createBtnRef}
+    onClick={() => setIsCreateMenuOpen((p) => !p)}
+    className="p-2 rounded-full hover:bg-gray-800"
+  >
+    <MoreHorizontal className="w-5 h-5 text-white" />
+  </button>
 
+  {isCreateMenuOpen && (
+    <CreateMenu
+      ref={createMenuRef}
+      onSelect={(type) => onCreatePost(type)}
+      onClose={() => setIsCreateMenuOpen(false)}
+    />
+  )}
+</div>
 
                         {canDeleteCommunity && (
                             <button
@@ -1693,6 +1759,7 @@ const showFab = useScrollDirection(scrollRef);
     const [postsLoading, setPostsLoading] = React.useState(true);
     const [selectedPost, setSelectedPost] = React.useState(null);
     const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [postType, setPostType] = React.useState("post");
     const [previewImageUrl, setPreviewImageUrl] = React.useState(null);
     const [reports, setReports] = React.useState([]);
     const [currentUser, setCurrentUser] = React.useState(null);
@@ -2369,7 +2436,7 @@ React.useEffect(() => {
             )}
 
             {isModalOpen && (
-                <CreatePostModal communityName={communityInfo.name} onClose={() => setIsModalOpen(false)} onSubmit={handleNewPost} />
+                <CreatePostModal postType={postType} communityName={communityInfo.name} onClose={() => setIsModalOpen(false)} onSubmit={handleNewPost} />
             )}
 
             <div
@@ -2392,14 +2459,24 @@ React.useEffect(() => {
                     />
                 </div>
             )}
-            <CommunityHeader
+         <CommunityHeader
   community={communityInfo}
-  onCreatePost={() => setIsModalOpen(true)}
-  isAdmin={isAdmin}              // still for moderation
+  onCreatePost={(type = "post") => {
+    
+    if (type === "quiz") {
+      router.push(`/groups/${communityInfo.slug}/quiz/create`);
+      return;
+    }
+
+    // normal postonSelect("quiz");
+
+    setPostType("post");
+    setIsModalOpen(true);
+  }}
+  isAdmin={isAdmin}
   canDeleteCommunity={canDeleteCommunity}
   onDeleteCommunity={handleDeleteCommunityClick}
 />
-
             <FilterBar selected={activeFilter} setActiveFilter={setActiveFilter} eventsCount={eventsInCategory.length} />
 
             <div className="pt-4 pb-12">

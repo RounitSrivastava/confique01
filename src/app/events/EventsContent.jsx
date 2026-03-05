@@ -704,9 +704,13 @@ useEffect(() => {
       merged.forEach(ev => map.set(ev.id, ev));
       
       const finalEvents = Array.from(map.values()).map(ev => ({
-        ...ev,
-        impressions: typeof ev.impressions === 'number' ? ev.impressions : Math.floor(Math.random() * 2000) + 800
-      })).sort((a, b) => b.impressions - a.impressions);
+  ...ev,
+  createdAt: ev.createdAt || new Date(),
+  impressions:
+    typeof ev.impressions === "number"
+      ? ev.impressions
+      : Math.floor(Math.random() * 2000) + 800
+})).sort((a, b) => b.impressions - a.impressions);
 
       if (isMounted) {
         setDynamicEvents(finalEvents);
@@ -718,16 +722,46 @@ useEffect(() => {
   }, []);
 
   // Impression Ticker
-  useEffect(() => {
-    if (dynamicEvents.length === 0) return;
-    const intervalId = setInterval(() => {
-      setDynamicEvents((prev) => 
-        [...prev].map(ev => ({ ...ev, impressions: ev.impressions + Math.floor(Math.random() * 10) + 1 }))
-        .sort((a, b) => b.impressions - a.impressions)
-      );
-    }, 15000);
-    return () => clearInterval(intervalId);
-  }, [dynamicEvents.length]);
+  // Controlled Impression Ticker (MAX 5000)
+useEffect(() => {
+  if (dynamicEvents.length === 0) return;
+
+  const intervalId = setInterval(() => {
+    setDynamicEvents(prev =>
+      [...prev].map(ev => {
+
+        const created = new Date(ev.createdAt || Date.now());
+        const ageMinutes = (Date.now() - created.getTime()) / (1000 * 60);
+        const ageHours = ageMinutes / 60;
+
+        let increase = 0;
+
+        // First 5 minutes
+        if (ageMinutes <= 5) {
+          increase = Math.floor(Math.random() * 2) + 1;
+        }
+
+        // First 6 hours
+        else if (ageHours <= 6) {
+          increase = Math.floor(Math.random() * 3) + 2;
+        }
+
+        // Normal growth
+        else {
+          increase = Math.floor(Math.random() * 6) + 2;
+        }
+
+        return {
+          ...ev,
+          impressions: Math.min(ev.impressions + increase, 5000) // 🚀 cap at 5000
+        };
+
+      }).sort((a, b) => b.impressions - a.impressions)
+    );
+  }, 15000);
+
+  return () => clearInterval(intervalId);
+}, [dynamicEvents.length]);
 
   const ALL_EVENTS = useMemo(() => dynamicEvents, [dynamicEvents]);
   const featuredEventIds = useMemo(() => {
@@ -832,7 +866,10 @@ const carouselEvents = useMemo(() => {
       if (isEdit) {
         setDynamicEvents(prev => prev.map(ev => String(ev.id) === String(editIdParam) ? { ...saved, id: saved._id } : ev));
       } else {
-        setDynamicEvents(prev => [{ ...saved, id: saved._id, impressions: 1200 }, ...prev]);
+      setDynamicEvents(prev => [
+  { ...saved, id: saved._id, impressions: 12, createdAt: new Date() },
+  ...prev
+]);
       }
       
       return true;

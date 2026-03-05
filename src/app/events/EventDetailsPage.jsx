@@ -1362,24 +1362,45 @@ return;
       </div>
 
       <div className="relative h-[280px] overflow-hidden">
-        <img
-          src={banner || poster}
-          alt={title}
-          className="w-full h-full object-cover object-center opacity-70"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-black/70 flex items-center">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <p className="text-purple-400 font-semibold text-sm uppercase mb-2">
-              {category} by {hostedBy || "Host"}
-            </p>
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
-              {title}
-            </h1>
-            <p className="text-xl text-gray-300 mt-2">{tagline || title}</p>
-          </div>
-        </div>
+  <img
+    src={banner || poster}
+    alt={title}
+    className="w-full h-full object-cover object-center opacity-70"
+    loading="lazy"
+  />
+
+  <div className="absolute inset-0 bg-black/70 flex items-center">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-center justify-between">
+
+      {/* LEFT TEXT */}
+      <div>
+        <p className="text-purple-400 font-semibold text-sm uppercase mb-2">
+          {category} by {hostedBy || "Host"}
+        </p>
+
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
+          {title}
+        </h1>
+
+        <p className="text-xl text-gray-300 mt-2">
+          {tagline || title}
+        </p>
       </div>
+
+      {/* RIGHT POSTER */}
+      {poster && (
+<div className="hidden lg:block w-32 h-32 rounded-xl overflow-hidden border border-gray-700 shadow-xl bg-gray-900 ml-10">
+          <img
+            src={poster}
+            alt={title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+    </div>
+  </div>
+</div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="lg:grid lg:grid-cols-12 lg:gap-10">

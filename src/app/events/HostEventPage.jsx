@@ -923,9 +923,9 @@ paymentMethod: eventData.paymentMethod,
 )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-              <ImageUploader label="1. Card Poster (Portrait)" ratioTip="Used for listing cards." name="posterFile" file={eventData.posterFile} previewUrl={eventData.posterPreviewUrl} onFileChange={(e) => handleFileChange(e, "posterFile", "posterPreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "posterFile", "posterPreviewUrl")} />
+              <ImageUploader label="1. Card Poster (16:9)" ratioTip="Used for listing cards." name="posterFile" file={eventData.posterFile} previewUrl={eventData.posterPreviewUrl} onFileChange={(e) => handleFileChange(e, "posterFile", "posterPreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "posterFile", "posterPreviewUrl")} />
               <ImageUploader
-  label="2. Header Banner (Landscape) (Optional)"
+  label="2. Header Banner (4:1 or 1920*480) (Optional)"
   ratioTip="If not uploaded, a default banner will be used."
   name="bannerFile"
   file={eventData.bannerFile}

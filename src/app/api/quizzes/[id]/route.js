@@ -147,11 +147,13 @@ export async function PATCH(req, context) {
       );
     }
     // 🔒 Prevent submission after attempt time
+// 🔒 Prevent very late submissions (allow 5 second buffer)
 if (quiz.attemptTime && body.startedAt) {
   const startTime = new Date(body.startedAt).getTime();
   const attemptEnd = startTime + quiz.attemptTime * 60 * 1000;
 
-  if (Date.now() > attemptEnd) {
+  // allow 5 second delay for auto-submit
+  if (Date.now() > attemptEnd + 5000) {
     return NextResponse.json(
       { error: "Attempt time expired" },
       { status: 403 }

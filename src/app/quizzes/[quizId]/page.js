@@ -211,22 +211,23 @@ useEffect(() => {
     setTimeLeft(null);
     
 
-    let totalScore = 0;
+    // freeze answers & times so React state delay doesn't affect scoring
+const finalAnswers = { ...answers };
 
-    quiz.questions.forEach((q, qIndex) => {
+const finalQuestionTimes = {
+  ...questionTimes,
+  [currentQuestion]: Math.floor(
+    (Date.now() - questionStartTime) / 1000
+  ),
+};
+
+let totalScore = 0;
+
+quiz.questions.forEach((q, qIndex) => {
   const correctIndex = q.options.findIndex((o) => o.isCorrect);
-  const userAnswer = answers[qIndex];
+  const userAnswer = finalAnswers[qIndex];
 
-  let timeSpent = questionTimes[qIndex];
-
-  // calculate time for current question if not stored yet
-  if (qIndex === currentQuestion) {
-    timeSpent = Math.floor(
-      (Date.now() - questionStartTime) / 1000
-    );
-  }
-
-  if (timeSpent === undefined) timeSpent = 999;
+  const timeSpent = finalQuestionTimes[qIndex] ?? 999;
 
   if (userAnswer === correctIndex) {
     totalScore += q.points;

@@ -11,6 +11,7 @@ export default function QuizPlay() {
   const [quiz, setQuiz] = useState(null);
   const [user, setUser] = useState(null);
   const [answers, setAnswers] = useState({});
+  const answersRef = useRef({});
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [questionTimes, setQuestionTimes] = useState({});
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -20,7 +21,7 @@ export default function QuizPlay() {
   const [attemptTime, setAttemptTime] = useState(0);
   const [attemptLimit, setAttemptLimit] = useState(null);
 
-  const startTimeRef = useRef(Date.now()).current;
+  const startTimeRef = useRef(Date.now());
 
   /* ---------------- FETCH USER ---------------- */
 
@@ -133,7 +134,7 @@ useEffect(() => {
   if (submitted || attemptLimit === null) return;
 
   const interval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - startTimeRef) / 1000);
+    const elapsed = Math.floor((Date.now() - startTimeRef.current)/ 1000);
 
     if (elapsed >= attemptLimit) {
       handleSubmit();
@@ -181,10 +182,12 @@ useEffect(() => {
       [currentQuestion]: timeSpent,
     }));
 
-    setAnswers((prev) => ({
-      ...prev,
-      [currentQuestion]: oIndex,
-    }));
+    answersRef.current[currentQuestion] = oIndex;
+
+setAnswers((prev) => ({
+  ...prev,
+  [currentQuestion]: oIndex,
+}));
   };
 
   /* ---------------- NAVIGATION ---------------- */
@@ -212,7 +215,7 @@ useEffect(() => {
     
 
     // freeze answers & times so React state delay doesn't affect scoring
-const finalAnswers = { ...answers };
+const finalAnswers = { ...answersRef.current };
 
 const finalQuestionTimes = {
   ...questionTimes,

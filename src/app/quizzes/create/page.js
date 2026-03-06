@@ -35,8 +35,8 @@ export default function CreateQuiz() {
 
     const loadQuiz = async () => {
       const res = await fetch(`/api/quizzes/${editId}`);
-      const data = await res.json();
-      if (!data) return;
+      if (!res.ok) return;
+const data = await res.json();
 
       setTitle(data.title);
 
@@ -52,11 +52,11 @@ export default function CreateQuiz() {
       );
 
       if (data.startAt) {
-        setStartAt(new Date(data.startAt).toISOString().slice(0, 16));
+        setStartAt(new Date(data.startAt).toLocaleString("sv-SE").slice(0, 16));
       }
 
       if (data.closeAt) {
-        setCloseAt(new Date(data.closeAt).toISOString().slice(0, 16));
+        setCloseAt(new Date(data.closeAt).toLocaleString("sv-SE").slice(0, 16));
       }
       if (data.attemptTime) {
   setAttemptTime(data.attemptTime);
@@ -146,6 +146,12 @@ const startTimestamp = startAt
 const closeTimestamp = closeAt
   ? new Date(closeAt)
   : null;
+  /* 🔒 PREVENT INVALID SCHEDULE */
+if (closeTimestamp && startTimestamp > closeTimestamp) {
+  alert("Close time must be after start time.");
+  setLoading(false);
+  return;
+}
 
     // 🔥 AUTO STATUS LOGIC
     let status = "active";
@@ -167,9 +173,8 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
       })),
       startAt: startTimestamp,
       closeAt: closeTimestamp,
-      attemptTime: Number(attemptTime),
+      attemptTime: Number(attemptTime) || 1,
       status,
-      createdAt: now,
     };
 
     try {
@@ -336,11 +341,12 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
               Close At (Hard Lock Time)
             </label>
             <input
-              type="datetime-local"
-              value={closeAt}
-              onChange={(e) => setCloseAt(e.target.value)}
-              className="bg-gray-900 border border-white/10 rounded-lg p-3 w-full"
-            />
+  type="datetime-local"
+  value={closeAt}
+  min={startAt}
+  onChange={(e) => setCloseAt(e.target.value)}
+  className="bg-gray-900 border border-white/10 rounded-lg p-3 w-full"
+/>
           </div>
           <div>
   <label className="block text-sm text-gray-400 mt-4">
@@ -348,12 +354,13 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
   </label>
 
   <input
-    type="number"
-    min="1"
-    value={attemptTime}
-    onChange={(e) => setAttemptTime(e.target.value)}
-    className="bg-gray-900 border border-white/10 rounded-lg p-3 w-full"
-  />
+  type="number"
+  min="1"
+  max="120"
+  value={attemptTime}
+  onChange={(e) => setAttemptTime(Math.max(1, Number(e.target.value)))}
+  className="bg-gray-900 border border-white/10 rounded-lg p-3 w-full"
+/>
 </div>
         </div>
 

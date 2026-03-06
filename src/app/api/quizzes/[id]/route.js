@@ -148,11 +148,10 @@ export async function PATCH(req, context) {
     }
     // 🔒 Prevent submission after attempt time
 if (quiz.attemptTime && body.startedAt) {
-  const attemptEnd = new Date(
-  body.startedAt + quiz.attemptTime * 60 * 1000
-);
+  const startTime = new Date(body.startedAt).getTime();
+  const attemptEnd = startTime + quiz.attemptTime * 60 * 1000;
 
-if (new Date() > attemptEnd) {
+  if (Date.now() > attemptEnd) {
     return NextResponse.json(
       { error: "Attempt time expired" },
       { status: 403 }
@@ -177,7 +176,7 @@ if (new Date() > attemptEnd) {
       userName: String(userName),
       score,
       timeTaken,
-      submittedAt: Date.now(),
+      submittedAt: new Date(),
     });
 
     await quiz.save();

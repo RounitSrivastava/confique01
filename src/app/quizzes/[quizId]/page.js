@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowLeft } from "lucide-react";
 
 export default function QuizPlay() {
@@ -17,8 +17,10 @@ export default function QuizPlay() {
   const [timeLeft, setTimeLeft] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [attemptTime, setAttemptTime] = useState(0);
+  const [attemptLimit, setAttemptLimit] = useState(null);
 
-  const startTimeRef = useState(Date.now())[0];
+  const startTimeRef = useRef(Date.now()).current;
 
   /* ---------------- FETCH USER ---------------- */
 
@@ -49,8 +51,12 @@ export default function QuizPlay() {
           cache: "no-store",
         });
 
-        const data = await res.json();
-        if (!data) return;
+        if (!res.ok) {
+  console.error("Quiz fetch failed");
+  return;
+}
+
+const data = await res.json();
 
         const now = new Date();
 
@@ -80,17 +86,18 @@ export default function QuizPlay() {
         }
 
         setQuiz(data);
+        setAttemptLimit((data.attemptTime || 20) * 60);
 
         // ✅ Schedule-based timer
-        if (data.closeAt) {
+       if (data.closeAt) {
   const closeTime = new Date(data.closeAt);
   const remainingSeconds = Math.floor(
     (closeTime.getTime() - now.getTime()) / 1000
   );
 
-  setTimeLeft(remainingSeconds > 0 ? remainingSeconds : 0);
+  setTimeLeft(Math.max(remainingSeconds, 0));
 } else {
-  setTimeLeft(300);
+  setTimeLeft(null);
 }
 
       } catch (err) {
@@ -114,11 +121,31 @@ export default function QuizPlay() {
     }
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
+  setTimeLeft((prev) => (prev ? prev - 1 : 0));
+}, 1000);
 
     return () => clearInterval(timer);
   }, [timeLeft, quiz, submitted]);
+
+ /* ---------------- ATTEMPT TIMER ---------------- */
+
+useEffect(() => {
+  if (submitted || attemptLimit === null) return;
+
+  const interval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTimeRef) / 1000);
+
+    if (elapsed >= attemptLimit) {
+      handleSubmit();
+      clearInterval(interval);
+      return;
+    }
+
+    setAttemptTime(Math.min(elapsed, attemptLimit));
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [submitted, attemptLimit]);
 
   /* ---------------- LOCK SCROLL ---------------- */
 
@@ -129,7 +156,7 @@ export default function QuizPlay() {
     };
   }, []);
 
-  if (loading || !quiz || timeLeft === null) {
+  if (loading || !quiz || attemptLimit === null){
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-[#0b1d3a] text-white">
         Loading...
@@ -181,6 +208,7 @@ export default function QuizPlay() {
   const handleSubmit = async () => {
     if (submitted) return;
     setSubmitted(true);
+    setTimeLeft(null);
 
     let totalScore = 0;
 
@@ -256,9 +284,9 @@ export default function QuizPlay() {
             <div>
               Question {currentQuestion + 1} / {totalQuestions}
             </div>
-            <div className={timeLeft < 30 ? "text-red-400" : ""}>
-              ⏳ {formatTime(timeLeft)}
-            </div>
+            <div className="text-blue-200">
+ ⏱ {formatTime(Math.max(attemptLimit - attemptTime, 0))}
+</div>
           </div>
 
           <h3 className="mb-6 text-xl">

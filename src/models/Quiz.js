@@ -77,9 +77,10 @@ const LeaderboardSchema = new mongoose.Schema(
     },
 
     submittedAt: {
-      type: Number,
-      required: true,
-    },
+  type: Date,
+  required: true,
+  default: Date.now,
+},
   },
   { _id: false }
 );

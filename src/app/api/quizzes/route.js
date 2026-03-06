@@ -39,8 +39,18 @@ export async function GET() {
     const quizzes = await Quiz.find()
       .sort({ createdAt: -1 })
       .lean();
+    const now = new Date();
 
     const updatedQuizzes = quizzes.map((quiz) => {
+      let status = "active";
+
+if (quiz.startAt && now < new Date(quiz.startAt)) {
+  status = "scheduled";
+}
+
+if (quiz.closeAt && now > new Date(quiz.closeAt)) {
+  status = "closed";
+}
       const createdBy = quiz.createdBy
         ? quiz.createdBy.toString()
         : null;
@@ -50,7 +60,7 @@ export async function GET() {
       if (currentUserId && Array.isArray(quiz.leaderboard)) {
         hasAttempted = quiz.leaderboard.some((entry) => {
           if (!entry.userId) return false;
-          return entry.userId.toString() === currentUserId;
+          return entry.userId?.toString() === currentUserId;
         });
       }
 
@@ -58,8 +68,9 @@ export async function GET() {
   ...quiz,
   createdBy,
   hasAttempted,
-  startAt: quiz.startAt ? new Date(quiz.startAt).toISOString() : null,
-  closeAt: quiz.closeAt ? new Date(quiz.closeAt).toISOString() : null,
+  status,
+  startAt: quiz.startAt,
+closeAt: quiz.closeAt,
 };
     });
 
@@ -116,6 +127,15 @@ export async function POST(req) {
     }
 
     const body = await req.json();
+    const startAt = body.startAt ? new Date(body.startAt) : null;
+const closeAt = body.closeAt ? new Date(body.closeAt) : null;
+
+if (startAt && closeAt && startAt > closeAt) {
+  return NextResponse.json(
+    { error: "Close time must be after start time" },
+    { status: 400 }
+  );
+}
 
     if (
       !body.title ||

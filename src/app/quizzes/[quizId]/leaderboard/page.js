@@ -53,8 +53,7 @@ export default function Leaderboard() {
         const data = await res.json();
         if (!data) return;
 
-        const locked =
-          data.closeAt && Date.now() > data.closeAt;
+        const locked = data.closeAt && Date.now() > data.closeAt;
 
         setQuiz({ ...data, locked });
 
@@ -87,7 +86,6 @@ export default function Leaderboard() {
 
         previousRanks.current = newRanks;
         setSorted(sortedData);
-
       } catch (err) {
         console.error("Failed to load leaderboard");
       }
@@ -123,23 +121,24 @@ export default function Leaderboard() {
   return (
     <div className="fixed inset-0 w-screen h-screen overflow-y-auto bg-gradient-to-br from-[#0b1d3a] via-[#142850] to-[#0b1d3a] text-white z-[9999]">
 
-      {/* Back */}
+      {/* Back Button */}
       <button
         onClick={() => router.push("/quizzes")}
-        className="absolute top-6 left-6 flex items-center gap-2 text-blue-200 hover:text-white transition"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-2 text-blue-200 hover:text-white transition text-sm sm:text-base"
       >
         <ArrowLeft size={18} />
         Back
       </button>
 
-      <div className="min-h-screen flex items-center justify-center px-4 py-10">
+      <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:py-10">
 
-        <div className="relative w-[650px] max-w-[95%] p-8 rounded-3xl border border-blue-400/40 shadow-[0_0_50px_rgba(59,130,246,0.5)] bg-[#132043]">
+        <div className="relative w-full max-w-[650px] p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-blue-400/40 shadow-[0_0_50px_rgba(59,130,246,0.5)] bg-[#132043]">
 
           {/* Title */}
-          <div className="flex justify-center mb-10">
-            <div className="relative px-10 py-4 rounded-2xl border border-blue-400/40 bg-[#102a57] text-3xl font-bold tracking-[0.28em] shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+          <div className="flex justify-center mb-6 sm:mb-10">
+            <div className="relative px-6 py-3 sm:px-10 sm:py-4 rounded-xl sm:rounded-2xl border border-blue-400/40 bg-[#102a57] text-lg sm:text-2xl md:text-3xl font-bold tracking-[0.18em] sm:tracking-[0.28em] shadow-[0_0_15px_rgba(59,130,246,0.4)]">
               <div className="absolute inset-0 rounded-2xl blur-lg bg-blue-500/20 opacity-30"></div>
+
               <div className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-blue-300 to-blue-200">
                 LEADERBOARD
               </div>
@@ -154,15 +153,15 @@ export default function Leaderboard() {
           )}
 
           {/* Players */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4 max-h-[65vh] overflow-y-auto scrollbar-hide">
+
             <AnimatePresence>
               {sorted.map((player, index) => {
                 const prevRank = previousRanks.current[player.userName];
                 const rankChange =
                   prevRank !== undefined ? prevRank - index : 0;
 
-                const isCurrentUser =
-                  player.userName === userName;
+                const isCurrentUser = player.userName === userName;
 
                 return (
                   <motion.div
@@ -171,37 +170,41 @@ export default function Leaderboard() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: "spring", stiffness: 300 }}
-                    className={`flex items-center justify-between px-6 py-4 rounded-xl border transition-all duration-500 ${
+                    className={`flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 rounded-xl border transition-all duration-500 ${
                       isCurrentUser
-                        ? "bg-green-600/30 border-green-400 scale-105 shadow-lg"
+                        ? "bg-green-600/30 border-green-400 scale-[1.02] sm:scale-105 shadow-lg"
                         : "bg-blue-700/30 border-blue-400/20"
                     }`}
                   >
-                    <div className="flex items-center gap-5">
-                      <div className="text-2xl w-10 text-center flex items-center gap-1">
+
+                    {/* Left */}
+                    <div className="flex items-center gap-3 sm:gap-5">
+
+                      {/* Rank */}
+                      <div className="text-lg sm:text-2xl w-7 sm:w-10 text-center flex items-center gap-1">
                         {getMedal(index)}
 
                         {rankChange > 0 && (
-                          <span className="text-green-400 text-sm animate-pulse">
+                          <span className="text-green-400 text-xs sm:text-sm animate-pulse">
                             ↑
                           </span>
                         )}
 
                         {rankChange < 0 && (
-                          <span className="text-red-400 text-sm animate-pulse">
+                          <span className="text-red-400 text-xs sm:text-sm animate-pulse">
                             ↓
                           </span>
                         )}
                       </div>
 
-                      <div className="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center font-bold text-lg">
-                        {player.userName
-                          ?.charAt(0)
-                          .toUpperCase()}
+                      {/* Avatar */}
+                      <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-gray-600 flex items-center justify-center font-bold text-sm sm:text-lg">
+                        {player.userName?.charAt(0).toUpperCase()}
                       </div>
 
+                      {/* Name */}
                       <div>
-                        <div className="font-semibold text-lg">
+                        <div className="font-semibold text-sm sm:text-lg truncate max-w-[120px] sm:max-w-none">
                           {player.userName}
                         </div>
 
@@ -211,9 +214,11 @@ export default function Leaderboard() {
                       </div>
                     </div>
 
-                    <div className="text-xl font-bold text-blue-200">
+                    {/* Score */}
+                    <div className="text-lg sm:text-xl font-bold text-blue-200">
                       {player.score}
                     </div>
+
                   </motion.div>
                 );
               })}
@@ -224,6 +229,7 @@ export default function Leaderboard() {
                 No submissions yet.
               </div>
             )}
+
           </div>
         </div>
       </div>

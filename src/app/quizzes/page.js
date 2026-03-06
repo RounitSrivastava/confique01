@@ -286,7 +286,8 @@ export default function QuizzesPage() {
   shadow-lg shadow-purple-500/20
   "
 >
-  + Create Quiz
+  <span className="sm:hidden">+ Create</span>
+  <span className="hidden sm:inline">+ Create Quiz</span>
 </button>
       </div>
 

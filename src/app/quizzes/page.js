@@ -272,31 +272,21 @@ export default function QuizzesPage() {
           </p>
         </div>
 
-        <button
+       <button
   onClick={() => router.push("/quizzes/create")}
   className="
-  hidden sm:inline-flex
-  bg-purple-600 px-6 py-2 rounded-xl hover:bg-purple-700 transition shadow-lg shadow-purple-500/20
+  bg-purple-600
+  px-4 py-2
+  text-sm
+  sm:px-6 sm:py-2.5
+  sm:text-base
+  rounded-xl
+  hover:bg-purple-700
+  transition
+  shadow-lg shadow-purple-500/20
   "
 >
   + Create Quiz
-</button>
-
-{/* Mobile Button */}
-<button
-  onClick={() => router.push("/quizzes/create")}
-  className="
-  sm:hidden
-  bg-purple-600
-  px-3 py-1.5
-  text-sm
-  rounded-lg
-  hover:bg-purple-700
-  transition
-  shadow-md shadow-purple-500/20
-  "
->
-  + Create
 </button>
       </div>
 

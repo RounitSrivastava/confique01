@@ -209,13 +209,22 @@ useEffect(() => {
     if (submitted) return;
     setSubmitted(true);
     setTimeLeft(null);
+    // save time for current question before submitting
+const timeSpent = Math.floor(
+  (Date.now() - questionStartTime) / 1000
+);
+
+setQuestionTimes((prev) => ({
+  ...prev,
+  [currentQuestion]: timeSpent,
+}));
 
     let totalScore = 0;
 
     quiz.questions.forEach((q, qIndex) => {
       const correctIndex = q.options.findIndex((o) => o.isCorrect);
       const userAnswer = answers[qIndex];
-      const timeSpent = questionTimes[qIndex] || 999;
+      const timeSpent = questionTimes[qIndex] ?? 999;
 
       if (userAnswer === correctIndex) {
         totalScore += q.points;

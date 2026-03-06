@@ -209,30 +209,32 @@ useEffect(() => {
     if (submitted) return;
     setSubmitted(true);
     setTimeLeft(null);
-    // save time for current question before submitting
-const timeSpent = Math.floor(
-  (Date.now() - questionStartTime) / 1000
-);
-
-setQuestionTimes((prev) => ({
-  ...prev,
-  [currentQuestion]: timeSpent,
-}));
+    
 
     let totalScore = 0;
 
     quiz.questions.forEach((q, qIndex) => {
-      const correctIndex = q.options.findIndex((o) => o.isCorrect);
-      const userAnswer = answers[qIndex];
-      const timeSpent = questionTimes[qIndex] ?? 999;
+  const correctIndex = q.options.findIndex((o) => o.isCorrect);
+  const userAnswer = answers[qIndex];
 
-      if (userAnswer === correctIndex) {
-        totalScore += q.points;
-        if (timeSpent <= 5) totalScore += 2;
-      } else if (userAnswer !== undefined) {
-        totalScore -= q.points * 0.25;
-      }
-    });
+  let timeSpent = questionTimes[qIndex];
+
+  // calculate time for current question if not stored yet
+  if (qIndex === currentQuestion) {
+    timeSpent = Math.floor(
+      (Date.now() - questionStartTime) / 1000
+    );
+  }
+
+  if (timeSpent === undefined) timeSpent = 999;
+
+  if (userAnswer === correctIndex) {
+    totalScore += q.points;
+    if (timeSpent <= 5) totalScore += 2;
+  } else if (userAnswer !== undefined) {
+    totalScore -= q.points * 0.25;
+  }
+});
 
     if (totalScore < 0) totalScore = 0;
 

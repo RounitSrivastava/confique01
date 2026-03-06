@@ -55,10 +55,12 @@ export async function GET() {
       }
 
       return {
-        ...quiz,
-        createdBy,
-        hasAttempted,
-      };
+  ...quiz,
+  createdBy,
+  hasAttempted,
+  startAt: quiz.startAt ? new Date(quiz.startAt).toISOString() : null,
+  closeAt: quiz.closeAt ? new Date(quiz.closeAt).toISOString() : null,
+};
     });
 
     return NextResponse.json(updatedQuizzes);

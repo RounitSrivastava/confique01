@@ -114,14 +114,20 @@ const QuizSchema = new mongoose.Schema(
 
     /* 🔥 SCHEDULING */
     startAt: {
-      type: Number, // timestamp
-      default: null,
-    },
+  type: Date,
+  default: null,
+},
 
-    closeAt: {
-      type: Number, // timestamp
-      default: null,
-    },
+closeAt: {
+  type: Date,
+  default: null,
+},
+
+attemptTime: {
+  type: Number, // minutes
+  default: 20,
+  min: 1,
+},
 
     /* 🔥 STATUS SYSTEM */
     status: {

@@ -8,7 +8,7 @@ export default function QuizzesPage() {
   const router = useRouter();
   const [quizzes, setQuizzes] = useState([]);
   const [openMenu, setOpenMenu] = useState(null);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -63,7 +63,7 @@ export default function QuizzesPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setNow(Date.now());
+      setNow(new Date());
     }, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -85,18 +85,18 @@ export default function QuizzesPage() {
   /* ================= FILTERING ================= */
 
   const scheduled = quizzes.filter(
-    (q) => q.startAt && q.startAt > now
-  );
+  (q) => q.startAt && new Date(q.startAt) > now
+);
 
   const ongoing = quizzes.filter(
-    (q) =>
-      (!q.startAt || q.startAt <= now) &&
-      (!q.closeAt || q.closeAt > now)
-  );
+  (q) =>
+    (!q.startAt || new Date(q.startAt) <= now) &&
+    (!q.closeAt || new Date(q.closeAt) > now)
+);
 
   const previous = quizzes.filter(
-    (q) => q.closeAt && q.closeAt <= now
-  );
+  (q) => q.closeAt && new Date(q.closeAt) <= now
+);
 
   /* ================= DELETE ================= */
 
@@ -122,10 +122,12 @@ export default function QuizzesPage() {
   /* ================= QUIZ CARD ================= */
 
   const QuizCard = ({ quiz, isPrevious }) => {
-    const isScheduled = quiz.startAt && quiz.startAt > now;
-    const isOngoing =
-      (!quiz.startAt || quiz.startAt <= now) &&
-      (!quiz.closeAt || quiz.closeAt > now);
+    const isScheduled =
+  quiz.startAt && new Date(quiz.startAt) > now;
+
+const isOngoing =
+  (!quiz.startAt || new Date(quiz.startAt) <= now) &&
+  (!quiz.closeAt || new Date(quiz.closeAt) > now);
     const alreadyAttempted = quiz.hasAttempted;
 
     const isOwner =
@@ -143,7 +145,7 @@ export default function QuizzesPage() {
     const getTimeLeft = (targetTime) => {
       if (!targetTime) return null;
 
-      const diff = targetTime - now;
+      const diff = new Date(targetTime).getTime() - now.getTime();
       if (diff <= 0) return null;
 
       const totalSeconds = Math.floor(diff / 1000);

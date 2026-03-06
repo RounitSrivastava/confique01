@@ -26,6 +26,7 @@ export default function CreateQuiz() {
   // 🔥 NEW SCHEDULE SYSTEM
   const [startAt, setStartAt] = useState("");
   const [closeAt, setCloseAt] = useState("");
+  const [attemptTime, setAttemptTime] = useState(20);
 
   /* ---------------- LOAD QUIZ (EDIT MODE) ---------------- */
 
@@ -57,6 +58,9 @@ export default function CreateQuiz() {
       if (data.closeAt) {
         setCloseAt(new Date(data.closeAt).toISOString().slice(0, 16));
       }
+      if (data.attemptTime) {
+  setAttemptTime(data.attemptTime);
+}
     };
 
     loadQuiz();
@@ -133,21 +137,21 @@ export default function CreateQuiz() {
 
     setLoading(true);
 
-    const now = Date.now();
+    const now = new Date();
 
-    const startTimestamp = startAt
-      ? new Date(startAt).getTime()
-      : now;
+const startTimestamp = startAt
+  ? new Date(startAt)
+  : now;
 
-    const closeTimestamp = closeAt
-      ? new Date(closeAt).getTime()
-      : null;
+const closeTimestamp = closeAt
+  ? new Date(closeAt)
+  : null;
 
     // 🔥 AUTO STATUS LOGIC
     let status = "active";
 
-    if (startTimestamp > now) status = "scheduled";
-    if (closeTimestamp && now > closeTimestamp) status = "closed";
+    if (startTimestamp && startTimestamp > now) status = "scheduled";
+if (closeTimestamp && now > closeTimestamp) status = "closed";
 
     const quizPayload = {
       title: title.trim(),
@@ -163,6 +167,7 @@ export default function CreateQuiz() {
       })),
       startAt: startTimestamp,
       closeAt: closeTimestamp,
+      attemptTime: Number(attemptTime),
       status,
       createdAt: now,
     };
@@ -337,6 +342,19 @@ export default function CreateQuiz() {
               className="bg-gray-900 border border-white/10 rounded-lg p-3 w-full"
             />
           </div>
+          <div>
+  <label className="block text-sm text-gray-400 mt-4">
+    Time Limit Per Attempt (minutes)
+  </label>
+
+  <input
+    type="number"
+    min="1"
+    value={attemptTime}
+    onChange={(e) => setAttemptTime(e.target.value)}
+    className="bg-gray-900 border border-white/10 rounded-lg p-3 w-full"
+  />
+</div>
         </div>
 
         {/* PUBLISH */}

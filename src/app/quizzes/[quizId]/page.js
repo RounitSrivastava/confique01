@@ -52,17 +52,17 @@ export default function QuizPlay() {
         const data = await res.json();
         if (!data) return;
 
-        const now = Date.now();
+        const now = new Date();
 
         // 🔒 Quiz not started yet
-        if (data.startAt && now < data.startAt) {
+        if (data.startAt && now < new Date(data.startAt)){
           alert("Quiz has not started yet.");
           router.push("/quizzes");
           return;
         }
 
         // 🔒 Quiz closed
-        if (data.closeAt && now > data.closeAt) {
+        if (data.closeAt && now > new Date(data.closeAt)){
           alert("Quiz already ended.");
           router.push(`/quizzes/${quizId}/leaderboard`);
           return;
@@ -83,13 +83,15 @@ export default function QuizPlay() {
 
         // ✅ Schedule-based timer
         if (data.closeAt) {
-          const remainingSeconds = Math.floor(
-            (data.closeAt - now) / 1000
-          );
-          setTimeLeft(remainingSeconds > 0 ? remainingSeconds : 0);
-        } else {
-          setTimeLeft(300); // fallback if no schedule
-        }
+  const closeTime = new Date(data.closeAt);
+  const remainingSeconds = Math.floor(
+    (closeTime.getTime() - now.getTime()) / 1000
+  );
+
+  setTimeLeft(remainingSeconds > 0 ? remainingSeconds : 0);
+} else {
+  setTimeLeft(300);
+}
 
       } catch (err) {
         console.error("Failed to load quiz");
@@ -208,6 +210,7 @@ export default function QuizPlay() {
         body: JSON.stringify({
           score: totalScore,
           timeTaken: totalTimeTaken,
+          startedAt: startTimeRef,
         }),
       });
 
@@ -220,10 +223,14 @@ export default function QuizPlay() {
   /* ---------------- FORMAT TIME ---------------- */
 
   const formatTime = (seconds) => {
+  if (seconds >= 60) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
-  };
+    return `${mins}m ${secs}s`;
+  } else {
+    return `${seconds}s`;
+  }
+};
 
   /* ---------------- UI ---------------- */
 

@@ -133,19 +133,32 @@ export async function PATCH(req, context) {
       );
     }
 
-    if (quiz.startAt && Date.now() < quiz.startAt) {
+    if (quiz.startAt && new Date() < quiz.startAt) {
       return NextResponse.json(
         { error: "Quiz not started yet" },
         { status: 403 }
       );
     }
 
-    if (quiz.closeAt && Date.now() > quiz.closeAt) {
+    if (quiz.closeAt && new Date() > quiz.closeAt) {
       return NextResponse.json(
         { error: "Quiz already closed" },
         { status: 403 }
       );
     }
+    // 🔒 Prevent submission after attempt time
+if (quiz.attemptTime && body.startedAt) {
+  const attemptEnd = new Date(
+  body.startedAt + quiz.attemptTime * 60 * 1000
+);
+
+if (new Date() > attemptEnd) {
+    return NextResponse.json(
+      { error: "Attempt time expired" },
+      { status: 403 }
+    );
+  }
+}
 
     /* Prevent double attempt */
     const alreadyAttempted = quiz.leaderboard.some(

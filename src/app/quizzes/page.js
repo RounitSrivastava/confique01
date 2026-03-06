@@ -276,7 +276,7 @@ export default function QuizzesPage() {
           onClick={() => router.push("/quizzes/create")}
           className="bg-purple-600 px-6 py-2 rounded-xl hover:bg-purple-700 transition shadow-lg shadow-purple-500/20"
         >
-          + Create Quiz
+          + Create
         </button>
       </div>
 

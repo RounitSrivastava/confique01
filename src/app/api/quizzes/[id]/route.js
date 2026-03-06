@@ -147,13 +147,13 @@ export async function PATCH(req, context) {
       );
     }
     // 🔒 Prevent submission after attempt time
-// 🔒 Prevent very late submissions (allow 5 second buffer)
+// 🔒 Allow small delay for auto-submit
 if (quiz.attemptTime && body.startedAt) {
-  const startTime = new Date(body.startedAt).getTime();
+  const startTime = Number(body.startedAt);
   const attemptEnd = startTime + quiz.attemptTime * 60 * 1000;
 
-  // allow 5 second delay for auto-submit
-  if (Date.now() > attemptEnd + 5000) {
+  // allow 10 second buffer for network delay
+  if (Date.now() > attemptEnd + 10000) {
     return NextResponse.json(
       { error: "Attempt time expired" },
       { status: 403 }
@@ -172,7 +172,11 @@ if (quiz.attemptTime && body.startedAt) {
         { status: 409 }
       );
     }
-
+console.log("Submitting score:", {
+  user: userName,
+  score,
+  timeTaken,
+});
     quiz.leaderboard.push({
       userId: user._id,
       userName: String(userName),

@@ -100,34 +100,19 @@ const SelectField = ({
     <label className="text-sm font-medium text-gray-400 block">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
+
     <select
       name={name}
       value={value}
       onChange={onChange}
       required={required}
       disabled={disabled}
-      className={`w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
+      className={`w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       }`}
     >
-      <select
-  name={name}
-  value={value}
-  onChange={onChange}
-  required={required}
-  disabled={disabled}
-  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer"
->
-  {options.map((option) => (
-    <option
-      key={option.name || option}
-      value={option.name || option}
-      className="bg-gray-800 text-white"
-    >
-      {option.name || option}
-    </option>
-  ))}
-</select>
+      <option value="">Select</option>
+
       {options.map((option) => (
         <option
           key={option.name || option}

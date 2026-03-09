@@ -836,7 +836,7 @@ setTimeout(() => {
 
           <form
             onSubmit={handleRegistrationSubmit}
-            className="space-y-4 max-h-[70vh] overflow-y-auto pr-1"
+            className="space-y-4 max-h-[70vh] overflow-y-auto pr-1 scrollbar-hide"
           >
             {/* TEAM SECTION */}
 {teamConfig?.enabled && !showBilling && (

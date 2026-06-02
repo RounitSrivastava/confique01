@@ -77,7 +77,7 @@ const InputField = ({
     <input
       name={name}
       type={type}
-      value={value}
+      value={value || ""}
       onChange={onChange}
       placeholder={placeholder}
       required={required}
@@ -103,7 +103,7 @@ const SelectField = ({
 
     <select
       name={name}
-      value={value}
+      value={value || ""}
       onChange={onChange}
       required={required}
       disabled={disabled}
@@ -173,14 +173,13 @@ const ImageUploader = ({
       )}
 
       <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        onChange={onFileChange}
-        required={isRequired}
-        style={{ display: "none" }}
-        name={name}
-      />
+  type="file"
+  accept="image/*"
+  ref={fileInputRef}
+  onChange={onFileChange}
+  style={{ display: "none" }}
+  name={name}
+/>
 
       <button
         type="button"
@@ -279,6 +278,8 @@ paymentMethod: initialData?.paymentMethod || "qr", // qr | gateway
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+const [aiLoading, setAiLoading] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
 useEffect(() => {
@@ -571,6 +572,205 @@ const addCustomField = () => {
     }
   };
 
+   const handleDocumentUpload = async (e) => {
+
+  const file = e.target.files[0];
+
+  if (!file) return;
+
+  try {
+
+    setAiLoading(true);
+
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    const response = await fetch("/api/ai-event-from-doc", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    console.log(data);
+
+    setEventData(prev => ({
+
+      ...prev,
+
+      title: data.title || "",
+      tagline: data.tagline || "",
+      description: data.description || "",
+
+      venue: data.venue || "",
+
+      category: data.category || "",
+
+      eligibility: data.eligibility || "",
+
+      prizes: data.prizes || "",
+
+      eventStart: data.eventStart || "",
+      eventEnd: data.eventEnd || "",
+
+      registrationStart: data.registrationStart || "",
+      registrationEnd: data.registrationEnd || "",
+      isFree:
+  typeof data.isFree === "boolean"
+    ? data.isFree
+    : prev.isFree,
+
+pricingMode:
+  data.pricingMode
+    ? data.pricingMode.trim()
+    : prev.pricingMode,
+
+fixedPrice:
+  data.fixedPrice !== undefined &&
+  data.fixedPrice !== null
+    ? String(data.fixedPrice)
+    : prev.fixedPrice,
+
+ticketTypes:
+  Array.isArray(data.ticketTypes)
+    ? data.ticketTypes
+    : prev.ticketTypes,
+
+      tags: Array.isArray(data.tags)
+        ? data.tags
+        : prev.tags,
+
+      rounds: Array.isArray(data.rounds)
+        ? data.rounds
+        : prev.rounds,
+
+      customFields: Array.isArray(data.customFields)
+        ? data.customFields
+        : prev.customFields,
+
+      teamConfig:
+        typeof data.teamConfig === "object" &&
+        data.teamConfig !== null
+          ? data.teamConfig
+          : prev.teamConfig
+
+    }));
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert("Document AI extraction failed");
+
+  } finally {
+
+    setAiLoading(false);
+
+  }
+};
+
+const generateWithAI = async () => {
+
+  try {
+
+    setAiLoading(true);
+
+    const response = await fetch("/api/ai-event", {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+        prompt: aiPrompt
+      })
+
+    });
+
+    const data = await response.json();
+
+    console.log(data);
+
+    setEventData(prev => ({
+
+      ...prev,
+
+      title: data.title || "",
+      tagline: data.tagline || "",
+      description: data.description || "",
+
+      venue: data.venue || "",
+
+      category: data.category || "",
+
+      eligibility: data.eligibility || "",
+
+      prizes: data.prizes || "",
+
+      eventStart: data.eventStart || "",
+      eventEnd: data.eventEnd || "",
+
+      registrationStart: data.registrationStart || "",
+registrationEnd: data.registrationEnd || "",
+
+// ✅ PRICING
+isFree:
+  typeof data.isFree === "boolean"
+    ? data.isFree
+    : prev.isFree,
+
+pricingMode:
+  data.pricingMode
+    ? data.pricingMode.trim()
+    : prev.pricingMode,
+
+fixedPrice:
+  data.fixedPrice !== undefined &&
+  data.fixedPrice !== null
+    ? String(data.fixedPrice)
+    : prev.fixedPrice,
+
+ticketTypes:
+  Array.isArray(data.ticketTypes)
+    ? data.ticketTypes
+    : prev.ticketTypes,
+
+tags: Array.isArray(data.tags)
+  ? data.tags
+  : prev.tags,
+
+      rounds: Array.isArray(data.rounds)
+  ? data.rounds
+  : prev.rounds,
+
+      teamConfig:
+  typeof data.teamConfig === "object" &&
+  data.teamConfig !== null
+    ? data.teamConfig
+    : prev.teamConfig,
+
+customFields: Array.isArray(data.customFields)
+  ? data.customFields
+  : prev.customFields
+
+    }));
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert("AI generation failed");
+
+  } finally {
+
+    setAiLoading(false);
+
+  }
+};
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -694,6 +894,40 @@ paymentMethod: eventData.paymentMethod,
     Confique Event Host Guide
     <ExternalLink className="w-4 h-4" />
   </a>
+</div>
+<div className="bg-gray-900 p-6 rounded-xl mb-10 border border-purple-500">
+
+  <h2 className="text-3xl font-bold text-white mb-4">
+    ✨ Generate Event Using AI
+  </h2>
+
+  <p className="text-gray-400 mb-4">
+    Describe your event idea and AI will auto-fill the form.
+  </p>
+
+  <textarea
+    value={aiPrompt}
+    onChange={(e) => setAiPrompt(e.target.value)}
+    placeholder="Example: Create a 2-day AI hackathon for 300 students with workshops, sponsors, prizes, and team participation."
+    className="w-full h-36 p-4 bg-gray-800 border border-gray-700 rounded-lg text-white"
+  />
+
+{/* pdf input area  */}
+<input
+  type="file"
+  accept=".pdf,.doc,.docx,.txt"
+  onChange={handleDocumentUpload}
+  className="mt-4 block w-full text-sm text-gray-300"
+/>
+  <button
+    type="button"
+    onClick={generateWithAI}
+    disabled={aiLoading}
+    className="mt-4 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-bold"
+  >
+    {aiLoading ? "Generating..." : "Generate Event"}
+  </button>
+
 </div>
         <form onSubmit={handleSubmit} className="space-y-10">
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-800">
@@ -836,7 +1070,7 @@ paymentMethod: eventData.paymentMethod,
         <span className="text-xl text-yellow-300">{CURRENCY_SYMBOL}</span>
         <input
           type="number"
-          value={eventData.fixedPrice}
+          value={eventData.fixedPrice || ""}
           onChange={e => setEventData(p => ({ ...p, fixedPrice: e.target.value }))}
           placeholder="e.g. 500"
           className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg"

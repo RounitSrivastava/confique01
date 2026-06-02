@@ -37,6 +37,6 @@ export default function RootLayout({ children }) {
           <ClientLayout>{children}</ClientLayout>
         </GoogleOAuthProvider>
       </body>
-    </html>
+    </html> 
   );
 }

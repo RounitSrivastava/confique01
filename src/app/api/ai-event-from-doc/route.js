@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 import Groq from "groq-sdk";
-import pdf from "pdf-parse/lib/pdf-parse.js";
+import pdf from "pdf-parse";
 import mammoth from "mammoth";
 
 const groq = new Groq({

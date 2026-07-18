@@ -123,7 +123,6 @@ export async function GET() {
 
     await dbConnect();
     const events = await Event.find()
-      .select("_id title tagline impressions category date venue isFree poster bannerUrl iconUrl coverImage imageUrl rounds tags pricingMode fixedPrice ticketTypes organizer hostedBy registrations registrationsCount teams isExternalRegistration registrationUrl eventStart eventEnd isFeatured")
       .sort({ impressions: -1 })
       .lean();
 

@@ -1,14 +1,14 @@
 "use client";
-export const dynamic = "force-dynamic";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { GoogleLogin } from "@react-oauth/google";
 
 const CREDENTIALS = "include";
 
-export default function RegisterPage() {
+// Inner component that uses useSearchParams (must be inside Suspense)
+function RegisterForm() {
   const searchParams = useSearchParams();
   const refCode = searchParams ? searchParams.get("ref") : null;
 
@@ -206,7 +206,7 @@ export default function RegisterPage() {
                 <span>
                   I agree to the{" "}
                   <Link href="/terms" className="text-blue-400 underline">
-                    Terms & Conditions
+                    Terms &amp; Conditions
                   </Link>
                 </span>
               </label>
@@ -236,5 +236,18 @@ export default function RegisterPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+// Page component wraps the form in Suspense (required for useSearchParams in Next.js 15)
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-black">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }

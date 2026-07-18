@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const CACHE_DURATION = 30; // seconds
-let eventsCache = null;  // will be populated on first request
+let eventsCache = null;
 let eventsCacheTime = 0;
 
 /* CREATE EVENT */

@@ -129,10 +129,21 @@ const EventSchema = new mongoose.Schema(
       default: [],
     },
 
-    /* ---------- DATE & VENUE ---------- */
+    // Primary date display field (kept for backward compat)
     date: {
       type: String,
-      required: true,
+      default: "",
+    },
+
+    // Actual start/end dates for the event
+    eventStart: {
+      type: String,
+      default: "",
+    },
+
+    eventEnd: {
+      type: String,
+      default: "",
     },
 
     venue: {

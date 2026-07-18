@@ -929,7 +929,16 @@ paymentMethod: eventData.paymentMethod,
   </button>
 
 </div>
-        <form onSubmit={handleSubmit} className="space-y-10">
+        <form 
+          onSubmit={handleSubmit} 
+          className="space-y-10"
+          onKeyDown={(e) => {
+            // Prevent accidental form submission when pressing Enter in text inputs
+            if (e.key === "Enter" && e.target.tagName !== "TEXTAREA" && e.target.type !== "submit") {
+              e.preventDefault();
+            }
+          }}
+        >
           <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-border-2">
             <SectionTitle icon={ClipboardList}>Basic Details</SectionTitle>
             <InputField label="Event Title" name="title" value={eventData.title} onChange={handleInputChange} placeholder="e.g., Global Tech Summit 2026" required />

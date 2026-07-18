@@ -96,6 +96,10 @@ export async function POST(req) {
       impressions: Math.floor(Math.random() * (3500 - 1200 + 1)) + 1200,
     });
 
+    // Bust cache so the new event appears immediately on all pages
+    eventsCache = null;
+    eventsCacheTime = 0;
+
     return NextResponse.json(event, { status: 201 });
   } catch (err) {
     console.error("❌ Mongoose Save Error:", err);
@@ -119,7 +123,7 @@ export async function GET() {
 
     await dbConnect();
     const events = await Event.find()
-      .select("_id title tagline impressions category date venue isFree poster bannerUrl iconUrl coverImage imageUrl rounds tags pricingMode fixedPrice ticketTypes organizer")
+      .select("_id title tagline impressions category date venue isFree poster bannerUrl iconUrl coverImage imageUrl rounds tags pricingMode fixedPrice ticketTypes organizer hostedBy registrations registrationsCount teams isExternalRegistration registrationUrl eventStart eventEnd isFeatured")
       .sort({ impressions: -1 })
       .lean();
 

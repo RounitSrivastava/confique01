@@ -43,7 +43,7 @@ export default function RewardsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-bg-1">
+      <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#c084fc] border-t-transparent" />
       </div>
     );
@@ -51,7 +51,7 @@ export default function RewardsPage() {
 
   if (!user) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-bg-1 text-text-1 p-6 text-center">
+      <div className="flex h-screen flex-col items-center justify-center text-text-1 p-6 text-center">
         <Gift className="w-16 h-16 text-[#c084fc] mb-4 opacity-50" />
         <h2 className="text-xl font-semibold mb-2">Please log in</h2>
         <p className="text-text-3">You need to log in to view your rewards and invite links.</p>
@@ -104,7 +104,7 @@ export default function RewardsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-1 text-text-1 p-4 md:p-8">
+    <div className="min-h-screen text-text-1 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Header */}

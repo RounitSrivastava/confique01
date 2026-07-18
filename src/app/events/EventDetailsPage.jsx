@@ -74,38 +74,38 @@ const getRegistrationStatus = (start, end) => {
   const s = new Date(start);
   const e = new Date(end);
 
-  s.setHours(0,0,0,0);
-  e.setHours(23,59,59,999);
+  s.setHours(0, 0, 0, 0);
+  e.setHours(23, 59, 59, 999);
 
   if (now < s) {
-  const diffMs = s - now;
+    const diffMs = s - now;
 
-  const totalMinutes = Math.floor(diffMs / (1000 * 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+    const totalMinutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
 
-  // Less than 1 hour → show minutes
-  if (hours === 0) {
+    // Less than 1 hour → show minutes
+    if (hours === 0) {
+      return {
+        status: "notStarted",
+        minutesLeft: minutes || 1, // never show 0
+      };
+    }
+
+    // Less than 24 hours → show hours
+    if (hours < 24) {
+      return {
+        status: "notStarted",
+        hoursLeft: hours,
+      };
+    }
+
+    // Otherwise → show days
     return {
       status: "notStarted",
-      minutesLeft: minutes || 1, // never show 0
+      daysLeft: Math.ceil(hours / 24),
     };
   }
-
-  // Less than 24 hours → show hours
-  if (hours < 24) {
-    return {
-      status: "notStarted",
-      hoursLeft: hours,
-    };
-  }
-
-  // Otherwise → show days
-  return {
-    status: "notStarted",
-    daysLeft: Math.ceil(hours / 24),
-  };
-}
 
   if (now > e) return { status: "closed" };
 
@@ -126,10 +126,9 @@ const TabButton = ({ name, icon: Icon, isActive, onClick }) => (
     onClick={onClick}
     className={`
       flex items-center space-x-2 px-6 py-3 text-base font-semibold border-b-2 transition-all duration-300
-      ${
-        isActive
-          ? "border-purple-600 text-text-1"
-          : "border-transparent text-text-3 hover:text-text-1 hover:border-gray-700"
+      ${isActive
+        ? "border-purple-600 text-text-1"
+        : "border-transparent text-text-3 hover:text-text-1 hover:border-gray-700"
       }
       whitespace-nowrap
     `}
@@ -212,92 +211,92 @@ const EventDetailsPage = ({
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [formData, setFormData] = useState({});
   const [formErrors, setFormErrors] = useState({});
-  const [ticketQty, setTicketQty] = useState({});   
+  const [ticketQty, setTicketQty] = useState({});
   const [showPaymentBox, setShowPaymentBox] = useState(false);
   const [showBilling, setShowBilling] = useState(false);
   const [showBillAfterRef, setShowBillAfterRef] = useState(false);
   const [canSubmit, setCanSubmit] = useState(false);
   const [userEmail, setUserEmail] = useState(null);
   const [teamMode, setTeamMode] = useState("create"); // default create
-const [teamName, setTeamName] = useState("");
-const [teamCode, setTeamCode] = useState("");
-const [createdTeamCode, setCreatedTeamCode] = useState(null);
-const [teamMembersCount, setTeamMembersCount] = useState(1);
-const [isSubmitting, setIsSubmitting] = useState(false);
-const [, forceUpdate] = useState(0);
-const [paymentMethod, setPaymentMethod] = useState("qr");
-const [teamParticipants, setTeamParticipants] = useState([]);
-const [teamCreator, setTeamCreator] = useState(null);
-const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-
-useEffect(() => {
-  if (!showSuccessPopup) return;
-
-  const duration = 2000;
-  const end = Date.now() + duration;
-
-  const interval = setInterval(() => {
-    if (Date.now() > end) {
-      clearInterval(interval);
-      return;
-    }
-
-    confetti({
-      particleCount: 40,
-      spread: 70,
-      origin: { x: Math.random(), y: 0.6 },
-    });
-  }, 250);
-
-  return () => clearInterval(interval);
-}, [showSuccessPopup]);
-
-useEffect(() => {
-  if (window.Cashfree) return;
-
-  const script = document.createElement("script");
-  script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
-  script.async = true;
-  document.body.appendChild(script);
-}, []);
+  const [teamName, setTeamName] = useState("");
+  const [teamCode, setTeamCode] = useState("");
+  const [createdTeamCode, setCreatedTeamCode] = useState(null);
+  const [teamMembersCount, setTeamMembersCount] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [, forceUpdate] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("qr");
+  const [teamParticipants, setTeamParticipants] = useState([]);
+  const [teamCreator, setTeamCreator] = useState(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   useEffect(() => {
-  // First try localStorage (page refresh support)
-  const stored = localStorage.getItem("userEmail");
-  if (stored) setUserEmail(stored);
+    if (!showSuccessPopup) return;
 
-  // Listen for login from anywhere in app
-  const handler = (e) => {
-    const email = e.detail?.user?.email;
-    if (email) {
-      localStorage.setItem("userEmail", email);
-      setUserEmail(email);
-    }
-  };
+    const duration = 2000;
+    const end = Date.now() + duration;
 
-  window.addEventListener("confique:auth-changed", handler);
+    const interval = setInterval(() => {
+      if (Date.now() > end) {
+        clearInterval(interval);
+        return;
+      }
 
-  return () => {
-    window.removeEventListener("confique:auth-changed", handler);
-  };
-}, []);
-useEffect(() => {
-  const timer = setInterval(() => {
-    forceUpdate(n => n + 1);
-  }, 60000);
+      confetti({
+        particleCount: 40,
+        spread: 70,
+        origin: { x: Math.random(), y: 0.6 },
+      });
+    }, 250);
 
-  return () => clearInterval(timer);
-}, []);
+    return () => clearInterval(interval);
+  }, [showSuccessPopup]);
+
+  useEffect(() => {
+    if (window.Cashfree) return;
+
+    const script = document.createElement("script");
+    script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
+  useEffect(() => {
+    // First try localStorage (page refresh support)
+    const stored = localStorage.getItem("userEmail");
+    if (stored) setUserEmail(stored);
+
+    // Listen for login from anywhere in app
+    const handler = (e) => {
+      const email = e.detail?.user?.email;
+      if (email) {
+        localStorage.setItem("userEmail", email);
+        setUserEmail(email);
+      }
+    };
+
+    window.addEventListener("confique:auth-changed", handler);
+
+    return () => {
+      window.removeEventListener("confique:auth-changed", handler);
+    };
+  }, []);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      forceUpdate(n => n + 1);
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     setActiveTab("Details");
   }, [displayEvent?.id]);
 
- useEffect(() => {
-  if (displayEvent?.paymentMethod) {
-    setPaymentMethod(displayEvent.paymentMethod);
-  }
-}, [displayEvent]);
+  useEffect(() => {
+    if (displayEvent?.paymentMethod) {
+      setPaymentMethod(displayEvent.paymentMethod);
+    }
+  }, [displayEvent]);
 
   const {
     title,
@@ -308,7 +307,7 @@ useEffect(() => {
     hostedBy,
     eligibility,
     prizes,
-    groupLink,  
+    groupLink,
     isExternalRegistration,
     registrationUrl,
     poster,
@@ -316,9 +315,9 @@ useEffect(() => {
     impressions,
     rounds = [],
     isFree,
-    pricingMode,        
-    fixedPrice,          
-    ticketTypes = [],   
+    pricingMode,
+    fixedPrice,
+    ticketTypes = [],
     venue,
     isOnline,
     customFields = [],
@@ -329,15 +328,15 @@ useEffect(() => {
     registrations = [],
     teamConfig,
   } = displayEvent || {};
-  
-const regInfo = getRegistrationStatus(registrationStart, registrationEnd);
+
+  const regInfo = getRegistrationStatus(registrationStart, registrationEnd);
   const CURRENCY_SYMBOL = "₹";
   const totalAmount =
     pricingMode === "flexible"
       ? ticketTypes.reduce(
-          (sum, t) => sum + (ticketQty[t.name] || 0) * t.price,
-          0
-        )
+        (sum, t) => sum + (ticketQty[t.name] || 0) * t.price,
+        0
+      )
       : Number(fixedPrice || 0);
 
   const participationFormat =
@@ -348,12 +347,12 @@ const regInfo = getRegistrationStatus(registrationStart, registrationEnd);
   const teamSize = teamMatch
     ? teamMatch[1]
     : participationFormat.includes("Solo")
-    ? "1"
-    : "Varies";
+      ? "1"
+      : "Varies";
 
   const regStart = registrationStart || displayEvent?.registration?.start || "TBD";
   const regEnd = registrationEnd || displayEvent?.registration?.end || "TBD";
-  
+
   const eventRounds =
     rounds.length > 0 ? rounds : EVENT_DETAIL_DATA_MOCK?.rounds || [];
 
@@ -364,77 +363,77 @@ const regInfo = getRegistrationStatus(registrationStart, registrationEnd);
 
 
   useEffect(() => {
-  if (!userEmail) return;
-  
+    if (!userEmail) return;
 
-  const eventId = displayEvent?.id || displayEvent?._id;
 
-  // 1️⃣ Check backend registrations (global truth)
-  if (displayEvent?.registrations) {
-    const found = displayEvent.registrations.some(
-      (r) => r.userEmail === userEmail
+    const eventId = displayEvent?.id || displayEvent?._id;
+
+    // 1️⃣ Check backend registrations (global truth)
+    if (displayEvent?.registrations) {
+      const found = displayEvent.registrations.some(
+        (r) => r.userEmail === userEmail
+      );
+
+      if (found) {
+        setRegistrationStatus("Registered");
+
+
+        // Sync to localStorage
+        try {
+          const raw =
+            localStorage.getItem("confique:user_event_registrations") || "{}";
+          const map = JSON.parse(raw);
+          if (!map[userEmail]) map[userEmail] = [];
+          if (!map[userEmail].includes(eventId)) {
+            map[userEmail].push(eventId);
+          }
+          localStorage.setItem(
+            "confique:user_event_registrations",
+            JSON.stringify(map)
+          );
+        } catch { }
+
+        return;
+      }
+    }
+
+    // 2️⃣ Fallback to localStorage
+    try {
+      const raw =
+        localStorage.getItem("confique:user_event_registrations") || "{}";
+      const map = JSON.parse(raw);
+      if (map[userEmail]?.includes(eventId)) {
+        setRegistrationStatus("Registered");
+        return;
+      }
+    } catch { }
+
+    // 3️⃣ Otherwise use event date
+    setRegistrationStatus(regInfo.status);
+  }, [userEmail, displayEvent?.registrations, displayEvent?.id, regInfo.status]);
+  // 🔄 Restore team info after refresh
+  useEffect(() => {
+    if (!userEmail || !displayEvent?.teams) return;
+
+    const myTeam = displayEvent.teams.find(t =>
+      Array.isArray(t.members) && t.members.includes(userEmail)
     );
 
-    if (found) {
-      setRegistrationStatus("Registered");
-      
+    if (myTeam) {
+      setCreatedTeamCode(myTeam.code);
+      setTeamMembersCount(myTeam.members.length);
 
-      // Sync to localStorage
-      try {
-        const raw =
-          localStorage.getItem("confique:user_event_registrations") || "{}";
-        const map = JSON.parse(raw);
-        if (!map[userEmail]) map[userEmail] = [];
-        if (!map[userEmail].includes(eventId)) {
-          map[userEmail].push(eventId);
-        }
-        localStorage.setItem(
-          "confique:user_event_registrations",
-          JSON.stringify(map)
-        );
-      } catch {}
+      // ✅ FIXED: use leader instead of creator
+      setTeamCreator(myTeam.leader);
 
-      return;
+      setTeamParticipants(
+        myTeam.members.map((email) => ({
+          name: email.split("@")[0],
+          email,
+        }))
+      );
     }
-  }
-
-  // 2️⃣ Fallback to localStorage
-  try {
-    const raw =
-      localStorage.getItem("confique:user_event_registrations") || "{}";
-    const map = JSON.parse(raw);
-    if (map[userEmail]?.includes(eventId)) {
-      setRegistrationStatus("Registered");
-      return;
-    }
-  } catch {}
-
-  // 3️⃣ Otherwise use event date
-  setRegistrationStatus(regInfo.status);
-}, [userEmail, displayEvent?.registrations, displayEvent?.id, regInfo.status]);
-// 🔄 Restore team info after refresh
-useEffect(() => {
-  if (!userEmail || !displayEvent?.teams) return;
-
-  const myTeam = displayEvent.teams.find(t =>
-    Array.isArray(t.members) && t.members.includes(userEmail)
-  );
-
-  if (myTeam) {
-    setCreatedTeamCode(myTeam.code);
-    setTeamMembersCount(myTeam.members.length);
-
-    // ✅ FIXED: use leader instead of creator
-    setTeamCreator(myTeam.leader);
-
-    setTeamParticipants(
-      myTeam.members.map((email) => ({
-        name: email.split("@")[0],
-        email,
-      }))
-    );
-  }
-}, [userEmail, displayEvent?.teams]);
+  }, [userEmail, displayEvent?.teams]);
 
   const REG_KEY = "confique:event_registrations";
 
@@ -453,198 +452,198 @@ useEffect(() => {
   };
 
   const handleFormChange = (fieldName, fieldType, value, checked) => {
-  setFormData((prev) => {
-    // Multi-checkbox
-   if (fieldType === "checkbox") {
-  const fieldConfig = customFields.find(f => f.name === fieldName);
+    setFormData((prev) => {
+      // Multi-checkbox
+      if (fieldType === "checkbox") {
+        const fieldConfig = customFields.find(f => f.name === fieldName);
 
-  // SINGLE SELECT (radio behaviour)
-  if (fieldConfig?.selectionType === "single") {
-    return {
-      ...prev,
-      [fieldName]: value,
-    };
-  }
+        // SINGLE SELECT (radio behaviour)
+        if (fieldConfig?.selectionType === "single") {
+          return {
+            ...prev,
+            [fieldName]: value,
+          };
+        }
 
-  // MULTIPLE SELECT
-  const currentValues = Array.isArray(prev[fieldName])
-    ? prev[fieldName]
-    : [];
+        // MULTIPLE SELECT
+        const currentValues = Array.isArray(prev[fieldName])
+          ? prev[fieldName]
+          : [];
 
-  if (checked) {
-    return {
-      ...prev,
-      [fieldName]: [...currentValues, value],
-    };
-  } else {
-    return {
-      ...prev,
-      [fieldName]: currentValues.filter((v) => v !== value),
-    };
-  }
-}
-    // Normal fields
-    return {
-      ...prev,
-      [fieldName]: value,
-    };
-  });
-};
+        if (checked) {
+          return {
+            ...prev,
+            [fieldName]: [...currentValues, value],
+          };
+        } else {
+          return {
+            ...prev,
+            [fieldName]: currentValues.filter((v) => v !== value),
+          };
+        }
+      }
+      // Normal fields
+      return {
+        ...prev,
+        [fieldName]: value,
+      };
+    });
+  };
 
   const validateForm = () => {
-  const errors = {};
+    const errors = {};
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const phoneRegex = /^\d{10}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10}$/;
 
-  customFields
-    .filter(f => f.name !== "Payment Ref (Last 4 digits)")
-    .forEach((field) => {
-      if (!field.required) return;
+    customFields
+      .filter(f => f.name !== "Payment Ref (Last 4 digits)")
+      .forEach((field) => {
+        if (!field.required) return;
 
-      const value = formData[field.name];
+        const value = formData[field.name];
 
-      // Empty check
-     if (field.type === "checkbox") {
-  if (field.selectionType === "single") {
-    if (!value) {
-      errors[field.name] = "Please select an option.";
-    }
-  } else {
-    if (!Array.isArray(value) || value.length === 0) {
-      errors[field.name] = "Please select at least one option.";
-    }
-  }
-}
+        // Empty check
+        if (field.type === "checkbox") {
+          if (field.selectionType === "single") {
+            if (!value) {
+              errors[field.name] = "Please select an option.";
+            }
+          } else {
+            if (!Array.isArray(value) || value.length === 0) {
+              errors[field.name] = "Please select at least one option.";
+            }
+          }
+        }
 
-      // 📧 Email validation
-      if (field.type === "email" && !emailRegex.test(value)) {
-        errors[field.name] = "Please enter a valid email address.";
-      }
+        // 📧 Email validation
+        if (field.type === "email" && !emailRegex.test(value)) {
+          errors[field.name] = "Please enter a valid email address.";
+        }
 
-      // 📱 Phone / Number validation (10 digits)
-      if (
-        (field.type === "number" || field.type === "tel") &&
-        !phoneRegex.test(value.toString())
-      ) {
-        errors[field.name] = "Please enter a valid 10-digit number.";
-      }
+        // 📱 Phone / Number validation (10 digits)
+        if (
+          (field.type === "number" || field.type === "tel") &&
+          !phoneRegex.test(value.toString())
+        ) {
+          errors[field.name] = "Please enter a valid 10-digit number.";
+        }
 
-      // Checkbox
-      
-    });
+        // Checkbox
+
+      });
     if (!isFree && paymentMethod === "qr" && showBilling) {
-  if (!formData.paymentScreenshot) {
-    errors.paymentScreenshot = "Please upload payment screenshot.";
-  }
-}
+      if (!formData.paymentScreenshot) {
+        errors.paymentScreenshot = "Please upload payment screenshot.";
+      }
+    }
 
-  setFormErrors(errors);
-  console.log("FORM ERRORS:", errors);
-  return Object.keys(errors).length === 0;
-};
+    setFormErrors(errors);
+    console.log("FORM ERRORS:", errors);
+    return Object.keys(errors).length === 0;
+  };
   const handleRegistrationSubmit = async (e) => {
-   if (e && e.preventDefault) e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
 
-if (isSubmitting) return;
-setIsSubmitting(true);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-if (!validateForm()) {
-  setIsSubmitting(false);
-  return;
-}
-// ✅ Flexible pricing validation (FINAL STEP)
-if (pricingMode === "flexible" && totalAmount === 0) {
-  alert("Please select at least one ticket before completing registration.");
-  setIsSubmitting(false);
-  return;
-}
-// TEAM VALIDATION (FINAL AUTHORITY)
-if (teamConfig?.enabled) {
-  if (teamMode === "create" && !teamName.trim()) {
-    alert("Please enter a team name");
-    setIsSubmitting(false);
-    return;
-  }
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
+    }
+    // ✅ Flexible pricing validation (FINAL STEP)
+    if (pricingMode === "flexible" && totalAmount === 0) {
+      alert("Please select at least one ticket before completing registration.");
+      setIsSubmitting(false);
+      return;
+    }
+    // TEAM VALIDATION (FINAL AUTHORITY)
+    if (teamConfig?.enabled) {
+      if (teamMode === "create" && !teamName.trim()) {
+        alert("Please enter a team name");
+        setIsSubmitting(false);
+        return;
+      }
 
-  if (teamMode === "join" && !teamCode.trim()) {
-    alert("Please enter a valid team code");
-    setIsSubmitting(false);
-    return;
-  }
-}
-   if (
-  !isFree &&
-  paymentMethod === "qr" &&
-  (formData["Payment Ref (Last 4 digits)"] || "").length !== 4
-){
-  alert("Please enter the last 4 digits of your payment reference");
-  setIsSubmitting(false);
-  return;
-}
+      if (teamMode === "join" && !teamCode.trim()) {
+        alert("Please enter a valid team code");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+    if (
+      !isFree &&
+      paymentMethod === "qr" &&
+      (formData["Payment Ref (Last 4 digits)"] || "").length !== 4
+    ) {
+      alert("Please enter the last 4 digits of your payment reference");
+      setIsSubmitting(false);
+      return;
+    }
 
-   if (!userEmail) {
-  alert("Please login again");
-  setIsSubmitting(false);
-  return;
-}
+    if (!userEmail) {
+      alert("Please login again");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const payload = new FormData();
 
-payload.append("userEmail", userEmail);
-payload.append("teamMode", teamConfig?.enabled ? teamMode : "");
-payload.append("teamName", teamConfig?.enabled ? teamName : "");
-payload.append("teamCode", teamConfig?.enabled ? teamCode : "");
-payload.append("paidRef", formData["Payment Ref (Last 4 digits)"] || "");
-payload.append("paidAmount", totalAmount);
-payload.append("paymentMethod", paymentMethod);
-if (pricingMode === "flexible") {
-  const selectedTickets = ticketTypes
-    .filter((t) => (ticketQty[t.name] || 0) > 0)
-    .map((t) => ({
-      type: t.name,
-      price: t.price,
-      quantity: ticketQty[t.name],
-      subtotal: t.price * ticketQty[t.name],
-    }));
+      payload.append("userEmail", userEmail);
+      payload.append("teamMode", teamConfig?.enabled ? teamMode : "");
+      payload.append("teamName", teamConfig?.enabled ? teamName : "");
+      payload.append("teamCode", teamConfig?.enabled ? teamCode : "");
+      payload.append("paidRef", formData["Payment Ref (Last 4 digits)"] || "");
+      payload.append("paidAmount", totalAmount);
+      payload.append("paymentMethod", paymentMethod);
+      if (pricingMode === "flexible") {
+        const selectedTickets = ticketTypes
+          .filter((t) => (ticketQty[t.name] || 0) > 0)
+          .map((t) => ({
+            type: t.name,
+            price: t.price,
+            quantity: ticketQty[t.name],
+            subtotal: t.price * ticketQty[t.name],
+          }));
 
-  payload.append("ticketSelection", JSON.stringify(selectedTickets));
-}
+        payload.append("ticketSelection", JSON.stringify(selectedTickets));
+      }
 
-// Append normal fields
-Object.entries(formData).forEach(([key, value]) => {
-  if (value instanceof File) {
-    payload.append(key, value); // screenshot
-  } else {
-    payload.append(key, JSON.stringify(value));
-  }
-});
+      // Append normal fields
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value instanceof File) {
+          payload.append(key, value); // screenshot
+        } else {
+          payload.append(key, JSON.stringify(value));
+        }
+      });
 
-const res = await fetch(
-  `/api/events/${displayEvent.id || displayEvent._id}/register`,
-  {
-    method: "POST",
-    body: payload, // ❗ NO headers
-  }
-);
+      const res = await fetch(
+        `/api/events/${displayEvent.id || displayEvent._id}/register`,
+        {
+          method: "POST",
+          body: payload, // ❗ NO headers
+        }
+      );
 
       const result = await res.json();
-     if (result.teamCode) {
-  setCreatedTeamCode(result.teamCode);
-  setTeamMembersCount(result.membersCount || 1);
-}
+      if (result.teamCode) {
+        setCreatedTeamCode(result.teamCode);
+        setTeamMembersCount(result.membersCount || 1);
+      }
       if (!res.ok) throw new Error(result.error || "Registration failed");
 
       setRegistrationStatus("Registered");
 
-// ❗ DO NOT close modal if team just created
-if (!(teamMode === "create" && result.teamCode)) {
-  setShowRegistrationForm(false);
-}
-setTimeout(() => {
-  setShowSuccessPopup(true);
-}, 300);
+      // ❗ DO NOT close modal if team just created
+      if (!(teamMode === "create" && result.teamCode)) {
+        setShowRegistrationForm(false);
+      }
+      setTimeout(() => {
+        setShowSuccessPopup(true);
+      }, 300);
 
       try {
         const eventKey = displayEvent?.id ?? displayEvent?.title ?? Date.now();
@@ -664,13 +663,13 @@ setTimeout(() => {
       }
 
       sendRegistrationNotification(title);
-      
-   } catch (err) {
-  console.error("Registration Error:", err);
-  alert(err.message);
-} finally {
-  setIsSubmitting(false);
-}
+
+    } catch (err) {
+      console.error("Registration Error:", err);
+      alert(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCloseForm = () => {
@@ -693,111 +692,111 @@ setTimeout(() => {
     setShowRegistrationForm(true);
   };
 
- const handleRemoveParticipant = async (emailToRemove) => {
-  if (!createdTeamCode) return;
+  const handleRemoveParticipant = async (emailToRemove) => {
+    if (!createdTeamCode) return;
 
-  try {
-    const res = await fetch(
-      `/api/events/${displayEvent.id || displayEvent._id}/remove-member`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          teamCode: createdTeamCode,
-          email: emailToRemove,
-          requester: userEmail,
-        }),
+    try {
+      const res = await fetch(
+        `/api/events/${displayEvent.id || displayEvent._id}/remove-member`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            teamCode: createdTeamCode,
+            email: emailToRemove,
+            requester: userEmail,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // 🗑 CASE 1: Team deleted (last member left)
+      if (data.teamDeleted) {
+        setCreatedTeamCode(null);
+        setTeamParticipants([]);
+        setTeamMembersCount(0);
+        setTeamCreator(null);
+        return;
       }
-    );
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
+      // Remove member from UI
+      setTeamParticipants(prev =>
+        prev.filter(p => p.email !== emailToRemove)
+      );
 
-    // 🗑 CASE 1: Team deleted (last member left)
-    if (data.teamDeleted) {
-      setCreatedTeamCode(null);
-      setTeamParticipants([]);
-      setTeamMembersCount(0);
-      setTeamCreator(null);
-      return;
+      setTeamMembersCount(prev => prev - 1);
+
+      // 🔄 CASE 2: Leadership transferred
+      if (data.newCreator) {
+        setTeamCreator(data.newCreator);
+      }
+
+    } catch (err) {
+      alert(err.message);
     }
-
-    // Remove member from UI
-    setTeamParticipants(prev =>
-      prev.filter(p => p.email !== emailToRemove)
-    );
-
-    setTeamMembersCount(prev => prev - 1);
-
-    // 🔄 CASE 2: Leadership transferred
-    if (data.newCreator) {
-      setTeamCreator(data.newCreator);
-    }
-
-  } catch (err) {
-    alert(err.message);
-  }
-};
-
- const getButtonProps = () => {
-  if (registrationStatus === "Registered") {
-    return {
-      text: "Registered",
-      className:
-        "w-full py-3 bg-green-600 text-text-1 font-bold rounded-lg shadow-lg flex items-center justify-center",
-      disabled: true,
-      Icon: CheckCircle,
-    };
-  }
-
- if (regInfo.status === "notStarted") {
-  let label;
-
-  if (regInfo.minutesLeft) {
-    label = `Opens in ${regInfo.minutesLeft} minute${regInfo.minutesLeft > 1 ? "s" : ""}`;
-  } else if (regInfo.hoursLeft) {
-    label = `Opens in ${regInfo.hoursLeft} hour${regInfo.hoursLeft > 1 ? "s" : ""}`;
-  } else {
-    label = `Opens in ${regInfo.daysLeft} day${regInfo.daysLeft > 1 ? "s" : ""}`;
-  }
-
-  return {
-    text: label,
-    className:
-      "w-full py-3 bg-gray-700 text-text-2 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
-    disabled: true,
-    Icon: Clock,
   };
-}
 
-  if (regInfo.status === "closed") {
-    return {
-      text: "Registration Closed",
-      className:
-        "w-full py-3 bg-gray-700 text-text-3 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
-      disabled: true,
-      Icon: Clock,
-    };
-  }
+  const getButtonProps = () => {
+    if (registrationStatus === "Registered") {
+      return {
+        text: "Registered",
+        className:
+          "w-full py-3 bg-green-600 text-text-1 font-bold rounded-lg shadow-lg flex items-center justify-center",
+        disabled: true,
+        Icon: CheckCircle,
+      };
+    }
 
-  if (isExternalRegistration) {
+    if (regInfo.status === "notStarted") {
+      let label;
+
+      if (regInfo.minutesLeft) {
+        label = `Opens in ${regInfo.minutesLeft} minute${regInfo.minutesLeft > 1 ? "s" : ""}`;
+      } else if (regInfo.hoursLeft) {
+        label = `Opens in ${regInfo.hoursLeft} hour${regInfo.hoursLeft > 1 ? "s" : ""}`;
+      } else {
+        label = `Opens in ${regInfo.daysLeft} day${regInfo.daysLeft > 1 ? "s" : ""}`;
+      }
+
+      return {
+        text: label,
+        className:
+          "w-full py-3 bg-gray-700 text-text-2 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
+        disabled: true,
+        Icon: Clock,
+      };
+    }
+
+    if (regInfo.status === "closed") {
+      return {
+        text: "Registration Closed",
+        className:
+          "w-full py-3 bg-gray-700 text-text-3 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
+        disabled: true,
+        Icon: Clock,
+      };
+    }
+
+    if (isExternalRegistration) {
+      return {
+        text: "Go to External Registration",
+        className:
+          "w-full py-3 bg-purple-600 text-text-1 font-bold rounded-lg hover:bg-purple-700 flex items-center justify-center",
+        disabled: false,
+        Icon: ExternalLink,
+      };
+    }
+
     return {
-      text: "Go to External Registration",
+      text: "Register Now",
       className:
         "w-full py-3 bg-purple-600 text-text-1 font-bold rounded-lg hover:bg-purple-700 flex items-center justify-center",
       disabled: false,
-      Icon: ExternalLink,
+      Icon: ClipboardList,
     };
-  }
-
-  return {
-    text: "Register Now",
-    className:
-      "w-full py-3 bg-purple-600 text-text-1 font-bold rounded-lg hover:bg-purple-700 flex items-center justify-center",
-    disabled: false,
-    Icon: ClipboardList,
   };
-};
 
   const buttonProps = getButtonProps();
 
@@ -839,178 +838,174 @@ setTimeout(() => {
             className="space-y-4 max-h-[70vh] overflow-y-auto pr-1 scrollbar-hide"
           >
             {/* TEAM SECTION */}
-{teamConfig?.enabled && !showBilling && (
-  <div className="space-y-4 p-4 bg-bg-3 rounded-xl border border-purple-600">
+            {teamConfig?.enabled && !showBilling && (
+              <div className="space-y-4 p-4 bg-bg-3 rounded-xl border border-purple-600">
 
-    <p className="text-purple-400 font-semibold text-sm">
-      Team Registration (Max {teamConfig.maxMembers} Members)
-    </p>
+                <p className="text-purple-400 font-semibold text-sm">
+                  Team Registration (Max {teamConfig.maxMembers} Members)
+                </p>
 
-    <div className="flex gap-3">
-      <button
-        type="button"
-        onClick={() => setTeamMode("create")}
-        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
-          teamMode === "create"
-            ? "bg-purple-600 text-text-1"
-            : "bg-gray-700 text-text-2"
-        }`}
-      >
-        Create Team
-      </button>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTeamMode("create")}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${teamMode === "create"
+                        ? "bg-purple-600 text-text-1"
+                        : "bg-gray-700 text-text-2"
+                      }`}
+                  >
+                    Create Team
+                  </button>
 
-      <button
-        type="button"
-        onClick={() => setTeamMode("join")}
-        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
-          teamMode === "join"
-            ? "bg-purple-600 text-text-1"
-            : "bg-gray-700 text-text-2"
-        }`}
-      >
-        Join Team
-      </button>
-    </div>
+                  <button
+                    type="button"
+                    onClick={() => setTeamMode("join")}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${teamMode === "join"
+                        ? "bg-purple-600 text-text-1"
+                        : "bg-gray-700 text-text-2"
+                      }`}
+                  >
+                    Join Team
+                  </button>
+                </div>
 
-    {teamMode === "create" && (
-      <input
-        type="text"
-        placeholder="Enter Team Name"
-        value={teamName}
-        onChange={(e) => setTeamName(e.target.value)}
-        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-text-1"
-      />
-    )}
-{createdTeamCode && (
-  <div className="bg-green-900/40 border border-green-500 rounded-lg p-3 text-sm text-green-300 mt-3">
+                {teamMode === "create" && (
+                  <input
+                    type="text"
+                    placeholder="Enter Team Name"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-text-1"
+                  />
+                )}
+                {createdTeamCode && (
+                  <div className="bg-green-900/40 border border-green-500 rounded-lg p-3 text-sm text-green-300 mt-3">
 
-    <p className="font-semibold text-center">
-      ✅ Team Created Successfully
-    </p>
+                    <p className="font-semibold text-center">
+                      ✅ Team Created Successfully
+                    </p>
 
-    <div
-      className="mt-2 font-bold text-text-1 text-center tracking-widest text-lg cursor-pointer"
-      onClick={() => navigator.clipboard.writeText(createdTeamCode)}
-    >
-      {createdTeamCode}
-    </div>
+                    <div
+                      className="mt-2 font-bold text-text-1 text-center tracking-widest text-lg cursor-pointer"
+                      onClick={() => navigator.clipboard.writeText(createdTeamCode)}
+                    >
+                      {createdTeamCode}
+                    </div>
 
-    <p className="text-xs text-text-3 mt-1 text-center">
-      Tap to copy & share with teammates
-    </p>
+                    <p className="text-xs text-text-3 mt-1 text-center">
+                      Tap to copy & share with teammates
+                    </p>
 
-  </div>
-)}
+                  </div>
+                )}
 
-    {teamMode === "join" && (
-      <input
-        type="text"
-        placeholder="Enter Team Code"
-        value={teamCode}
-        onChange={(e) => setTeamCode(e.target.value)}
-        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-text-1"
-      />
-    )}
-  </div>
-)}
+                {teamMode === "join" && (
+                  <input
+                    type="text"
+                    placeholder="Enter Team Code"
+                    value={teamCode}
+                    onChange={(e) => setTeamCode(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-text-1"
+                  />
+                )}
+              </div>
+            )}
             {/* Step 1: Show Form Fields */}
-           {!showBilling && customFields
-  .filter(f =>
-    f.name !== "Payment Ref (Last 4 digits)" &&
-    f.type !== "file"
-  )
-  .map((field, index) => {
-    const value =
-      formData[field.name] ??
-      (field.type === "checkbox" ? false : "");
-    const error = formErrors[field.name];
+            {!showBilling && customFields
+              .filter(f =>
+                f.name !== "Payment Ref (Last 4 digits)" &&
+                f.type !== "file"
+              )
+              .map((field, index) => {
+                const value =
+                  formData[field.name] ??
+                  (field.type === "checkbox" ? false : "");
+                const error = formErrors[field.name];
 
                 return (
                   <div key={index} className="space-y-1">
                     {field.type === "checkbox" && Array.isArray(field.options) && field.options.length > 0 ? (
-  <div className="space-y-2">
-    <label className="text-xs font-medium text-text-2 block mb-1">
-      {field.name} {field.required && <span className="text-red-500">*</span>}
-    </label>
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-text-2 block mb-1">
+                          {field.name} {field.required && <span className="text-red-500">*</span>}
+                        </label>
 
-    {field.options.map((option, optIndex) => {
-      const selectedValues = formData[field.name] || [];
+                        {field.options.map((option, optIndex) => {
+                          const selectedValues = formData[field.name] || [];
 
-      return (
-        <div key={optIndex} className="flex items-center space-x-2">
-          <input
-  type={
-    field.selectionType === "single"
-      ? "radio"
-      : "checkbox"
-  }
-  name={field.name}
-            id={`${field.name}-${optIndex}`}
-            value={option}
-            checked={
-  field.selectionType === "single"
-    ? formData[field.name] === option
-    : (formData[field.name] || []).includes(option)
-}
-            onChange={(e) =>
-              handleFormChange(
-                field.name,
-                "checkbox",
-                option,
-                e.target.checked
-              )
-            }
-            className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
-          />
-          <label
-            htmlFor={`${field.name}-${optIndex}`}
-            className="text-sm text-gray-200"
-          >
-            {option}
-          </label>
-        </div>
-      );
-    })}
-  </div>
-) : (
+                          return (
+                            <div key={optIndex} className="flex items-center space-x-2">
+                              <input
+                                type={
+                                  field.selectionType === "single"
+                                    ? "radio"
+                                    : "checkbox"
+                                }
+                                name={field.name}
+                                id={`${field.name}-${optIndex}`}
+                                value={option}
+                                checked={
+                                  field.selectionType === "single"
+                                    ? formData[field.name] === option
+                                    : (formData[field.name] || []).includes(option)
+                                }
+                                onChange={(e) =>
+                                  handleFormChange(
+                                    field.name,
+                                    "checkbox",
+                                    option,
+                                    e.target.checked
+                                  )
+                                }
+                                className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                              />
+                              <label
+                                htmlFor={`${field.name}-${optIndex}`}
+                                className="text-sm text-gray-200"
+                              >
+                                {option}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
                       <>
                         <label className="text-xs font-medium text-text-2 block mb-1">
                           {field.name} {field.required && <span className="text-red-500">*</span>}
                         </label>
                         {field.type === "file" ? (
-  <input
-    type="file"
-    accept="image/*"
-    onChange={(e) =>
-      handleFormChange(
-        field.name,
-        "file",
-        e.target.files[0],
-        false
-      )
-    }
-    className={`w-full px-3 py-2 rounded-lg bg-bg-3 border text-sm text-text-1 ${
-      error ? "border-red-500" : "border-gray-700"
-    }`}
-  />
-) : (
-  <input
-    type={field.type || "text"}
-    value={value}
-    onChange={(e) =>
-      handleFormChange(
-        field.name,
-        field.type,
-        e.target.value,
-        false
-      )
-    }
-    className={`w-full px-3 py-2 rounded-lg bg-bg-3 border text-sm text-text-1 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-      error ? "border-red-500" : "border-gray-700"
-    }`}
-    placeholder={field.name}
-  />
-)}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) =>
+                              handleFormChange(
+                                field.name,
+                                "file",
+                                e.target.files[0],
+                                false
+                              )
+                            }
+                            className={`w-full px-3 py-2 rounded-lg bg-bg-3 border text-sm text-text-1 ${error ? "border-red-500" : "border-gray-700"
+                              }`}
+                          />
+                        ) : (
+                          <input
+                            type={field.type || "text"}
+                            value={value}
+                            onChange={(e) =>
+                              handleFormChange(
+                                field.name,
+                                field.type,
+                                e.target.value,
+                                false
+                              )
+                            }
+                            className={`w-full px-3 py-2 rounded-lg bg-bg-3 border text-sm text-text-1 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${error ? "border-red-500" : "border-gray-700"
+                              }`}
+                            placeholder={field.name}
+                          />
+                        )}
                       </>
                     )}
                     {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
@@ -1019,11 +1014,11 @@ setTimeout(() => {
               })}
 
             {/* Step 2: Show Billing Details & Transaction ID Input */}
-           
+
             {showBilling && !isFree && (
               <div className="mt-6 p-4 rounded-xl bg-bg-3 border border-purple-600 space-y-4">
                 <SectionTitle icon={List} className="text-lg">Bill Details</SectionTitle>
-                
+
                 {pricingMode === "flexible" && ticketTypes.map((t) => (
                   <div key={t.name} className="flex justify-between items-center text-sm">
                     <span className="text-text-1">{t.name} – ₹{t.price}</span>
@@ -1048,210 +1043,207 @@ setTimeout(() => {
                   <span className="text-green-400">₹{totalAmount}</span>
                 </div>
 
-              
+
 
                 {/* Step 3: Show QR Code and Transaction Summary after Ref Number */}
-               {paymentMethod === "qr" && qrCode && (
-  <div className="mt-4 p-4 bg-gray-950 border border-purple-600 rounded-xl space-y-4">
+                {paymentMethod === "qr" && qrCode && (
+                  <div className="mt-4 p-4 bg-gray-950 border border-purple-600 rounded-xl space-y-4">
 
-    {/* QR Code */}
-    <div className="flex items-center space-x-4">
-      <img
-        src={qrCode}
-        alt="QR Code"
-        className="w-28 h-28 rounded-md border border-purple-500 bg-white p-2"
-      />
-      <div className="text-sm text-text-2">
-        <p className="font-bold text-text-1">Scan & Pay</p>
-        <p>Pay <span className="text-green-400 font-semibold">₹{totalAmount}</span></p>
-        <p className="text-xs text-text-3 mt-1">
-          Use any UPI app
-        </p>
-      </div>
-    </div>
+                    {/* QR Code */}
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={qrCode}
+                        alt="QR Code"
+                        className="w-28 h-28 rounded-md border border-purple-500 bg-white p-2"
+                      />
+                      <div className="text-sm text-text-2">
+                        <p className="font-bold text-text-1">Scan & Pay</p>
+                        <p>Pay <span className="text-green-400 font-semibold">₹{totalAmount}</span></p>
+                        <p className="text-xs text-text-3 mt-1">
+                          Use any UPI app
+                        </p>
+                      </div>
+                    </div>
 
-    {/* Transaction Input BELOW QR */}
-    <div className="pt-4 border-t border-gray-700">
-      <label className="text-xs text-text-3">
-        Enter Last 4 digits of Transaction ID
-      </label>
-      <input
-        type="text"
-        maxLength="4"
-        value={formData["Payment Ref (Last 4 digits)"] || ""}
-        onChange={(e) => {
-          const val = e.target.value.replace(/\D/g, "");
-          setFormData((p) => ({
-            ...p,
-            "Payment Ref (Last 4 digits)": val,
-          }));
-        }}
-        className="w-full mt-2 px-3 py-2 rounded-lg bg-gray-900 border border-gray-600 text-text-1 text-sm tracking-widest text-center"
-        placeholder="1234"
-      />
-{/* Screenshot Upload */}
-{/* Screenshot Upload */}
-<div className="mt-4">
-  <label className="text-xs text-text-3">
-    Upload Payment Screenshot <span className="text-red-500">*</span>
-  </label>
+                    {/* Transaction Input BELOW QR */}
+                    <div className="pt-4 border-t border-gray-700">
+                      <label className="text-xs text-text-3">
+                        Enter Last 4 digits of Transaction ID
+                      </label>
+                      <input
+                        type="text"
+                        maxLength="4"
+                        value={formData["Payment Ref (Last 4 digits)"] || ""}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
+                          setFormData((p) => ({
+                            ...p,
+                            "Payment Ref (Last 4 digits)": val,
+                          }));
+                        }}
+                        className="w-full mt-2 px-3 py-2 rounded-lg bg-gray-900 border border-gray-600 text-text-1 text-sm tracking-widest text-center"
+                        placeholder="1234"
+                      />
+                      {/* Screenshot Upload */}
+                      {/* Screenshot Upload */}
+                      <div className="mt-4">
+                        <label className="text-xs text-text-3">
+                          Upload Payment Screenshot <span className="text-red-500">*</span>
+                        </label>
 
-  <input
-    type="file"
-    accept="image/*"
-    onChange={(e) => {
-      const file = e.target.files[0];
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
 
-      setFormData((p) => ({
-        ...p,
-        paymentScreenshot: file,
-      }));
+                            setFormData((p) => ({
+                              ...p,
+                              paymentScreenshot: file,
+                            }));
 
-      // 🔥 clear error instantly when file selected
-      if (file) {
-        setFormErrors((prev) => ({
-          ...prev,
-          paymentScreenshot: undefined,
-        }));
-      }
-    }}
-    className={`w-full mt-2 px-3 py-2 rounded-lg bg-gray-900 border text-text-1 text-sm ${
-      formErrors.paymentScreenshot
-        ? "border-red-500"
-        : "border-gray-600"
-    }`}
-  />
+                            // 🔥 clear error instantly when file selected
+                            if (file) {
+                              setFormErrors((prev) => ({
+                                ...prev,
+                                paymentScreenshot: undefined,
+                              }));
+                            }
+                          }}
+                          className={`w-full mt-2 px-3 py-2 rounded-lg bg-gray-900 border text-text-1 text-sm ${formErrors.paymentScreenshot
+                              ? "border-red-500"
+                              : "border-gray-600"
+                            }`}
+                        />
 
-  {formErrors.paymentScreenshot && (
-    <p className="text-xs text-red-400 mt-1">
-      {formErrors.paymentScreenshot}
-    </p>
-  )}
-</div>
-      {showBillAfterRef && (
-        <p className="mt-2 text-xs text-green-400">
-          ✔ Transaction captured: {formData["Payment Ref (Last 4 digits)"]}
-        </p>
-      )}
-    </div>
+                        {formErrors.paymentScreenshot && (
+                          <p className="text-xs text-red-400 mt-1">
+                            {formErrors.paymentScreenshot}
+                          </p>
+                        )}
+                      </div>
+                      {showBillAfterRef && (
+                        <p className="mt-2 text-xs text-green-400">
+                          ✔ Transaction captured: {formData["Payment Ref (Last 4 digits)"]}
+                        </p>
+                      )}
+                    </div>
 
-  </div>
-)}
+                  </div>
+                )}
 
               </div>
             )}
 
             <div className="flex items-center justify-end space-x-3 pt-2">
               {!showBilling ? (
- <button
-  type="button"
-  disabled={isSubmitting}
-  onClick={async () => {
-  if (isSubmitting) return;
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={async () => {
+                    if (isSubmitting) return;
 
- if (!validateForm()) {
-  console.log("FORM INVALID");
-  setIsSubmitting(false);
-  return;
-}
+                    if (!validateForm()) {
+                      console.log("FORM INVALID");
+                      setIsSubmitting(false);
+                      return;
+                    }
 
-  // FREE EVENT
-  if (isFree || pricingMode === "free") {
-    handleRegistrationSubmit();
-    return;
-  }
+                    // FREE EVENT
+                    if (isFree || pricingMode === "free") {
+                      handleRegistrationSubmit();
+                      return;
+                    }
 
-  // GATEWAY PAYMENT
-if (paymentMethod === "gateway") {
-  setIsSubmitting(true);
+                    // GATEWAY PAYMENT
+                    if (paymentMethod === "gateway") {
+                      setIsSubmitting(true);
 
-  const res = await fetch("/api/create-order", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      eventId: displayEvent.id || displayEvent._id,
-      amount: totalAmount,
-      email: userEmail,
-    }),
-  });
+                      const res = await fetch("/api/create-order", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          eventId: displayEvent.id || displayEvent._id,
+                          amount: totalAmount,
+                          email: userEmail,
+                        }),
+                      });
 
-  const data = await res.json();
+                      const data = await res.json();
 
-  // 🔴 Safety check
-  if (!data.payment_session_id) {
-    alert("Failed to create payment session");
-    console.error("Create order failed:", data);
-    setIsSubmitting(false);
-    return;
-  }
+                      // 🔴 Safety check
+                      if (!data.payment_session_id) {
+                        alert("Failed to create payment session");
+                        console.error("Create order failed:", data);
+                        setIsSubmitting(false);
+                        return;
+                      }
 
-  // ✅ Open Cashfree checkout
- // ✅ Open Cashfree checkout
-const cashfree = new window.Cashfree({ mode: "production" });
+                      // ✅ Open Cashfree checkout
+                      // ✅ Open Cashfree checkout
+                      const cashfree = new window.Cashfree({ mode: "production" });
 
-cashfree.checkout({
-  paymentSessionId: data.payment_session_id,
-});
+                      cashfree.checkout({
+                        paymentSessionId: data.payment_session_id,
+                      });
 
-return;
-}
-  // QR PAYMENT
-  setShowBilling(true);
-}}
-  className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
-    isSubmitting
-      ? "bg-gray-700 cursor-not-allowed"
-      : "bg-purple-600 hover:bg-purple-700 text-text-1"
-  }`}
->
-  {isSubmitting
-    ? "Submitting..."
-    : (isFree || pricingMode === "free")
-    ? "Submit"
-    : "Continue"}
-</button>
-) : (
+                      return;
+                    }
+                    // QR PAYMENT
+                    setShowBilling(true);
+                  }}
+                  className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${isSubmitting
+                      ? "bg-gray-700 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700 text-text-1"
+                    }`}
+                >
+                  {isSubmitting
+                    ? "Submitting..."
+                    : (isFree || pricingMode === "free")
+                      ? "Submit"
+                      : "Continue"}
+                </button>
+              ) : (
 
                 <button
-  type="submit"
-  disabled={
-  isSubmitting ||
-  !!createdTeamCode ||
+                  type="submit"
+                  disabled={
+                    isSubmitting ||
+                    !!createdTeamCode ||
 
-  // ✅ NEW: No ticket selected
-  (pricingMode === "flexible" && totalAmount === 0) ||
+                    // ✅ NEW: No ticket selected
+                    (pricingMode === "flexible" && totalAmount === 0) ||
 
-  (
-    paymentMethod === "qr" &&
-    !isFree &&
-    (
-      (formData["Payment Ref (Last 4 digits)"] || "").length !== 4 ||
-      !formData.paymentScreenshot
-    )
-  )
-}
-  className={`px-6 py-2 rounded-lg text-sm font-semibold text-text-1 flex items-center transition-all ${
-  isSubmitting ||
-  (pricingMode === "flexible" && totalAmount === 0) ||
-  (
-    paymentMethod === "qr" &&
-    !isFree &&
-    (
-      (formData["Payment Ref (Last 4 digits)"] || "").length !== 4 ||
-      !formData.paymentScreenshot
-    )
-  )
-    ? "bg-gray-700 cursor-not-allowed"
-    : "bg-green-600 hover:bg-green-700"
-}`}
->
-  <CheckCircle className="w-4 h-4 mr-2" />
-  {isSubmitting
-    ? "Submitting..."
-    : createdTeamCode
-    ? "Registered"
-    : "Complete Registration"}
-</button>
+                    (
+                      paymentMethod === "qr" &&
+                      !isFree &&
+                      (
+                        (formData["Payment Ref (Last 4 digits)"] || "").length !== 4 ||
+                        !formData.paymentScreenshot
+                      )
+                    )
+                  }
+                  className={`px-6 py-2 rounded-lg text-sm font-semibold text-text-1 flex items-center transition-all ${isSubmitting ||
+                      (pricingMode === "flexible" && totalAmount === 0) ||
+                      (
+                        paymentMethod === "qr" &&
+                        !isFree &&
+                        (
+                          (formData["Payment Ref (Last 4 digits)"] || "").length !== 4 ||
+                          !formData.paymentScreenshot
+                        )
+                      )
+                      ? "bg-gray-700 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700"
+                    }`}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  {isSubmitting
+                    ? "Submitting..."
+                    : createdTeamCode
+                      ? "Registered"
+                      : "Complete Registration"}
+                </button>
               )}
             </div>
           </form>
@@ -1279,9 +1271,8 @@ return;
               <div key={index} className="flex space-x-6">
                 <div className="flex flex-col items-center">
                   <div
-                    className={`w-10 h-10 flex items-center justify-center rounded-full text-text-1 font-bold ${
-                      index === 0 ? "bg-purple-600" : "bg-gray-700"
-                    }`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full text-text-1 font-bold ${index === 0 ? "bg-purple-600" : "bg-gray-700"
+                      }`}
                   >
                     {index + 1}
                   </div>
@@ -1310,9 +1301,9 @@ return;
         return (
           <div className="space-y-8">
             <SectionTitle icon={ClipboardList}>{title} Overview</SectionTitle>
-           <p className="text-text-2 text-lg leading-relaxed whitespace-pre-wrap">
-  {description || "No detailed description provided."}
-</p>
+            <p className="text-text-2 text-lg leading-relaxed whitespace-pre-wrap">
+              {description || "No detailed description provided."}
+            </p>
             <p className="text-text-2 text-lg leading-relaxed">
               The event is scheduled for{" "}
               <span className="font-semibold text-purple-300">
@@ -1362,45 +1353,45 @@ return;
       </div>
 
       <div className="relative h-[280px] overflow-hidden">
-  <img
-    src={banner || poster}
-    alt={title}
-    className="w-full h-full object-cover object-center opacity-70"
-    loading="lazy"
-  />
+        <img
+          src={banner || poster}
+          alt={title}
+          className="w-full h-full object-cover object-center opacity-70"
+          loading="lazy"
+        />
 
-  <div className="absolute inset-0 bg-black/70 flex items-center">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-center justify-between">
+        <div className="absolute inset-0 bg-black/70 flex items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-center justify-between">
 
-      {/* LEFT TEXT */}
-      <div>
-        <p className="text-purple-400 font-semibold text-sm uppercase mb-2">
-          {category} by {hostedBy || "Host"}
-        </p>
+            {/* LEFT TEXT */}
+            <div>
+              <p className="text-purple-400 font-semibold text-sm uppercase mb-2">
+                {category} by {hostedBy || "Host"}
+              </p>
 
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-text-1 tracking-tight">
-          {title}
-        </h1>
+              <h1 className="text-4xl sm:text-5xl font-extrabold text-text-1 tracking-tight">
+                {title}
+              </h1>
 
-        <p className="text-xl text-text-2 mt-2">
-          {tagline || title}
-        </p>
-      </div>
+              <p className="text-xl text-text-2 mt-2">
+                {tagline || title}
+              </p>
+            </div>
 
-      {/* RIGHT POSTER */}
-      {poster && (
-<div className="hidden lg:block w-32 h-32 rounded-xl overflow-hidden border border-gray-700 shadow-xl bg-gray-900 ml-10">
-          <img
-            src={poster}
-            alt={title}
-            className="w-full h-full object-cover"
-          />
+            {/* RIGHT POSTER */}
+            {poster && (
+              <div className="hidden lg:block w-32 h-32 rounded-xl overflow-hidden border border-gray-700 shadow-xl bg-gray-900 ml-10">
+                <img
+                  src={poster}
+                  alt={title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+          </div>
         </div>
-      )}
-
-    </div>
-  </div>
-</div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="lg:grid lg:grid-cols-12 lg:gap-10">
@@ -1440,66 +1431,66 @@ return;
                       {isFree
                         ? "Free"
                         : pricingMode === "fixed"
-                        ? `${CURRENCY_SYMBOL}${fixedPrice}`
-                        : "Multiple ticket types"}
+                          ? `${CURRENCY_SYMBOL}${fixedPrice}`
+                          : "Multiple ticket types"}
                     </span>
                   </p>
                   <p className="flex justify-between">Format: <span className="text-blue-400">{participationFormat}</span></p>
                   {createdTeamCode && (
-  <div className="mt-3 p-4 rounded-lg bg-green-900/40 border border-green-500 space-y-3">
+                    <div className="mt-3 p-4 rounded-lg bg-green-900/40 border border-green-500 space-y-3">
 
-    <p className="text-green-300 text-center font-semibold">
-      Team Code
-    </p>
+                      <p className="text-green-300 text-center font-semibold">
+                        Team Code
+                      </p>
 
-    <p className="text-text-1 text-lg font-bold text-center tracking-widest">
-      {createdTeamCode}
-    </p>
+                      <p className="text-text-1 text-lg font-bold text-center tracking-widest">
+                        {createdTeamCode}
+                      </p>
 
-    <p className="text-text-2 text-center">
-      Members: {teamMembersCount} / {teamConfig?.maxMembers}
-    </p>
+                      <p className="text-text-2 text-center">
+                        Members: {teamMembersCount} / {teamConfig?.maxMembers}
+                      </p>
 
-    {/* PARTICIPANTS LIST */}
-    <div className="mt-3 space-y-2">
-      {teamParticipants.map((member, idx) => (
-        <div
-          key={idx}
-          className="flex justify-between items-center bg-bg-3 px-3 py-2 rounded-md"
-        >
-          <div>
-            <p className="text-sm text-text-1 font-medium">
-              {member.name}
-            </p>
-            <p className="text-xs text-text-3">
-              {member.email}
-            </p>
-          </div>
+                      {/* PARTICIPANTS LIST */}
+                      <div className="mt-3 space-y-2">
+                        {teamParticipants.map((member, idx) => (
+                          <div
+                            key={idx}
+                            className="flex justify-between items-center bg-bg-3 px-3 py-2 rounded-md"
+                          >
+                            <div>
+                              <p className="text-sm text-text-1 font-medium">
+                                {member.name}
+                              </p>
+                              <p className="text-xs text-text-3">
+                                {member.email}
+                              </p>
+                            </div>
 
-         {/* Removal Rules:
+                            {/* Removal Rules:
     - Creator → can remove anyone except himself
     - Member → can remove only himself
 */}
-{(
-  // Leader can remove anyone (including himself)
-  userEmail === teamCreator ||
+                            {(
+                              // Leader can remove anyone (including himself)
+                              userEmail === teamCreator ||
 
-  // Non-leader can remove only himself
-  member.email === userEmail
-) && (
-            <button
-              onClick={() => handleRemoveParticipant(member.email)}
-              className="text-red-400 hover:text-red-500 text-xs font-semibold"
-            >
-              Remove
-            </button>
-          )}
-        </div>
-      ))}
-    </div>
+                              // Non-leader can remove only himself
+                              member.email === userEmail
+                            ) && (
+                                <button
+                                  onClick={() => handleRemoveParticipant(member.email)}
+                                  className="text-red-400 hover:text-red-500 text-xs font-semibold"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                          </div>
+                        ))}
+                      </div>
 
-  </div>
-)}
+                    </div>
+                  )}
 
                 </div>
 
@@ -1523,7 +1514,7 @@ return;
                     {prizes.split("\n").map((line, i) =>
                       line.trim() ? (
                         <p key={i} className="text-text-2 text-sm flex items-start gap-2">
-                          <span className="text-yellow-400 mt-0.5">🏆</span>
+                          <span className="text-yellow-400 mt-0.5"></span>
                           <span>{line.trim()}</span>
                         </p>
                       ) : null
@@ -1550,54 +1541,54 @@ return;
           )}
         </div>
       </div>
-     {showSuccessPopup && (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 overflow-hidden">
+      {showSuccessPopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 overflow-hidden">
 
-    <div className="relative z-10 w-full max-w-md bg-gradient-to-br from-gray-900 to-gray-950 border border-green-500/30 rounded-3xl p-8 text-center shadow-2xl">
+          <div className="relative z-10 w-full max-w-md bg-gradient-to-br from-gray-900 to-gray-950 border border-green-500/30 rounded-3xl p-8 text-center shadow-2xl">
 
-      {/* Close Button */}
-      <button
-        onClick={() => setShowSuccessPopup(false)}
-        className="absolute top-4 right-4 text-text-3 hover:text-text-1 transition"
-      >
-        <CloseIcon className="w-5 h-5" />
-      </button>
+            {/* Close Button */}
+            <button
+              onClick={() => setShowSuccessPopup(false)}
+              className="absolute top-4 right-4 text-text-3 hover:text-text-1 transition"
+            >
+              <CloseIcon className="w-5 h-5" />
+            </button>
 
-      {/* Success Icon */}
-      <div className="flex justify-center mb-6">
-        <div className="bg-green-500/20 p-5 rounded-full">
-          <CheckCircle className="w-12 h-12 text-green-400" />
+            {/* Success Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="bg-green-500/20 p-5 rounded-full">
+                <CheckCircle className="w-12 h-12 text-green-400" />
+              </div>
+            </div>
+
+            {/* Heading */}
+            <h2 className="text-3xl font-bold text-text-1 mb-3">
+              Registration Successful 🎉
+            </h2>
+
+            {/* Description */}
+            <p className="text-text-2 mb-6 leading-relaxed">
+              You are successfully registered for <br />
+              <span className="text-purple-400 font-semibold">
+                {title}
+              </span>
+            </p>
+
+            {/* WhatsApp Button */}
+            {groupLink && (
+              <a
+                href={groupLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 bg-green-600 hover:bg-green-700 rounded-xl font-semibold transition shadow-lg"
+              >
+                🔗 Join WhatsApp Group
+              </a>
+            )}
+
+          </div>
         </div>
-      </div>
-
-      {/* Heading */}
-      <h2 className="text-3xl font-bold text-text-1 mb-3">
-        Registration Successful 🎉
-      </h2>
-
-      {/* Description */}
-      <p className="text-text-2 mb-6 leading-relaxed">
-        You are successfully registered for <br />
-        <span className="text-purple-400 font-semibold">
-          {title}
-        </span>
-      </p>
-
-      {/* WhatsApp Button */}
-      {groupLink && (
-        <a
-          href={groupLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full py-3 bg-green-600 hover:bg-green-700 rounded-xl font-semibold transition shadow-lg"
-        >
-          🔗 Join WhatsApp Group
-        </a>
       )}
-
-    </div>
-  </div>
-)}
       {renderRegistrationFormModal()}
     </div>
   );

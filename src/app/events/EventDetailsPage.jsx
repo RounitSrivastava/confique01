@@ -1518,7 +1518,20 @@ return;
               <div className="bg-gray-900 border border-border-2 rounded-xl p-6 shadow-xl space-y-3">
                 <Gift className="w-5 h-5 text-yellow-400" />
                 <p className="text-lg font-semibold text-text-1">Prizes for Winners</p>
-                <p className="text-text-2 text-sm">{prizes || "Goodies and Certificates."}</p>
+                {prizes ? (
+                  <div className="space-y-2">
+                    {prizes.split("\n").map((line, i) =>
+                      line.trim() ? (
+                        <p key={i} className="text-text-2 text-sm flex items-start gap-2">
+                          <span className="text-yellow-400 mt-0.5">🏆</span>
+                          <span>{line.trim()}</span>
+                        </p>
+                      ) : null
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-text-2 text-sm">Goodies and Certificates.</p>
+                )}
               </div>
             </div>
           </div>

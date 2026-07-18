@@ -36,10 +36,12 @@ export async function dbConnect() {
   // Create connection once
   if (!cached.promise) {
     const options = {
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
+      maxPoolSize: 20,           // More connections for concurrent requests
+      minPoolSize: 5,            // Keep minimum connections warm
+      serverSelectionTimeoutMS: 3000,  // Fail fast if DB unreachable
+      connectTimeoutMS: 8000,
+      socketTimeoutMS: 30000,
+      bufferCommands: false,     // Don't silently queue commands
     };
 
     cached.promise = mongoose

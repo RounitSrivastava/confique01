@@ -133,7 +133,7 @@
 //       UI
 //   ---------------------------------- */
 //   return (
-//     <main className="min-h-screen bg-black text-white relative">
+//     <main className="min-h-screen bg-bg-1 text-text-1 relative">
 //       <img
 //         src="https://img.freepik.com/premium-photo/portrait-successful-business-woman-suit-gray-isolated-background-serious-office-female-worker-manager-employees-female-employee-young-secretary_545934-23090.jpg?w=200&h=200&fit=crop"
 //         alt=""
@@ -171,14 +171,14 @@
 //             {/* RIGHT LOGIN FORM */}
 //             <section className="p-6 sm:p-10">
 //               <h1 className="text-3xl font-semibold">Welcome back</h1>
-//               <p className="mt-1 text-sm text-gray-400">
+//               <p className="mt-1 text-sm text-text-3">
 //                 Sign in to continue
 //               </p>
 
 //               <form onSubmit={handleLogin} className="mt-8 space-y-5">
 //                 {/* Email */}
 //                 <div>
-//                   <label className="block text-sm mb-1 text-gray-300">
+//                   <label className="block text-sm mb-1 text-text-2">
 //                     Email
 //                   </label>
 //                   <input
@@ -186,14 +186,14 @@
 //                     value={email}
 //                     onChange={(e) => setEmail(e.target.value)}
 //                     placeholder="name@company.com"
-//                     className="w-full rounded-xl bg-black border border-gray-700 px-4 py-3"
+//                     className="w-full rounded-xl bg-bg-1 border border-gray-700 px-4 py-3"
 //                   />
 //                 </div>
 
 //                 {/* Password */}
 //                 <div>
 //                   <div className="flex justify-between">
-//                     <label className="block text-sm mb-1 text-gray-300">
+//                     <label className="block text-sm mb-1 text-text-2">
 //                       Password
 //                     </label>
 //                     <Link href="/forgot-password" className="text-xs text-purple-400">
@@ -205,7 +205,7 @@
 //                     value={password}
 //                     onChange={(e) => setPassword(e.target.value)}
 //                     placeholder="••••••••"
-//                     className="w-full rounded-xl bg-black border border-gray-700 px-4 py-3"
+//                     className="w-full rounded-xl bg-bg-1 border border-gray-700 px-4 py-3"
 //                   />
 //                 </div>
 
@@ -220,7 +220,7 @@
 //                 </button>
 //               </form>
 
-//               <p className="mt-8 text-sm text-gray-400">
+//               <p className="mt-8 text-sm text-text-3">
 //                 Don’t have an account?{" "}
 //                 <Link href="/auth/register" className="text-purple-400">
 //                   Sign Up
@@ -242,7 +242,7 @@ export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+    <Suspense fallback={<div className="min-h-screen bg-bg-1" />}>
       <LoginClient />
     </Suspense>
   );

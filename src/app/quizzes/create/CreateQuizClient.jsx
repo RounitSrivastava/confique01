@@ -203,13 +203,13 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] text-white">
+    <div className="min-h-screen bg-bg-4 text-text-1">
 
       {/* HEADER */}
       <div className="flex items-center justify-center relative px-6 py-4 border-b border-white/10">
         <ArrowLeft
           onClick={() => router.back()}
-          className="absolute left-6 w-5 h-5 cursor-pointer text-gray-400 hover:text-white"
+          className="absolute left-6 w-5 h-5 cursor-pointer text-text-3 hover:text-text-1"
         />
         <h1 className="font-semibold text-lg">
           {editId ? "Edit Quiz" : "Create Quiz"}
@@ -285,7 +285,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
                     className={`w-5 h-5 cursor-pointer ${
                       q.correctIndex === oIndex
                         ? "text-green-500"
-                        : "text-gray-500"
+                        : "text-text-4"
                     }`}
                   />
 
@@ -294,7 +294,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
                       onClick={() =>
                         removeOption(qIndex, oIndex)
                       }
-                      className="w-4 h-4 text-gray-500 hover:text-red-500 cursor-pointer"
+                      className="w-4 h-4 text-text-4 hover:text-red-500 cursor-pointer"
                     />
                   )}
                 </div>
@@ -325,7 +325,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
           <h3 className="font-semibold">Quiz Schedule</h3>
 
           <div>
-            <label className="block text-sm text-gray-400">
+            <label className="block text-sm text-text-3">
               Start At
             </label>
             <input
@@ -337,7 +337,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mt-4">
+            <label className="block text-sm text-text-3 mt-4">
               Close At (Hard Lock Time)
             </label>
             <input
@@ -349,7 +349,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
 />
           </div>
           <div>
-  <label className="block text-sm text-gray-400 mt-4">
+  <label className="block text-sm text-text-3 mt-4">
     Time Limit Per Attempt (minutes)
   </label>
 

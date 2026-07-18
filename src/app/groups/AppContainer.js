@@ -1,81 +1,85 @@
-// /groups/AppContainer.js
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import ExplorePage from "./ExplorePage";
 import CommunityFeedPage from "./CommunityFeedPage";
 
 export default function AppContainer() {
-  // 1. Which page is visible?
-  const [currentPage, setCurrentPage] = useState("explore");
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  // 2. Which community is currently opened in Feed?
-  const [selectedCommunity, setSelectedCommunity] = useState(null);
+  // 1. State for current view
+  const [currentPage, setCurrentPage] = useState("explore");
+  const [selectedCommunity, setSelectedCommunity] = useState(null);
 
-  // 3. All communities created by users in this session
-  const [userCreatedCommunities, setUserCreatedCommunities] = useState([]);
+  // 2. Sync URL with State
+  useEffect(() => {
+    const cParam = searchParams.get('c');
+    if (cParam) {
+      try {
+        const community = JSON.parse(atob(cParam));
+        setSelectedCommunity(community);
+        setCurrentPage("feed");
+      } catch (e) {
+        setSelectedCommunity(null);
+        setCurrentPage("explore");
+      }
+    } else {
+      setSelectedCommunity(null);
+      setCurrentPage("explore");
+    }
+  }, [searchParams]);
 
-  // ---- NAVIGATION HANDLERS ----
+  // 3. Communities created by user in this session
+  const [userCreatedCommunities, setUserCreatedCommunities] = useState([]);
 
-  // When user clicks a community in Explore → open Feed
-  const handleNavigateToCommunity = (community) => {
-    setSelectedCommunity(community);
-    setCurrentPage("feed");
-  };
+  // ---- NAVIGATION HANDLERS ----
 
-  // Go back from Feed to Explore
-  const handleGoBack = () => {
-    setSelectedCommunity(null);
-    setCurrentPage("explore");
-  };
+  const handleNavigateToCommunity = (community) => {
+    const encoded = btoa(JSON.stringify(community));
+    router.push(`/groups?c=${encoded}`);
+  };
 
-  // When a new community is created from Explore
-  const handleCreateNewCommunity = (newCommunity) => {
-    // Add to user-created list only if it doesn't already exist (defensive against duplicates)
-    setUserCreatedCommunities((prev) => {
+  const handleGoBack = () => {
+    router.push(`/groups`);
+  };
+
+  const handleCreateNewCommunity = (newCommunity) => {
+    setUserCreatedCommunities((prev) => {
       if (prev.some(c => c.id === newCommunity.id)) return prev;
       return [...prev, newCommunity];
     });
-    setSelectedCommunity(newCommunity);
-    setCurrentPage("feed");
-  };
+    handleNavigateToCommunity(newCommunity);
+  };
 
-  // When a community is deleted (from Explore OR Feed)
-  const handleDeleteCommunity = (community) => {
-    // Remove from user-created list
-    setUserCreatedCommunities((prev) =>
-      prev.filter((c) => c.id !== community.id)
-    );
+  const handleDeleteCommunity = (community) => {
+    setUserCreatedCommunities((prev) =>
+      prev.filter((c) => c.id !== community.id)
+    );
+    if (selectedCommunity && selectedCommunity.id === community.id) {
+      handleGoBack();
+    }
+  };
 
-    // If we are currently inside that community's Feed, go back to Explore
-    if (selectedCommunity && selectedCommunity.id === community.id) {
-      setSelectedCommunity(null);
-      setCurrentPage("explore");
-    }
-  };
+  // ---- CONDITIONAL RENDER ----
+  
+  if (currentPage === "feed" && selectedCommunity) {
+    return (
+      <CommunityFeedPage
+        community={selectedCommunity}
+        onGoBack={handleGoBack}
+        onDeleteCommunity={handleDeleteCommunity}
+      />
+    );
+  }
 
-  // ---- CONDITIONAL RENDER ----
-  if (currentPage === "feed" && selectedCommunity) {
-    return (
-      <CommunityFeedPage
-        community={selectedCommunity}
-        onGoBack={handleGoBack}
-        onDeleteCommunity={handleDeleteCommunity}
-      />
-    );
-  }
-
-  if (currentPage === "explore") {
-    // Default: show Explore
-    return (
-      <ExplorePage
-        onNavigateToCommunity={handleNavigateToCommunity}
-        onCreateNewCommunity={handleCreateNewCommunity}
-        onDeleteCommunity={handleDeleteCommunity}
-        userCreatedCommunities={userCreatedCommunities}
-      />
-    );
-  }
-
-  // Fallback for any unknown state (highly unlikely)
-  return null; 
+  // Default: show Explore
+  return (
+    <ExplorePage
+      onNavigateToCommunity={handleNavigateToCommunity}
+      onCreateNewCommunity={handleCreateNewCommunity}
+      onDeleteCommunity={handleDeleteCommunity}
+      userCreatedCommunities={userCreatedCommunities}
+    />
+  );
 }

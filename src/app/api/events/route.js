@@ -5,6 +5,10 @@ import Event from "@/models/Event";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const CACHE_DURATION = 30; // seconds
+let eventsCache = null;  // will be populated on first request
+let eventsCacheTime = 0;
+
 /* CREATE EVENT */
 export async function POST(req) {
   try {
@@ -105,9 +109,26 @@ export async function POST(req) {
 /* GET ALL EVENTS */
 export async function GET() {
   try {
+    const now = Date.now();
+    // Serve from memory cache if fresh (< 30s old)
+    if (eventsCache && (now - eventsCacheTime) < CACHE_DURATION * 1000) {
+      return NextResponse.json(eventsCache, {
+        headers: { "Cache-Control": `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate=60` },
+      });
+    }
+
     await dbConnect();
-    const events = await Event.find().sort({ impressions: -1 });
-    return NextResponse.json(events);
+    const events = await Event.find()
+      .select("_id title tagline impressions category date venue isFree poster bannerUrl iconUrl coverImage imageUrl rounds tags pricingMode fixedPrice ticketTypes organizer")
+      .sort({ impressions: -1 })
+      .lean();
+
+    eventsCache = events;
+    eventsCacheTime = now;
+
+    return NextResponse.json(events, {
+      headers: { "Cache-Control": `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate=60` },
+    });
   } catch (err) {
     console.error("❌ Fetch Error:", err);
     return NextResponse.json(

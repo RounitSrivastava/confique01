@@ -22,7 +22,7 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="h-full w-full bg-[#0d0d0d] text-white">
+    <div className="h-full w-full bg-bg-4 text-text-1">
       <Feed />
     </div>
   );

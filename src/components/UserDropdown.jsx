@@ -10,7 +10,7 @@ export default function UserDropdown() {
       {/* Avatar Button */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 bg-gray-900 text-white px-3 py-2 rounded-lg hover:bg-gray-800"
+        className="flex items-center gap-2 bg-gray-900 text-text-1 px-3 py-2 rounded-lg hover:bg-bg-3"
       >
         <img
           src="/images/avatar.jpg"

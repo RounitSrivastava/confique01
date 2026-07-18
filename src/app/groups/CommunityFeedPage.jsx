@@ -21,6 +21,11 @@ import {
     MessageCircle,
     Trash2,
     MapPin,
+    CornerUpLeft,
+    Pin,
+    ThumbsDown,
+    BarChart2,
+    Smile,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 const SITE_OWNER_EMAIL = "confique01@gmail.com";
@@ -94,10 +99,22 @@ const pushNotifications = (notifications) => {
     if (typeof window === "undefined" || !Array.isArray(notifications)) return;
     try {
         const notifStore = JSON.parse(localStorage.getItem("notifications") || "{}");
-        notifications.forEach((n) => {
+        notifications.forEach(async (n) => {
             if (!n || !n.targetEmail) return;
-            const list = notifStore[n.targetEmail] || [];
-            notifStore[n.targetEmail] = [n, ...list];
+            const target = n.targetEmail.toLowerCase();
+            const list = notifStore[target] || [];
+            notifStore[target] = [n, ...list];
+            
+            // Send to Backend
+            try {
+                await fetch("/api/notifications", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(n)
+                });
+            } catch (err) {
+                console.error("Backend notification error", err);
+            }
         });
         localStorage.setItem("notifications", JSON.stringify(notifStore));
         window.dispatchEvent(
@@ -172,12 +189,36 @@ const fileToBase64 = (file) =>
         fr.readAsDataURL(file);
     });
 
+const renderTextWithLinks = (text) => {
+    if (!text) return null;
+    if (typeof text !== 'string') return text;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+        if (part.match(urlRegex)) {
+            return (
+                <a 
+                    key={i} 
+                    href={part} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-[#53bdeb] hover:underline break-all" 
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {part}
+                </a>
+            );
+        }
+        return part;
+    });
+};
+
 // --------------------
 // Avatar component (fixes scaling / fallback)
 // --------------------
 // Avatar component (FIXED – SVG safe, DiceBear compatible)
 // --------------------
-const Avatar = ({ src, alt, size = 40, className = "" }) => {
+const Avatar = ({ src, alt, size = 40, className = "", onClick }) => {
   const px = typeof size === "number" ? `${size}px` : size;
 
   const finalSrc =
@@ -193,7 +234,7 @@ const Avatar = ({ src, alt, size = 40, className = "" }) => {
       alt={alt || "avatar"}
       width={px}
       height={px}
-      className={`rounded-full object-cover bg-gray-800 ${className}`}
+      className={`rounded-full object-cover bg-bg-3 ${className}`}
       onError={(e) => {
         e.currentTarget.onerror = null;
         e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
@@ -201,6 +242,7 @@ const Avatar = ({ src, alt, size = 40, className = "" }) => {
         )}`;
       }}
       style={{ width: px, height: px }}
+      onClick={onClick}
     />
   );
 };
@@ -291,7 +333,7 @@ const PostOptionsMenu = React.forwardRef(
 
                         <button
                             onClick={handleHide}
-                            className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 rounded-md"
+                            className="flex items-center w-full px-3 py-2 text-sm text-text-2 hover:bg-bg-3 rounded-md"
                         >
                             <EyeOff className="w-4 h-4 mr-2" /> Hide Post
                         </button>
@@ -311,9 +353,9 @@ const PostOptionsMenu = React.forwardRef(
                 ) : (
                     <div className="space-y-1">
                         <div className="flex justify-between px-1">
-                            <h4 className="text-sm text-white">Select a reason:</h4>
+                            <h4 className="text-sm text-text-1">Select a reason:</h4>
                             <X
-                                className="w-4 text-gray-400 cursor-pointer"
+                                className="w-4 text-text-3 cursor-pointer"
                                 onClick={() => setReporting(false)}
                             />
                         </div>
@@ -322,7 +364,7 @@ const PostOptionsMenu = React.forwardRef(
                             <button
                                 key={type}
                                 onClick={() => handleReport(type)}
-                                className="w-full px-3 py-2 text-xs text-white hover:bg-purple-500 rounded-md"
+                                className="w-full px-3 py-2 text-xs text-text-1 hover:bg-[#a855f7] rounded-md"
                             >
                                 {type}
                             </button>
@@ -339,7 +381,7 @@ const ImagePreviewModal = ({ imageUrl, onClose }) => {
     if (!imageUrl) return null;
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-bg-1 bg-opacity-90 p-4"
             onClick={onClose}
         >
             <div
@@ -348,7 +390,7 @@ const ImagePreviewModal = ({ imageUrl, onClose }) => {
             >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-10 p-2 bg-gray-800/70 rounded-full text-white hover:bg-gray-900 transition-colors"
+                    className="absolute top-4 right-4 z-10 p-2 bg-gray-800/70 rounded-full text-text-1 hover:bg-gray-900 transition-colors"
                     aria-label="Close image preview"
                 >
                     <X className="w-6 h-6" />
@@ -464,7 +506,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
       <div
         className="
           w-full sm:max-w-xl
-          bg-[#0d0d0d]
+          bg-bg-4
           rounded-2xl
           shadow-2xl
           flex flex-col
@@ -473,19 +515,19 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
         "
       >
         {/* HEADER */}
-        <div className="flex-none flex items-center justify-between px-4 py-3 border-b border-gray-800">
+        <div className="flex-none flex items-center justify-between px-4 py-3 border-b border-border-2">
           <div>
-            <h2 className="text-lg font-semibold text-white">Create post</h2>
-            <p className="text-xs text-gray-400">
+            <h2 className="text-lg font-semibold text-text-1">Create post</h2>
+            <p className="text-xs text-text-3">
               Posting in <span className="text-purple-400">{communityName}</span>
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-800 transition"
+            className="p-2 rounded-full hover:bg-bg-3 transition"
           >
-            <X className="w-5 h-5 text-gray-300" />
+            <X className="w-5 h-5 text-text-2" />
           </button>
         </div>
 
@@ -499,11 +541,11 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
             onChange={(e) => setTitle(e.target.value)}
             className="
               w-full bg-transparent
-              text-white
+              text-text-1
               placeholder-gray-500
               border-b border-gray-700
               pb-2
-              focus:outline-none focus:border-purple-500
+              focus:outline-none focus:border-[#a855f7]
             "
           />
 
@@ -523,7 +565,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
             rows={6}
             className="
               w-full bg-transparent
-              text-white
+              text-text-1
               placeholder-gray-400
               rounded-xl
               px-4 py-3
@@ -550,7 +592,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
                   hover:bg-red-600 transition
                 "
               >
-                <X className="w-4 h-4 text-white" />
+                <X className="w-4 h-4 text-text-1" />
               </button>
             </div>
           )}
@@ -561,9 +603,9 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
           className="
             flex-none
             px-4 py-3
-            border-t border-gray-800
+            border-t border-border-2
             flex items-center gap-3
-            bg-[#0d0d0d]
+            bg-bg-4
           "
           style={{
             paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
@@ -571,7 +613,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
         >
           <label
             htmlFor="post-image"
-            className="p-2 rounded-full hover:bg-gray-800 cursor-pointer"
+            className="p-2 rounded-full hover:bg-bg-3 cursor-pointer"
           >
             <ImageIcon className="w-5 h-5 text-purple-400" />
           </label>
@@ -589,8 +631,8 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
   disabled={!title.trim() || isPosting}
   className={`ml-auto px-6 py-2 rounded-full font-semibold transition active:scale-95
     ${isPosting
-      ? "bg-gray-700 text-gray-300 cursor-not-allowed"
-      : "bg-purple-600 text-white hover:bg-purple-700"}
+      ? "bg-gray-700 text-text-2 cursor-not-allowed"
+      : "bg-[#c084fc] text-text-1 hover:bg-purple-700"}
   `}
 >
   {isPosting ? "Posting..." : "Post"}
@@ -661,26 +703,26 @@ const InviteMenu = React.forwardRef(
 "
 >
 
-                <h4 className="text-sm text-white px-3 py-1 font-semibold border-b border-gray-600 mb-1">
+                <h4 className="text-sm text-text-1 px-3 py-1 font-semibold border-b border-gray-600 mb-1">
                     Invite Members
                 </h4>
 
                 <button
                     onClick={() => handleShare("Link")}
-                    className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 rounded-md transition-colors"
+                    className="flex items-center w-full px-3 py-2 text-sm text-text-2 hover:bg-bg-3 rounded-md transition-colors"
                 >
                     <Link className="w-4 h-4 mr-2" /> Share via Link
                 </button>
                 <button
                     onClick={() => handleShare("WhatsApp")}
-                    className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 rounded-md transition-colors"
+                    className="flex items-center w-full px-3 py-2 text-sm text-text-2 hover:bg-bg-3 rounded-md transition-colors"
                 >
                     <MessageCircle className="w-4 h-4 mr-2 text-green-400" /> Share via
                     WhatsApp
                 </button>
                 <button
                     onClick={() => handleShare("Other Apps")}
-                    className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 rounded-md transition-colors"
+                    className="flex items-center w-full px-3 py-2 text-sm text-text-2 hover:bg-bg-3 rounded-md transition-colors"
                 >
                     <Share2 className="w-4 h-4 mr-2" /> Other Methods
                 </button>
@@ -699,7 +741,7 @@ const CreateMenu = React.forwardRef(({ onSelect, onClose }, ref) => (
         onSelect("poll");
         onClose();
       }}
-      className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-800"
+      className="w-full text-left px-4 py-2 text-sm text-text-1 hover:bg-bg-3"
     >
       Create Poll
     </button>
@@ -722,7 +764,7 @@ const AuthorProfileModal = ({ email, onClose, userData }) => {
   className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
   onMouseDown={onClose}
 >
-            <div className="bg-[#0d0d0d] rounded-lg max-w-sm w-full p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-bg-4 rounded-lg max-w-sm w-full p-4" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-4">
                  <Avatar
   src={u?.avatar || null}
@@ -732,15 +774,15 @@ const AuthorProfileModal = ({ email, onClose, userData }) => {
 
 
                     <div>
-                        <h3 className="text-lg font-bold text-white">{u?.displayName || deriveNameFromEmail(email)}</h3>
-                       <p className="text-sm text-gray-400 mt-1">
+                        <h3 className="text-lg font-bold text-text-1">{u?.displayName || deriveNameFromEmail(email)}</h3>
+                       <p className="text-sm text-text-3 mt-1">
   {bioText || "No bio added yet"}
 </p>
                     </div>
                 </div>
 
                 <div className="mt-4 flex justify-end">
-                    <button onClick={onClose} className="px-3 py-2 rounded-md bg-gray-800 text-white">Close</button>
+                    <button onClick={onClose} className="px-3 py-2 rounded-md bg-bg-3 text-text-1">Close</button>
                 </div>
             </div>
         </div>
@@ -812,14 +854,17 @@ const mobileInviteMenuRef = React.useRef(null);
   return () => document.removeEventListener("mousedown", handleClickOutside);
 }, [isInviteMenuOpen, isCreateMenuOpen]);
 
-    const membersLabel = community.members
-        ? community.members
-            .toString()
-            .toLowerCase()
-            .includes("member")
-            ? community.members
-            : `${community.members} members`
-        : "0 members";
+    const getMembersLabel = () => {
+        if (community.membersCount !== undefined) {
+            return `${community.membersCount} member${community.membersCount === 1 ? '' : 's'}`;
+        }
+        if (community.members) {
+            const m = community.members.toString().toLowerCase();
+            return m.includes("member") ? community.members : `${community.members} members`;
+        }
+        return "0 members";
+    };
+    const membersLabel = getMembersLabel();
 
     const inviteButton = (
         
@@ -847,7 +892,7 @@ const mobileInviteMenuRef = React.useRef(null);
     return (
         <div className="mb-6">
             <div className="relative w-full">
-                <div className="h-24 sm:h-32 w-full overflow-hidden bg-gray-800">
+                <div className="h-24 sm:h-32 w-full overflow-hidden bg-bg-3">
                     {community.bannerUrl ? (
                         <img
                             src={community.bannerUrl}
@@ -864,7 +909,7 @@ const mobileInviteMenuRef = React.useRef(null);
                     )}
                 </div>
 
-                <div className="bg-[#0d0d0d] px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-4 text-white">
+                <div className="bg-bg-4 px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-4 text-text-1">
                     <div className="-mt-10">
                         <Avatar
                             src={community.iconUrl}
@@ -878,7 +923,7 @@ const mobileInviteMenuRef = React.useRef(null);
                         <h1 className="text-lg sm:text-xl font-bold">
                             {community.name || "Community Name"}
                         </h1>
-                       <p className="text-xs sm:text-sm text-white">
+                       <p className="text-xs sm:text-sm text-text-1">
   {membersLabel}
 </p>
 
@@ -910,9 +955,9 @@ const mobileInviteMenuRef = React.useRef(null);
   <button
     ref={createBtnRef}
     onClick={() => setIsCreateMenuOpen((p) => !p)}
-    className="p-2 rounded-full hover:bg-gray-800"
+    className="p-2 rounded-full hover:bg-bg-3"
   >
-    <MoreHorizontal className="w-5 h-5 text-white" />
+    <MoreHorizontal className="w-5 h-5 text-text-1" />
   </button>
 
   {isCreateMenuOpen && (
@@ -957,9 +1002,9 @@ const mobileInviteMenuRef = React.useRef(null);
   <button
     ref={createBtnRef}
     onClick={() => setIsCreateMenuOpen((p) => !p)}
-    className="p-2 rounded-full hover:bg-gray-800"
+    className="p-2 rounded-full hover:bg-bg-3"
   >
-    <MoreHorizontal className="w-5 h-5 text-white" />
+    <MoreHorizontal className="w-5 h-5 text-text-1" />
   </button>
 
   {isCreateMenuOpen && (
@@ -974,7 +1019,7 @@ const mobileInviteMenuRef = React.useRef(null);
                         {canDeleteCommunity && (
                             <button
                                 onClick={onDeleteCommunity}
-                                className="ml-2 flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-red-700 text-white hover:bg-red-600"
+                                className="ml-2 flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-red-700 text-text-1 hover:bg-red-600"
                             >
                                 <Trash2 className="w-4 h-4 mr-1" />
                                 Delete Community
@@ -986,7 +1031,7 @@ const mobileInviteMenuRef = React.useRef(null);
 
             {community.description && (
                 <div className="px-4 sm:px-6 mt-2">
-                    <p className="text-sm text-gray-300">{community.description}</p>
+                    <p className="text-sm text-text-2">{community.description}</p>
                 </div>
             )}
         </div>
@@ -997,15 +1042,15 @@ const mobileInviteMenuRef = React.useRef(null);
 // Filter Bar
 // --------------------
 const FilterBar = ({ selected, setActiveFilter, eventsCount = 0 }) => (
-    <div className="flex space-x-2 px-4 py-3 bg-[#0d0d0d] border-b border-gray-800">
+    <div className="flex space-x-2 px-4 py-3 bg-bg-4 border-b border-border-2">
         {["Hot", "New"].map((f) => (
             <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
                 className={`px-3 py-1 rounded-full text-sm transition-colors ${
                     selected === f
-                        ? "bg-purple-600 text-white"
-                        : "bg-gray-900 text-gray-300 hover:bg-gray-800"
+                        ? "bg-[#c084fc] text-text-1"
+                        : "bg-gray-900 text-text-2 hover:bg-bg-3"
                 }`}
             >
                 {f}
@@ -1016,8 +1061,8 @@ const FilterBar = ({ selected, setActiveFilter, eventsCount = 0 }) => (
             onClick={() => setActiveFilter("Events")}
             className={`px-3 py-1 rounded-full text-sm transition-colors ${
                 selected === "Events"
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-900 text-gray-300 hover:bg-gray-800"
+                    ? "bg-[#c084fc] text-text-1"
+                    : "bg-gray-900 text-text-2 hover:bg-bg-3"
             }`}
         >
             Events {eventsCount > 0 ? `(${eventsCount})` : ""}
@@ -1073,8 +1118,8 @@ const CommentItem = ({ comment, allComments, onReply, currentUserEmail, currentU
             </div>
 
             <div className="ml-3 flex-1">
-                <p className="text-xs text-gray-400">
-                    <span className="text-white font-semibold">{comment.author}</span> ·{" "}
+                <p className="text-xs text-text-3">
+                    <span className="text-text-1 font-semibold">{comment.author}</span> ·{" "}
                     {comment.time}
                 </p>
                 <p className="text-sm text-gray-200 mt-1">{comment.text}</p>
@@ -1307,24 +1352,24 @@ setIsSubmitting(true);
         .sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
 
     return (
-        <div className="relative bg-[#0d0d0d] text-white min-h-screen pb-20">
-            <div className="flex items-center px-4 py-3 bg-[#0d0d0d] border-b border-gray-800 z-20">
+        <div className="relative bg-bg-4 text-text-1 min-h-screen pb-20">
+            <div className="flex items-center px-4 py-3 bg-bg-4 border-b border-border-2 z-20">
                 <ArrowLeft className="w-6 h-6 cursor-pointer mr-3" onClick={onBack} />
                 <div className="overflow-hidden">
-                    <p className="text-xs text-gray-400">{post.community}</p>
-                    <h2 className="text-sm text-white line-clamp-1">{post.title}</h2>
+                    <p className="text-xs text-text-3">{post.community}</p>
+                    <h2 className="text-sm text-text-1 line-clamp-1">{post.title}</h2>
                 </div>
             </div>
 
-            <div className="px-4 py-3 bg-[#0d0d0d] border-b border-gray-800 z-10">
-                <p className="text-xs text-gray-400">
-                    <span className="text-white font-semibold">{post.author}</span> ·{" "}
+            <div className="px-4 py-3 bg-bg-4 border-b border-border-2 z-10">
+                <p className="text-xs text-text-3">
+                    <span className="text-text-1 font-semibold">{post.author}</span> ·{" "}
                     {post.time}
                 </p>
                 {post.content && (
   <p
     className="
-      text-gray-300 text-sm mt-2
+      text-text-2 text-sm mt-2
       whitespace-pre-wrap
       leading-relaxed
       line-clamp-3
@@ -1338,11 +1383,11 @@ setIsSubmitting(true);
 
             <div>
                 {loadingComments && (
-                    <div className="p-4 text-center text-gray-500 text-sm">Loading comments...</div>
+                    <div className="p-4 text-center text-text-4 text-sm">Loading comments...</div>
                 )}
 
                 {topLevelComments.map((c) => (
-                    <div key={c.id} className="px-4 py-3 border-b border-gray-800">
+                    <div key={c.id} className="px-4 py-3 border-b border-border-2">
                         <CommentItem
                             comment={c}
                             allComments={comments}
@@ -1354,7 +1399,7 @@ setIsSubmitting(true);
                 ))}
 
                 {!loadingComments && topLevelComments.length === 0 && (
-                    <div className="p-4 text-center text-gray-500">Be the first to comment!</div>
+                    <div className="p-4 text-center text-text-4">Be the first to comment!</div>
                 )}
             </div>
 
@@ -1362,7 +1407,7 @@ setIsSubmitting(true);
   role="region"
   aria-label="Comment input"
   className="
-    fixed bottom-0 z-50 bg-[#0d0d0d] border-t border-gray-800 shadow-2xl
+    fixed bottom-0 z-50 bg-bg-4 border-t border-border-2 shadow-2xl
     left-0 w-full
     sm:left-[250px] sm:w-[calc(100%-250px-360px)]
   "
@@ -1370,9 +1415,9 @@ setIsSubmitting(true);
 
                 <div className="p-4">
                     {replyingTo && (
-                        <div className="flex justify-between items-center text-xs text-gray-400 mb-2 p-2 bg-gray-800 rounded">
+                        <div className="flex justify-between items-center text-xs text-text-3 mb-2 p-2 bg-bg-3 rounded">
                             <span>Replying to {replyingTo.author}</span>
-                            <button onClick={() => setReplyingTo(null)} className="text-white hover:text-purple-300 ml-2 transition-colors">
+                            <button onClick={() => setReplyingTo(null)} className="text-text-1 hover:text-purple-300 ml-2 transition-colors">
                                 <X className="w-3 h-3 inline" /> Cancel
                             </button>
                         </div>
@@ -1389,16 +1434,16 @@ setIsSubmitting(true);
                                 }
                             }}
                             placeholder={replyingTo ? "Write your reply..." : "Add a comment..."}
-                            className="flex-1 bg-gray-800 px-4 py-2 rounded-full text-sm text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-purple-600 h-10 transition-shadow"
+                            className="flex-1 bg-bg-3 px-4 py-2 rounded-full text-sm text-text-1 placeholder-gray-400 outline-none focus:ring-2 focus:ring-purple-600 h-10 transition-shadow"
                         />
                         <button
                             onClick={handleCommentSubmit}
                             disabled={!commentText.trim() || isSubmitting}
                             className={`
-    p-2 rounded-full text-white transition-colors
+    p-2 rounded-full text-text-1 transition-colors
     ${isSubmitting
         ? "bg-gray-700 cursor-not-allowed"
-        : "bg-purple-600 hover:bg-purple-700"}
+        : "bg-[#c084fc] hover:bg-purple-700"}
 `}
                             aria-disabled={!commentText.trim()}
                         >
@@ -1450,7 +1495,19 @@ const PostCard = ({
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+
+        const handleGlobalPostDeleted = (e) => {
+            const deletedPostId = e?.detail?.postId;
+            if (deletedPostId && typeof setPosts === 'function') {
+                setPosts(prev => prev.filter(p => p.id !== deletedPostId));
+            }
+        };
+        window.addEventListener("confique:post-deleted", handleGlobalPostDeleted);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            window.removeEventListener("confique:post-deleted", handleGlobalPostDeleted);
+        };
     }, [isMenuOpen, onToggleMenu]);
 
     const format = (n) => (n >= 1000 ? (n / 1000).toFixed(1) + "k" : n);
@@ -1503,15 +1560,15 @@ const PostCard = ({
                     >
                         <Avatar src={avatarSrc} alt={authorLabel} size={24} className="mr-2 flex-shrink-0" />
                         <div className="text-left">
-                            <div className="text-sm text-white font-semibold">{authorLabel}</div>
-                            <div className="text-xs text-gray-400"> {post.time}</div>
+                            <div className="text-sm text-text-1 font-semibold">{authorLabel}</div>
+                            <div className="text-xs text-text-3"> {post.time}</div>
                         </div>
                     </button>
                 </div>
 
                 <MoreHorizontal
                     ref={menuButtonRef}
-                    className="w-5 h-5 text-gray-400 cursor-pointer hover:text-white transition-colors"
+                    className="w-5 h-5 text-text-3 cursor-pointer hover:text-text-1 transition-colors"
                     onClick={() => onToggleMenu(post.id)}
                 />
 
@@ -1530,7 +1587,7 @@ const PostCard = ({
                 )}
             </div>
 
-            <h3 className="text-white text-lg font-bold mt-3 cursor-pointer transition-colors" onClick={() => onCommentsClick(post)}>
+            <h3 className="text-text-1 text-lg font-bold mt-3 cursor-pointer transition-colors" onClick={() => onCommentsClick(post)}>
                 {post.title}
             </h3>
 
@@ -1538,7 +1595,7 @@ const PostCard = ({
   <div className="mt-2">
     <p
       className={`
-        text-gray-300 text-sm
+        text-text-2 text-sm
         whitespace-pre-wrap
         leading-relaxed
         ${expanded ? "" : "line-clamp-3"}
@@ -1578,23 +1635,23 @@ const PostCard = ({
                         onClick={handleUpvoteClick}
                         className={`flex items-center px-2 py-1 cursor-pointer transition-colors ${
   post.userVote === 1
-    ? "text-purple-500"
-    : "text-gray-400 hover:text-white"
+    ? "text-[#a855f7]"
+    : "text-text-3 hover:text-text-1"
 }`}
                     >
                         <ArrowUp
   className={`w-4 h-4 mr-1 transition-colors ${
-    post.userVote === 1 ? "text-purple-500" : "text-gray-400"
+    post.userVote === 1 ? "text-[#a855f7]" : "text-text-3"
   }`}
 />
-                        <span className={`font-semibold ${post.userVote === 1 ? "text-white" : "text-gray-300"}`}>
+                        <span className={`font-semibold ${post.userVote === 1 ? "text-text-1" : "text-text-2"}`}>
                             {format(post.upvotes)}
                         </span>
                     </div>
                 </div>
                 </div>
 
-                <button className="flex items-center text-gray-400 cursor-pointer transition-colors p-1" onClick={() => onCommentsClick(post)}>
+                <button className="flex items-center text-text-3 cursor-pointer transition-colors p-1" onClick={() => onCommentsClick(post)}>
                     <MessageSquare className="w-5 h-5 mr-2" />
                     <span className="font-semibold">{post.comments} Comments</span>
                 </button>
@@ -1609,7 +1666,7 @@ const PostCard = ({
 // --------------------
 const EventListItem = ({ event, onOpenDetails }) => {
     return (
-        <div className="flex items-start gap-4 p-4 border-b border-gray-800">
+        <div className="flex items-start gap-4 p-4 border-b border-border-2">
             <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-900 flex-shrink-0">
                 <img
                     src={event.poster}
@@ -1623,25 +1680,25 @@ const EventListItem = ({ event, onOpenDetails }) => {
             </div>
 
             <div className="flex-1">
-                <h4 className="text-white font-bold text-lg cursor-pointer" onClick={() => onOpenDetails(event.id)}>
+                <h4 className="text-text-1 font-bold text-lg cursor-pointer" onClick={() => onOpenDetails(event.id)}>
                     {event.title}
                 </h4>
-                <div className="text-sm text-gray-400 mt-1 flex items-center gap-3">
+                <div className="text-sm text-text-3 mt-1 flex items-center gap-3">
                     <MapPin className="w-4 h-4 text-purple-400" />
                     <span>{event.venue || "Online"}</span>
                     <span>•</span>
                     <span>{event.date || "TBA"}</span>
                 </div>
-                <div className="mt-2 text-xs text-gray-300 flex items-center gap-2">
+                <div className="mt-2 text-xs text-text-2 flex items-center gap-2">
                     {event.tags && event.tags.map((t, i) => (
-                        <span key={i} className="px-2 py-1 rounded-full bg-gray-800 text-gray-300">{t}</span>
+                        <span key={i} className="px-2 py-1 rounded-full bg-bg-3 text-text-2">{t}</span>
                     ))}
                 </div>
             </div>
 
             <div className="flex flex-col items-end gap-2">
-                <button onClick={() => onOpenDetails(event.id)} className="bg-purple-600 text-white px-3 py-1.5 rounded-full text-sm">View</button>
-                <div className="text-xs text-gray-400">{event.impressions ? `${event.impressions.toLocaleString()} views` : ""}</div>
+                <button onClick={() => onOpenDetails(event.id)} className="bg-[#c084fc] text-text-1 px-3 py-1.5 rounded-full text-sm">View</button>
+                <div className="text-xs text-text-3">{event.impressions ? `${event.impressions.toLocaleString()} views` : ""}</div>
             </div>
         </div>
     );
@@ -1692,13 +1749,15 @@ const mapBackendPostToFrontend = (post, communityInfo) => {
         authorDisplayName: post.authorDisplayName || null,
         authorName: post.authorName || null,
         authorUsername: post.authorUsername || null,
+        reactions: post.reactions || [],
+        poll: post.poll || null,
     };
 };
 
 // --------------------
 // MAIN FEED PAGE (Client Component)
 // --------------------
-export default function CommunityFeedPage({ community }) {
+export default function CommunityFeedPage({ community, onGoBack, onDeleteCommunity }) {
     // Use the custom hook for Twitter-like scroll behavior
    const scrollRef = React.useRef(null);
 const showFab = useScrollDirection(scrollRef);
@@ -1708,10 +1767,15 @@ const showFab = useScrollDirection(scrollRef);
     const router = useRouter();
 
     const handleGoBack = () => {
-        router.back();
+        if (onGoBack) onGoBack();
+        else router.back();
     };
 
     const handleDeleteCommunity = async (communityInfo) => {
+        if (onDeleteCommunity) {
+            onDeleteCommunity(communityInfo);
+            return;
+        }
         if (typeof window !== "undefined" && !window.confirm(`Are you sure you want to delete the community "${communityInfo.name}"?`)) {
             return;
         }
@@ -1735,12 +1799,12 @@ const showFab = useScrollDirection(scrollRef);
     
     if (!community) {
         return (
-            <div className="min-h-screen bg-[#0d0d0d] text-white p-4">
-                <button onClick={handleGoBack} className="text-gray-400 hover:text-white mb-4 flex items-center">
+            <div className="min-h-screen bg-bg-4 text-text-1 p-4">
+                <button onClick={handleGoBack} className="text-text-3 hover:text-text-1 mb-4 flex items-center">
                     <ArrowLeft className="w-6 h-6 mr-2" /> Back to Explore
                 </button>
                 <h1 className="text-xl font-bold text-red-500">Error: Community data missing.</h1>
-                <p className="text-gray-400">Please ensure the community object is passed correctly to CommunityFeedPage.</p>
+                <p className="text-text-3">Please ensure the community object is passed correctly to CommunityFeedPage.</p>
             </div>
         );
     }
@@ -1768,8 +1832,23 @@ const showFab = useScrollDirection(scrollRef);
     const [selectedProfileData, setSelectedProfileData] = React.useState(null);
     const [profileLoading, setProfileLoading] = React.useState(false);
 
+    // CHAT STATE
+    const [chatInput, setChatInput] = React.useState("");
+    const [replyToMsg, setReplyToMsg] = React.useState(null);
+    const [menuOpenId, setMenuOpenId] = React.useState(null);
+    const [selectedImageFile, setSelectedImageFile] = React.useState(null);
+    const [selectedImagePreview, setSelectedImagePreview] = React.useState(null);
+    const [pinnedPostId, setPinnedPostId] = React.useState(null);
+    const [isPollModalOpen, setIsPollModalOpen] = React.useState(false);
+    const [pollQuestion, setPollQuestion] = React.useState("");
+    const [pollOptions, setPollOptions] = React.useState(["", ""]);
+    const [isMultiSelect, setIsMultiSelect] = React.useState(false);
+    const fileInputRef = React.useRef(null);
+    const chatEndRef = React.useRef(null);
+
     const topRef = React.useRef(null);
     const fetchedEmailsRef = React.useRef(new Set());
+    const deletedPostIdsRef = React.useRef(new Set());
 
 
     React.useEffect(() => {
@@ -1990,9 +2069,9 @@ if (authorImage) {
         return;
     }
 
-    async function loadPosts() {
+    async function loadPosts(isInitial = false) {
         try {
-            setPostsLoading(true);
+            if (isInitial) setPostsLoading(true);
 
             const res = await apiFetch(
                 `/api/groups/${encodeURIComponent(communityInfo.id)}/posts`,
@@ -2001,7 +2080,7 @@ if (authorImage) {
 
             if (!res.ok) {
                 console.error("Failed to load posts", res.status);
-                setPosts([]);
+                if (isInitial) setPosts([]);
                 return;
             }
 
@@ -2009,20 +2088,154 @@ if (authorImage) {
             const postsFromDb = Array.isArray(data.posts) ? data.posts : [];
             const mapped = postsFromDb.map((p) =>
                 mapBackendPostToFrontend(p, communityInfo)
-            );
+            ).filter(p => !deletedPostIdsRef.current.has(p.id));
 
             setPosts(mapped);
             enrichAuthors(mapped);
         } catch (e) {
             console.error("Error loading posts", e);
-            setPosts([]);
         } finally {
-            setPostsLoading(false); // ✅ stop loading
+            if (isInitial) setPostsLoading(false);
         }
     }
 
-    loadPosts();
+    // Initial load
+    loadPosts(true);
+
+    // Real-time polling
+    const interval = setInterval(() => {
+        loadPosts(false);
+    }, 3000);
+
+    return () => clearInterval(interval);
 }, [isDbBackedCommunity, communityInfo.id, enrichAuthors]);
+
+    const handleReact = async (postId, emoji) => {
+        if (!isDbBackedCommunity || !communityInfo.id) return;
+        try {
+            // Optimistic UI update
+            setPosts(prev => prev.map(p => {
+                if (p.id !== postId) return p;
+                const currentUserEmailLocal = currentUserEmail || getCurrentUserEmail();
+                if (!currentUserEmailLocal) return p;
+
+                let newReactions = [...(p.reactions || [])];
+                const existingTargetEntry = newReactions.find(r => r.emoji === emoji);
+                const userHadThisEmoji = existingTargetEntry && existingTargetEntry.users.includes(currentUserEmailLocal);
+
+                // Remove user from ALL emojis
+                newReactions = newReactions.map(r => ({
+                    ...r,
+                    users: r.users.filter(u => u !== currentUserEmailLocal)
+                }));
+
+                if (!userHadThisEmoji) {
+                    // Add them to the new emoji
+                    const targetEntry = newReactions.find(r => r.emoji === emoji);
+                    if (targetEntry) {
+                        targetEntry.users.push(currentUserEmailLocal);
+                    } else {
+                        newReactions.push({ emoji, users: [currentUserEmailLocal] });
+                    }
+                }
+
+                // Filter out empty emojis
+                newReactions = newReactions.filter(r => r.users.length > 0);
+
+                return { ...p, reactions: newReactions };
+            }));
+
+            await apiFetch(`/api/groups/${encodeURIComponent(communityInfo.id)}/posts/${encodeURIComponent(postId)}/react`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ emoji })
+            });
+        } catch (e) {
+            console.error("Failed to react", e);
+        }
+    };
+
+    const handleCreatePoll = async () => {
+        if (!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2) {
+            alert("Please provide a question and at least two options.");
+            return;
+        }
+        if (!isDbBackedCommunity || !communityInfo.id) {
+            alert("Polls are only supported in DB-backed communities.");
+            return;
+        }
+
+        const payload = {
+            title: pollQuestion,
+            content: "poll",
+            poll: {
+                question: pollQuestion,
+                isMultiSelect: isMultiSelect,
+                options: pollOptions.filter(o => o.trim()).map(opt => ({ text: opt, votes: [] }))
+            }
+        };
+
+        try {
+            const res = await apiFetch(`/api/groups/${encodeURIComponent(communityInfo.id)}/posts`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.post) {
+                    const mapped = mapBackendPostToFrontend(data.post, communityInfo);
+                    setPosts(prev => [mapped, ...prev]);
+                    enrichAuthors([mapped]);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to create poll", e);
+        } finally {
+            setIsPollModalOpen(false);
+            setPollQuestion("");
+            setPollOptions(["", ""]);
+            setIsMultiSelect(false);
+            if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    };
+
+    const handleVotePoll = async (postId, optionIndex) => {
+        if (!isDbBackedCommunity || !communityInfo.id) return;
+        try {
+            // Optimistic UI update
+            setPosts(prev => prev.map(p => {
+                if (p.id !== postId || !p.poll) return p;
+                const newPoll = JSON.parse(JSON.stringify(p.poll));
+                const currentUserEmailLocal = currentUserEmail || getCurrentUserEmail();
+                if (!currentUserEmailLocal) return p;
+
+                const userHasVotedForThisOption = newPoll.options[optionIndex].votes.includes(currentUserEmailLocal);
+
+                if (userHasVotedForThisOption) {
+                    newPoll.options[optionIndex].votes = newPoll.options[optionIndex].votes.filter(e => e !== currentUserEmailLocal);
+                } else {
+                    if (!newPoll.isMultiSelect) {
+                        newPoll.options.forEach(opt => {
+                            opt.votes = opt.votes.filter(u => u !== currentUserEmailLocal);
+                        });
+                    }
+                    newPoll.options[optionIndex].votes.push(currentUserEmailLocal);
+                }
+
+                return { ...p, poll: newPoll };
+            }));
+
+            await apiFetch(`/api/groups/${encodeURIComponent(communityInfo.id)}/posts/${encodeURIComponent(postId)}/vote-poll`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ optionIndex })
+            });
+        } catch (e) {
+            console.error("Failed to vote", e);
+        }
+    };
 
     const handleNewPost = async ({ title, content, imageFile, imagePreviewUrl }) => {
         if (!isDbBackedCommunity || !communityInfo.id) {
@@ -2115,6 +2328,61 @@ setPosts((prev) => [mapped, ...prev]);
         }
     };
 
+    // Auto-scroll to bottom of chat only when new posts arrive
+    React.useEffect(() => {
+        if (chatEndRef.current) {
+            chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [posts.length]);
+
+    const handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (selectedImagePreview) URL.revokeObjectURL(selectedImagePreview);
+        setSelectedImageFile(file);
+        setSelectedImagePreview(URL.createObjectURL(file));
+    };
+
+    const handleClearImage = () => {
+        if (selectedImagePreview) URL.revokeObjectURL(selectedImagePreview);
+        setSelectedImageFile(null);
+        setSelectedImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const handleSendChat = async () => {
+        if (!chatInput.trim() && !selectedImageFile) return;
+        const msg = chatInput.trim();
+        setChatInput("");
+        
+        const fileToUpload = selectedImageFile;
+        const previewToUpload = selectedImagePreview;
+        setSelectedImageFile(null);
+        setSelectedImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        
+        let finalContent = msg;
+        if (replyToMsg) {
+            const payload = {
+                isReply: true,
+                replyId: replyToMsg.id,
+                replyAuthor: replyToMsg.authorName || replyToMsg.author,
+                replyText: replyToMsg.displayContent || replyToMsg.content || replyToMsg.title,
+                text: msg
+            };
+            finalContent = JSON.stringify(payload);
+            setReplyToMsg(null);
+        }
+        
+        const title = msg.length > 50 ? msg.substring(0, 47) + "..." : msg || "Image attachment";
+        await handleNewPost({
+            title,
+            content: finalContent,
+            imageFile: fileToUpload,
+            imagePreviewUrl: previewToUpload
+        });
+    };
+
     const vote = (id, type) => {
         // Since we only have upvote now, type will always be 1 or 0
         let likedPost = null;
@@ -2184,6 +2452,26 @@ setPosts((prev) => [mapped, ...prev]);
     const handleHidePost = (id) => {
         setPosts((prev) => prev.filter((p) => p.id !== id));
         alert(`Post ${id} has been hidden for you.`);
+    };
+
+    const handleDeletePost = async (postId) => {
+        if (!confirm("Are you sure you want to delete this message for everyone?")) return;
+        
+        // Optimistic UI update
+        deletedPostIdsRef.current.add(postId);
+        setPosts((prev) => prev.filter((p) => p.id !== postId));
+        
+        try {
+            const res = await apiFetch(`/api/groups/${encodeURIComponent(communityInfo.id)}/posts/${postId}`, {
+                method: "DELETE"
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(()=>({}));
+                alert(data.error || "Failed to delete message");
+            }
+        } catch (e) {
+            console.error("Error deleting post:", e);
+        }
     };
 
     const handleReportPost = (post, reason) => {
@@ -2275,6 +2563,22 @@ setPosts((prev) => [mapped, ...prev]);
             alert("Post removed from the community (local only).");
         }
     };
+    const handleCommunityInvite = async () => {
+        try {
+            const res = await fetch("/api/me");
+            const data = await res.json();
+            if (data?.user?.referralCode) {
+                const link = `${window.location.origin}/auth/register?ref=${data.user.referralCode}&c=${communityInfo.id}`;
+                navigator.clipboard.writeText(link);
+                alert("Invite link copied to clipboard! When your friend signs up, you both get points, and they can join this community.");
+            } else {
+                alert("Please log in to generate an invite link.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error generating invite link.");
+        }
+    };
 
     const handleDeleteCommunityClick = async () => {
         if (typeof window !== "undefined" && !window.confirm(`Are you sure you want to delete the community "${communityInfo.name}"?`)) {
@@ -2292,20 +2596,11 @@ setPosts((prev) => [mapped, ...prev]);
                 : true
         );
 
-        switch (activeFilter) {
-            case "Hot":
-                filtered.sort((a, b) => b.upvotes - a.upvotes);
-                break;
-            case "New":
-                filtered.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
-                break;
-            case "Events":
-                break;
-            default:
-                filtered.sort((a, b) => b.upvotes - a.upvotes);
-        }
+        // Always sort strictly chronologically for chat interface
+        filtered.sort((a, b) => (a.createdAtMs || 0) - (b.createdAtMs || 0));
+        
         return filtered;
-    }, [posts, searchTerm, activeFilter]);
+    }, [posts, searchTerm]);
 
     const handleOpenEventDetails = (eventId) => {
         if (typeof window !== "undefined") {
@@ -2391,39 +2686,18 @@ React.useEffect(() => {
     }
 
     return (
-        <div
-  ref={scrollRef}
-  className="h-screen bg-[#0d0d0d] text-white overflow-y-auto"
-
->
-
-            
-            {/* Mobile Twitter-style FAB - Fixed with proper hide/show */}
-            <div className={`fixed bottom-20 right-4 z-50 sm:hidden transition-all duration-300 ease-in-out ${
-                showFab ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
-            }`}>
-                <button
-  onClick={() => setIsModalOpen(true)}
-  className="
-    w-13 h-13 
-    rounded-full
-    bg-purple-600
-    text-white
-    flex items-center justify-center
-    shadow-lg sm:shadow-xl
-    hover:bg-purple-700
-    active:scale-95
-    ring-1 sm:ring-2 ring-purple-400/30
-    transition-transform duration-200
-    fixed bottom-0 right-2 sm:right-4
-
-  "
-  aria-label="Create Post"
->
-  <Plus className="w-5 h-5 sm:w-7 sm:h-7" />
-</button>
-
-            </div>
+        <>
+            <style dangerouslySetInnerHTML={{__html: `
+                @media (min-width: 768px) {
+                    main { padding-top: 0 !important; }
+                    main > div { padding-left: 0 !important; padding-right: 0 !important; max-width: none !important; height: 100%; }
+                }
+            `}} />
+            <div
+                className="fixed inset-0 z-[100] bg-bg-4 md:relative md:inset-auto md:z-auto md:h-[calc(100vh-64px)] md:bg-transparent text-text-2 flex flex-col overflow-hidden"
+                onClick={() => { if (menuOpenId) setMenuOpenId(null); }}
+            >
+            <div className="flex-1 overflow-y-auto" ref={scrollRef}>
 
             <ImagePreviewModal imageUrl={previewImageUrl} onClose={() => setPreviewImageUrl(null)} />
 
@@ -2441,105 +2715,395 @@ React.useEffect(() => {
 
             <div
                 ref={topRef}
-                className="flex items-center justify-between px-4 pt-0 pb-4 bg-[#0d0d0d] border-b border-gray-800"
+                className="sticky top-0 z-40 flex items-center justify-between px-4 py-2 bg-bg-2 cursor-pointer shadow-sm"
             >
-
-                <ArrowLeft className="w-6 h-6 cursor-pointer text-gray-400 hover:text-white" onClick={handleGoBack} /> 
-                <div className="flex-1 text-center" />
-                <Search className="w-6 h-6 cursor-pointer text-gray-400 hover:text-white" onClick={() => setSearchShown(!searchShown)} />
+                <div className="flex items-center gap-3">
+                    <ArrowLeft className="w-6 h-6 cursor-pointer text-[#aebac1]" onClick={handleGoBack} /> 
+                    {(communityInfo.iconUrl || communityInfo.image) ? (
+                        <img 
+                            src={communityInfo.iconUrl || communityInfo.image} 
+                            alt={communityInfo.name} 
+                            className="w-10 h-10 rounded-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-10 h-10 rounded-full bg-[#005c4b] flex items-center justify-center text-text-1 font-bold text-lg">
+                            {communityInfo.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                    )}
+                    <div className="flex flex-col">
+                        <span className="font-semibold text-base text-text-2">{communityInfo.name}</span>
+                        <span className="text-xs text-text-3">
+                            {communityInfo.membersCount || 0} participants
+                        </span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4 text-[#aebac1]">
+                    <UserPlus className="w-5 h-5 cursor-pointer hover:text-[#c084fc] transition-colors" onClick={(e) => { e.stopPropagation(); handleCommunityInvite(); }} title="Invite Friends" />
+                    <Search className="w-5 h-5 cursor-pointer hover:text-text-1 transition-colors" onClick={(e) => { e.stopPropagation(); setSearchShown(!searchShown); }} title="Search" />
+                </div>
             </div>
 
             {searchShown && (
-                <div className="p-4 bg-[#0d0d0d] border-b border-gray-800">
-                    <input
-                        className="w-full bg-gray-800 px-4 py-2 rounded-full text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-purple-600"
-                        placeholder="Search posts..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="px-4 py-3 bg-bg-4 border-b border-border-2 flex items-center gap-3 shadow-sm animate-in slide-in-from-top-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-4" />
+                        <input
+                            className="w-full bg-bg-3 pl-10 pr-4 py-2 rounded-full text-text-2 placeholder-gray-500 outline-none text-sm border border-border-1 focus:border-[#a855f7] transition-colors"
+                            placeholder="Search messages..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            autoFocus
+                        />
+                    </div>
+                    <button onClick={() => { setSearchShown(false); setSearchTerm(""); }} className="text-sm font-medium text-text-3 hover:text-text-1">Cancel</button>
                 </div>
             )}
-         <CommunityHeader
-  community={communityInfo}
-  onCreatePost={(type = "post") => {
-    
-    if (type === "quiz") {
-      router.push(`/groups/${communityInfo.slug}/quiz/create`);
-      return;
-    }
 
-    // normal postonSelect("quiz");
-
-    setPostType("post");
-    setIsModalOpen(true);
-  }}
-  isAdmin={isAdmin}
-  canDeleteCommunity={canDeleteCommunity}
-  onDeleteCommunity={handleDeleteCommunityClick}
-/>
-            <FilterBar selected={activeFilter} setActiveFilter={setActiveFilter} eventsCount={eventsInCategory.length} />
-
-            <div className="pt-4 pb-12">
-                {activeFilter === "Events" ? (
-                    <div className="max-w-4xl mx-auto">
-                        <div className="px-4">
-                            <h2 className="text-2xl font-bold mb-4">Events in {communityInfo.category || communityInfo.name}</h2>
+            {pinnedPostId && sortedAndFilteredPosts.find(p => p.id === pinnedPostId) && (
+                <div className="bg-bg-3 border-b border-border-2 px-4 py-2 flex items-center justify-between cursor-pointer sticky top-0 z-30 shadow-md" onClick={() => {
+                    const el = document.getElementById(`msg-${pinnedPostId}`);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}>
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <Pin className="w-[14px] h-[14px] text-text-3 shrink-0" />
+                        <div className="truncate text-[14px]">
+                            <span className="font-semibold text-[#a855f7] mr-1">
+                                {sortedAndFilteredPosts.find(p => p.id === pinnedPostId).authorEmail === currentUserEmail ? 'You:' : (sortedAndFilteredPosts.find(p => p.id === pinnedPostId).authorName || sortedAndFilteredPosts.find(p => p.id === pinnedPostId).author) + ':'}
+                            </span>
+                            <span className="text-text-2">{sortedAndFilteredPosts.find(p => p.id === pinnedPostId).content || sortedAndFilteredPosts.find(p => p.id === pinnedPostId).title}</span>
                         </div>
-
-                        {eventsInCategory.length === 0 ? (
-                            <div className="p-8 text-center text-gray-500">No events found for this category.</div>
-                        ) : (
-                            <div className="bg-[#0d0d0d] divide-y divide-gray-800 rounded-lg overflow-hidden">
-                                {eventsInCategory.map((ev) => (
-                                    <EventListItem key={ev.id} event={ev} onOpenDetails={handleOpenEventDetails} />
-                                ))}
-                            </div>
-                        )}
                     </div>
-                ) : (
-                    <>
-                        {sortedAndFilteredPosts.map((p) => {
-                            const canDeleteSelf = !!currentUserEmail && p.authorEmail && p.authorEmail === currentUserEmail;
-                            return (
-                                <PostCard
-                                    key={p.id}
-                                    post={p}
-                                    openMenuId={openMenuId}
-                                    onToggleMenu={setOpenMenuId}
-                                    onCommentsClick={(post) => setSelectedPost(post)}
-                                    onImageClick={setPreviewImageUrl}
-                                    onHidePost={handleHidePost}
-                                    onReport={handleReportPost}
-                                    isAdmin={isAdmin}
-                                    onAdminRemove={handleAdminRemovePost}
-                                    canDeleteSelf={canDeleteSelf}
-                                    onDeleteSelf={(postId) => handleAdminRemovePost(postId)}
-                                   onAuthorClick={(email) => {
-  setSelectedProfileEmail(email);
-  loadProfileByEmail(email); // ✅ ENSURE data
-}}
+                </div>
+            )}
 
-                         currentUserAvatar={currentUserAvatar}
-                                    currentUserEmail={currentUserEmail}
-                                    currentUserDisplayName={currentUserDisplayName}
-                                    onVote={vote}
-                                />
+            <div className="flex flex-col gap-2 p-4 min-h-full">
+                {postsLoading ? (
+                    <div className="flex justify-center p-8"><span className="w-8 h-8 rounded-full border-4 border-[#a855f7] border-t-transparent animate-spin"></span></div>
+                ) : sortedAndFilteredPosts.length === 0 ? (
+                    <div className="p-8 text-center text-text-4">No messages yet. Start the conversation!</div>
+                ) : (
+                    <div className="space-y-4">
+                        {sortedAndFilteredPosts.slice().map((p, index) => {
+                            const isNearBottom = index >= sortedAndFilteredPosts.length - 2;
+                            const dropdownPositionClass = isNearBottom ? "bottom-6" : "top-6";
+                            const isSelf = !!currentUserEmail && p.authorEmail === currentUserEmail;
+                            const timeStr = p.createdAtMs ? new Date(p.createdAtMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : p.time;
+                            
+                            let displayContent = p.content || p.title;
+                            let replyData = null;
+                            if (p.content && p.content.startsWith('{"isReply":true')) {
+                                try {
+                                    const parsed = JSON.parse(p.content);
+                                    replyData = parsed;
+                                    displayContent = parsed.text;
+                                } catch(e) {}
+                            }
+                            p.displayContent = displayContent; // save for replying to this later
+
+                            const isMenuOpen = menuOpenId === p.id;
+
+                            return (
+                                <div key={p.id} id={`msg-${p.id}`} className={`flex ${isSelf ? 'justify-end' : 'justify-start'} group relative ${isMenuOpen ? 'z-50' : 'z-0'}`}>
+                                    {!isSelf && (
+                                        <Avatar 
+                                            src={p.authorImage || p.authorAvatar} 
+                                            alt={p.authorName || p.author}
+                                            size={32}
+                                            className="mr-2 self-end mb-1 cursor-pointer"
+                                            onClick={() => { setSelectedProfileEmail(p.authorEmail); loadProfileByEmail(p.authorEmail); }}
+                                        />
+                                    )}
+                                    <div className={`max-w-[85%] md:max-w-[70%] rounded-lg p-2 px-3 shadow-sm relative ${isSelf ? 'bg-bg-3 text-text-2 rounded-tr-none' : 'bg-bg-2 text-text-2 rounded-tl-none'}`}>
+                                        {!isSelf && <div className="text-[13px] font-semibold text-[#53bdeb] mb-0.5">{p.authorName || p.author}</div>}
+                                        
+                                        {pinnedPostId === p.id && (
+                                            <div className="absolute top-2 right-2 text-text-3">
+                                                <Pin className="w-3 h-3" />
+                                            </div>
+                                        )}
+
+                                        {/* Hover Chevron */}
+                                        <div 
+                                            className={`absolute top-1 right-2 ${isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} cursor-pointer text-text-3 hover:text-text-1 transition-opacity z-10 bg-gradient-to-l from-[#2a2a2a] to-transparent pl-2`}
+                                            style={!isSelf ? { backgroundImage: 'linear-gradient(to left, #111111 50%, transparent)' } : {}}
+                                            onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === p.id ? null : p.id); }}
+                                        >
+                                            <svg viewBox="0 0 19 20" width="19" height="20" className="fill-current"><path d="M3.8 6.7l5.7 5.7 5.7-5.7 1.6 1.6-7.3 7.2-7.3-7.2 1.6-1.6z"></path></svg>
+                                        </div>
+                                        
+                                        {/* Dropdown Menu */}
+                                        {menuOpenId === p.id && (
+                                            <div className={`absolute ${dropdownPositionClass} ${isSelf ? 'right-2' : 'left-[calc(100%-28px)]'} z-50 bg-[#121212] rounded-xl shadow-2xl py-2 w-52 border border-[#222] overflow-hidden flex flex-col`}>
+                                                <div className="flex items-center justify-around px-3 py-2 mb-1 border-b border-[#222]">
+                                                    {["👍", "❤️", "😂", "😮", "😢", "🙏"].map(emoji => (
+                                                        <span 
+                                                            key={emoji} 
+                                                            onClick={(e) => { e.stopPropagation(); handleReact(p.id, emoji); setMenuOpenId(null); }}
+                                                            className="text-xl cursor-pointer hover:scale-125 transition-transform"
+                                                        >
+                                                            {emoji}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                                <div 
+                                                    className="px-4 py-2.5 hover:bg-bg-3 cursor-pointer text-[14px] font-medium text-text-2 transition-colors flex items-center gap-4"
+                                                    onClick={(e) => { e.stopPropagation(); setReplyToMsg(p); setMenuOpenId(null); }}
+                                                >
+                                                    <CornerUpLeft className="w-[18px] h-[18px] text-text-3" />
+                                                    Reply
+                                                </div>
+                                                <div 
+                                                    className="px-4 py-2.5 hover:bg-bg-3 cursor-pointer text-[14px] font-medium text-text-2 transition-colors flex items-center gap-4"
+                                                    onClick={(e) => { e.stopPropagation(); setPinnedPostId(pinnedPostId === p.id ? null : p.id); setMenuOpenId(null); }}
+                                                >
+                                                    <Pin className="w-[18px] h-[18px] text-text-3" />
+                                                    {pinnedPostId === p.id ? 'Unpin' : 'Pin'}
+                                                </div>
+                                                {!isSelf && (
+                                                    <div 
+                                                        className="px-4 py-2.5 hover:bg-bg-3 cursor-pointer text-[14px] font-medium text-text-2 transition-colors flex items-center gap-4"
+                                                        onClick={(e) => { e.stopPropagation(); handleReportPost(p, "Reported via chat menu"); setMenuOpenId(null); }}
+                                                    >
+                                                        <ThumbsDown className="w-[18px] h-[18px] text-text-3" />
+                                                        Report
+                                                    </div>
+                                                )}
+                                                {(isSelf || isAdmin) && (
+                                                    <div 
+                                                        className="px-4 py-2.5 hover:bg-bg-3 cursor-pointer text-[14px] font-medium text-text-2 transition-colors flex items-center gap-4"
+                                                        onClick={(e) => { e.stopPropagation(); handleDeletePost(p.id); setMenuOpenId(null); }}
+                                                    >
+                                                        <Trash2 className="w-[18px] h-[18px] text-text-3" />
+                                                        Delete
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Reply Quote Box */}
+                                        {replyData && (
+                                            <div className={`mb-1 p-2 rounded bg-black/20 border-l-4 ${isSelf ? 'border-[#53bdeb]' : 'border-[#a855f7]'}`}>
+                                                <div className={`text-[12px] font-semibold ${isSelf ? 'text-[#53bdeb]' : 'text-[#a855f7]'} mb-0.5`}>{replyData.replyAuthor}</div>
+                                                <div className="text-[13px] text-text-2 opacity-80 truncate">{replyData.replyText}</div>
+                                            </div>
+                                        )}
+
+                                        {p.imageUrl && (
+                                            <img src={p.imageUrl} alt="attached" className="rounded-lg mb-1 max-h-60 object-contain cursor-pointer" onClick={() => setPreviewImageUrl(p.imageUrl)} />
+                                        )}
+                                        {p.poll ? (
+                                            <div className="min-w-[200px] sm:min-w-[250px] mb-2 pb-2 pr-12 relative z-0">
+                                                <div className="font-bold text-[15px] mb-3 flex items-start gap-2">
+                                                    <BarChart2 className="w-5 h-5 text-[#a855f7] shrink-0 mt-0.5" />
+                                                    {p.poll.question}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {p.poll.options.map((opt, i) => {
+                                                        const totalVotes = p.poll.options.reduce((sum, o) => sum + (o.votes?.length || 0), 0);
+                                                        const voteCount = opt.votes?.length || 0;
+                                                        const percent = totalVotes === 0 ? 0 : Math.round((voteCount / totalVotes) * 100);
+                                                        const currentUserEmailLocal = currentUserEmail || getCurrentUserEmail();
+                                                        const hasVoted = opt.votes?.includes(currentUserEmailLocal);
+
+                                                        return (
+                                                            <div 
+                                                                key={i} 
+                                                                onClick={(e) => { e.stopPropagation(); handleVotePoll(p.id, i); }}
+                                                                className="relative bg-black/20 rounded-md overflow-hidden cursor-pointer hover:bg-black/30 transition-colors border border-border-1"
+                                                            >
+                                                                <div 
+                                                                    className="absolute top-0 left-0 bottom-0 bg-[#c084fc]/30 transition-all duration-500"
+                                                                    style={{ width: `${percent}%` }}
+                                                                />
+                                                                <div className="relative px-3 py-2 flex justify-between items-center z-10">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className={`w-3 h-3 rounded-full border border-gray-400 flex items-center justify-center shrink-0 ${hasVoted ? 'bg-[#c084fc] border-[#a855f7]' : ''}`}>
+                                                                            {hasVoted && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                                                        </div>
+                                                                        <span className="text-[14px]">{opt.text}</span>
+                                                                    </div>
+                                                                    {totalVotes > 0 && <span className="text-[12px] text-text-2 font-medium">{percent}%</span>}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="whitespace-pre-wrap text-[14.2px] leading-snug break-words pb-2 pr-16 relative z-0">
+                                                {renderTextWithLinks(displayContent)}
+                                            </p>
+                                        )}
+
+                                        {p.reactions && p.reactions.length > 0 && (
+                                            <div className="mt-1 flex flex-wrap gap-1 pr-14 relative z-10">
+                                                {p.reactions.map((r, idx) => {
+                                                    const currentUserEmailLocal = currentUserEmail || getCurrentUserEmail();
+                                                    const hasReacted = r.users.includes(currentUserEmailLocal);
+                                                    return (
+                                                        <div 
+                                                            key={idx} 
+                                                            onClick={(e) => { e.stopPropagation(); handleReact(p.id, r.emoji); }}
+                                                            className={`bg-black/30 rounded-full px-1.5 py-0.5 flex items-center gap-1 cursor-pointer hover:bg-black/50 text-[11px] ${hasReacted ? 'border border-[#a855f7]' : 'border border-transparent'}`}
+                                                        >
+                                                            <span>{r.emoji}</span>
+                                                            <span className="text-text-3 font-medium">{r.users.length}</span>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+                                        <div className="absolute bottom-1 right-2 flex items-center gap-1 z-0">
+                                            <span className="text-[11px] text-text-3">{timeStr}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             );
                         })}
-
-                        {postsLoading ? (
-    <div className="p-8 text-center text-gray-500">
-        Loading posts...
-    </div>
-) : sortedAndFilteredPosts.length === 0 ? (
-    <div className="p-8 text-center text-gray-500">
-        No posts yet. Be the first to post 🚀
-    </div>
-) : null}
-
-                    </>
+                        <div ref={chatEndRef} />
+                    </div>
                 )}
             </div>
+            </div> {/* End of scrollable area */}
+            
+            {/* STICKY CHAT INPUT */}
+            <div className="flex-none bg-bg-2 z-50 relative">
+                {selectedImagePreview && (
+                    <div className="bg-bg-2 px-4 py-2 border-b border-border-3 relative flex justify-center">
+                        <img src={selectedImagePreview} alt="Preview" className="h-24 object-contain rounded border border-border-1" />
+                        <button onClick={handleClearImage} className="absolute top-3 right-4 bg-black/60 p-1 rounded-full text-text-1 hover:bg-black/80">
+                            <svg viewBox="0 0 24 24" width="18" height="18" className="fill-current"><path d="M19.1 17.2l-5.3-5.3 5.3-5.3-1.8-1.8-5.3 5.3-5.3-5.3-1.8 1.8 5.3 5.3-5.3 5.3 1.8 1.8 5.3-5.3 5.3 5.3z"></path></svg>
+                        </button>
+                    </div>
+                )}
+                {replyToMsg && (
+                    <div className="bg-bg-2 border-b border-border-3">
+                        <div className="max-w-4xl mx-auto w-full px-4 py-2 flex items-center justify-between">
+                            <div className="flex-1 border-l-4 border-[#a855f7] bg-bg-3 rounded p-2 mr-4 min-w-0">
+                                <div className="text-[13px] font-semibold text-[#a855f7] mb-0.5">{replyToMsg.authorName || replyToMsg.author}</div>
+                                <div className="text-[13px] text-text-2 truncate">{replyToMsg.displayContent}</div>
+                            </div>
+                            <button onClick={() => setReplyToMsg(null)} className="text-text-3 hover:text-[#d1d7db] p-1 flex-shrink-0">
+                                <svg viewBox="0 0 24 24" width="24" height="24" className="fill-current"><path d="M19.1 17.2l-5.3-5.3 5.3-5.3-1.8-1.8-5.3 5.3-5.3-5.3-1.8 1.8 5.3 5.3-5.3 5.3 1.8 1.8 5.3-5.3 5.3 5.3z"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                )}
+                <div className="flex items-end gap-2 max-w-4xl mx-auto w-full px-2 py-2.5">
+                    <div className="flex items-center gap-1 shrink-0 pb-1.5 pl-1">
+                        <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageSelect} />
+                        <button onClick={() => fileInputRef.current?.click()} className="p-1.5 text-text-3 hover:text-[#d1d7db] transition-colors">
+                            <ImageIcon className="w-6 h-6" />
+                        </button>
+                        <button onClick={() => setIsPollModalOpen(true)} className="p-1.5 text-text-3 hover:text-[#d1d7db] transition-colors" title="Create Poll">
+                            <BarChart2 className="w-6 h-6" />
+                        </button>
+                    </div>
+                    <textarea 
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSendChat();
+                            }
+                        }}
+                        placeholder="Type a message"
+                        className="flex-1 bg-bg-3 border border-border-1 text-text-2 rounded-lg px-4 py-2.5 min-h-[44px] max-h-32 outline-none resize-none overflow-y-auto text-[15px]"
+                        rows="1"
+                    />
+                    <button 
+                        onClick={handleSendChat}
+                        disabled={!chatInput.trim()}
+                        className={`p-2 rounded-full transition-colors flex items-center justify-center w-11 h-11 shrink-0 ${chatInput.trim() ? 'bg-[#c084fc] text-[#111b21] hover:bg-[#a855f7]' : 'bg-transparent text-text-3'}`}
+                    >
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                            <path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
+        {/* Poll Modal */}
+        {isPollModalOpen && (
+            <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
+                <div className="bg-bg-2 border border-border-1 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
+                    <button onClick={() => setIsPollModalOpen(false)} className="absolute top-4 right-4 text-text-3 hover:text-[#d1d7db]">
+                        <X className="w-6 h-6" />
+                    </button>
+                    <h2 className="text-xl font-bold text-text-2 mb-6">Create Poll</h2>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-text-3 mb-2">Question</label>
+                            <input 
+                                type="text" 
+                                value={pollQuestion}
+                                onChange={(e) => setPollQuestion(e.target.value)}
+                                className="w-full bg-bg-3 border border-border-1 rounded-lg px-4 py-2.5 text-text-2 outline-none focus:border-[#a855f7]"
+                                placeholder="Ask a question..."
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-text-3 mb-2">Options</label>
+                            <div className="space-y-3">
+                                {pollOptions.map((opt, i) => (
+                                    <div key={i} className="flex gap-2">
+                                        <input 
+                                            type="text" 
+                                            value={opt}
+                                            onChange={(e) => {
+                                                const newOpts = [...pollOptions];
+                                                newOpts[i] = e.target.value;
+                                                setPollOptions(newOpts);
+                                            }}
+                                            className="flex-1 bg-bg-3 border border-border-1 rounded-lg px-4 py-2.5 text-text-2 outline-none focus:border-[#a855f7]"
+                                            placeholder={`Option ${i + 1}`}
+                                        />
+                                        {pollOptions.length > 2 && (
+                                            <button onClick={() => setPollOptions(pollOptions.filter((_, idx) => idx !== i))} className="p-2 text-red-400 hover:text-red-300">
+                                                <X className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            {pollOptions.length < 10 && (
+                                <button 
+                                    onClick={() => setPollOptions([...pollOptions, ""])}
+                                    className="mt-3 text-sm text-[#a855f7] hover:text-purple-400 font-medium flex items-center gap-1"
+                                >
+                                    <Plus className="w-4 h-4" /> Add Option
+                                </button>
+                            )}
+                            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border-1">
+                                <input
+                                    type="checkbox"
+                                    id="multiSelectToggle"
+                                    checked={isMultiSelect}
+                                    onChange={(e) => setIsMultiSelect(e.target.checked)}
+                                    className="w-4 h-4 rounded border-border-1 accent-[#c084fc] bg-bg-3 cursor-pointer"
+                                />
+                                <label htmlFor="multiSelectToggle" className="text-sm text-text-3 select-none cursor-pointer hover:text-[#d1d7db] transition-colors">
+                                    Allow multiple answers
+                                </label>
+                            </div>
+                        </div>
+                        <div className="pt-4 flex justify-end gap-3">
+                            <button onClick={() => setIsPollModalOpen(false)} className="px-5 py-2 text-text-2 hover:bg-bg-3 rounded-full font-medium transition-colors">
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleCreatePoll}
+                                disabled={!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2}
+                                className="px-5 py-2 bg-[#c084fc] text-[#111b21] rounded-full font-bold hover:bg-[#a855f7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Send Poll
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 }

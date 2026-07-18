@@ -83,6 +83,32 @@ const PostSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    
+    /* ------------------------------------
+       REACTIONS & POLLS
+    ------------------------------------ */
+    reactions: {
+      type: [
+        {
+          emoji: String,
+          users: [String], // Array of user emails
+        }
+      ],
+      default: [],
+    },
+    poll: {
+      type: {
+        question: String,
+        isMultiSelect: { type: Boolean, default: false },
+        options: [
+          {
+            text: String,
+            votes: [String], // Array of user emails
+          }
+        ],
+      },
+      default: null,
+    },
 
     /* ------------------------------------
        SOFT DELETE

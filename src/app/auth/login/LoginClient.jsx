@@ -85,7 +85,7 @@ window.location.href = redirect || "/";
   };
 
   return (
-    <main className="fixed inset-0 bg-black text-white overflow-hidden">
+    <main className="fixed inset-0 bg-bg-1 text-text-1 overflow-hidden">
       {/* BACKGROUND */}
       <img
   src="/website bg.png"
@@ -119,7 +119,7 @@ window.location.href = redirect || "/";
             <h1 className="text-4xl font-semibold">
               Welcome Back
             </h1>
-            <p className="mt-2 text-gray-400 text-sm">
+            <p className="mt-2 text-text-3 text-sm">
               Sign in to continue
             </p>
 
@@ -134,7 +134,7 @@ window.location.href = redirect || "/";
               />
             </div>
 
-            <div className="my-5 text-center text-xs text-gray-400">OR</div>
+            <div className="my-5 text-center text-xs text-text-3">OR</div>
 
             {/* FORM */}
             <form onSubmit={handleLogin} className="space-y-4">
@@ -143,8 +143,8 @@ window.location.href = redirect || "/";
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-full bg-[#2a2a2a]
-                           px-5 py-3 text-sm text-white
+                className="w-full rounded-full bg-bg-3
+                           px-5 py-3 text-sm text-text-1
                            placeholder-gray-400 outline-none"
               />
 
@@ -153,8 +153,8 @@ window.location.href = redirect || "/";
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-full bg-[#2a2a2a]
-                           px-5 py-3 text-sm text-white
+                className="w-full rounded-full bg-bg-3
+                           px-5 py-3 text-sm text-text-1
                            placeholder-gray-400 outline-none"
               />
 
@@ -165,7 +165,7 @@ window.location.href = redirect || "/";
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full py-3 font-medium text-white
+                className="w-full rounded-full py-3 font-medium text-text-1
                            bg-gradient-to-r from-[#8B5CF6] to-[#5AC8FA]
                            hover:opacity-90 transition"
               >
@@ -173,7 +173,7 @@ window.location.href = redirect || "/";
               </button>
             </form>
 
-            <p className="mt-5 text-center text-xs text-gray-400">
+            <p className="mt-5 text-center text-xs text-text-3">
               Don’t have an account?{" "}
               <Link href="/auth/register" className="text-blue-400">
                 Sign Up

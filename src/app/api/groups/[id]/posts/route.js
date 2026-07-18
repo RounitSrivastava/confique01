@@ -42,7 +42,8 @@ export async function GET(req, context) {
   await dbConnect();
 
   try {
-    const { id: groupId } = context.params;
+    const params = await context.params;
+    const { id: groupId } = params;
 
     if (!mongoose.Types.ObjectId.isValid(groupId)) {
       return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
@@ -57,7 +58,7 @@ export async function GET(req, context) {
         path: "author",
         select: "name username avatar email",
       })
-      .select("title content imageUrl author upvotes commentsCount createdAt")
+      .select("title content imageUrl author upvotes commentsCount reactions poll createdAt")
       .lean();
 
     const postIds = posts.map((p) => p._id);
@@ -80,6 +81,8 @@ export async function GET(req, context) {
 
         upvotes: post.upvotes || 0,
         commentsCount: post.commentsCount || 0,
+        reactions: post.reactions || [],
+        poll: post.poll || null,
         userVote: userVotesMap[postId] || 0,
         createdAt: post.createdAt,
 
@@ -107,7 +110,8 @@ export async function POST(req, context) {
   await dbConnect();
 
   try {
-    const { id: groupId } = context.params;
+    const params = await context.params;
+    const { id: groupId } = params;
 
     if (!mongoose.Types.ObjectId.isValid(groupId)) {
       return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
@@ -119,7 +123,7 @@ export async function POST(req, context) {
     }
 
     // 🔥 image uploaded here and stored in Cloudinary
-    const { title, content, imageBase64 } = await req.json();
+    const { title, content, imageBase64, poll } = await req.json();
 
     if (!title?.trim()) {
       return NextResponse.json(
@@ -175,6 +179,7 @@ if (imageBase64) {
   group: group._id,
   title,
   content,
+  poll: poll ? { ...poll, isMultiSelect: poll.isMultiSelect || false } : null,
   imageUrl,
   imagePublicId, // 🔥 REQUIRED for delete route
   author: user._id,
@@ -203,6 +208,8 @@ if (imageBase64) {
 
           upvotes: 1,
           commentsCount: 0,
+          reactions: [],
+          poll: post.poll || null,
           userVote: 1,
           createdAt: post.createdAt,
           isAuthor: true,

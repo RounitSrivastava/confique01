@@ -3,11 +3,15 @@ export const dynamic = "force-dynamic";
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { GoogleLogin } from "@react-oauth/google";
 
 const CREDENTIALS = "include";
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams();
+  const refCode = searchParams ? searchParams.get("ref") : null;
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -73,6 +77,7 @@ export default function RegisterPage() {
           name: form.name.trim(),
           email: form.email.trim(),
           password: form.password,
+          ref: refCode,
         }),
       });
 
@@ -84,7 +89,12 @@ export default function RegisterPage() {
         return;
       }
 
-      window.location.href = "/";
+      const cId = searchParams ? searchParams.get("c") : null;
+      if (cId) {
+        window.location.href = `/groups?c=${cId}`;
+      } else {
+        window.location.href = "/";
+      }
     } catch {
       setError("Something went wrong");
       setLoading(false);
@@ -92,7 +102,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="relative min-h-screen bg-black text-white overflow-hidden">
+    <main className="relative min-h-screen bg-bg-1 text-text-1 overflow-hidden">
       {/* BACKGROUND */}
       <img
         src="/website bg.png"
@@ -123,7 +133,7 @@ export default function RegisterPage() {
             "
           >
             {/* SUBTITLE ONLY */}
-            <p className="mb-4 text-gray-400 text-sm">
+            <p className="mb-4 text-text-3 text-sm">
               Sign up to get started
             </p>
 
@@ -138,7 +148,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div className="my-5 text-center text-xs text-gray-400">OR</div>
+            <div className="my-5 text-center text-xs text-text-3">OR</div>
 
             {/* FORM */}
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -148,8 +158,8 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 type="text"
                 placeholder="Full Name"
-                className="w-full rounded-full bg-[#2a2a2a]
-                           px-5 py-3 text-sm text-white
+                className="w-full rounded-full bg-bg-3
+                           px-5 py-3 text-sm text-text-1
                            placeholder-gray-400 outline-none"
               />
 
@@ -159,8 +169,8 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 type="email"
                 placeholder="Email"
-                className="w-full rounded-full bg-[#2a2a2a]
-                           px-5 py-3 text-sm text-white
+                className="w-full rounded-full bg-bg-3
+                           px-5 py-3 text-sm text-text-1
                            placeholder-gray-400 outline-none"
               />
 
@@ -170,8 +180,8 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 type="password"
                 placeholder="Password"
-                className="w-full rounded-full bg-[#2a2a2a]
-                           px-5 py-3 text-sm text-white
+                className="w-full rounded-full bg-bg-3
+                           px-5 py-3 text-sm text-text-1
                            placeholder-gray-400 outline-none"
               />
 
@@ -181,12 +191,12 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 type="password"
                 placeholder="Confirm Password"
-                className="w-full rounded-full bg-[#2a2a2a]
-                           px-5 py-3 text-sm text-white
+                className="w-full rounded-full bg-bg-3
+                           px-5 py-3 text-sm text-text-1
                            placeholder-gray-400 outline-none"
               />
 
-              <label className="flex items-start gap-2 text-xs text-gray-300">
+              <label className="flex items-start gap-2 text-xs text-text-2">
                 <input
                   type="checkbox"
                   checked={agree}
@@ -208,7 +218,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full py-3 font-medium text-white
+                className="w-full rounded-full py-3 font-medium text-text-1
                            bg-gradient-to-r from-[#8B5CF6] to-[#5AC8FA]
                            hover:opacity-90 transition"
               >
@@ -216,7 +226,7 @@ export default function RegisterPage() {
               </button>
             </form>
 
-            <p className="mt-5 text-center text-xs text-gray-400">
+            <p className="mt-5 text-center text-xs text-text-3">
               Already have an account?{" "}
               <Link href="/auth/login" className="text-blue-400">
                 Log in

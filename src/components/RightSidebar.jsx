@@ -100,13 +100,13 @@ let list = [...storedAll];
   }
 
   return (
-    <aside className="hidden xl:flex w-[360px] shrink-0 border-l border-[#262626] bg-[#0d0d0d] overflow-y-auto">
+    <aside className="hidden xl:flex w-[360px] shrink-0 border-l border-border-2 bg-bg-4 overflow-y-auto">
       <div className="mx-auto w-full max-w-[340px] p-4 pb-10 space-y-6">
         
         {isSettingsPage ? (
-          <section className="rounded-2xl bg-[#101010] border border-[#262626] shadow-sm px-6 py-8 text-center">
-            <h2 className="text-xl font-bold text-white">Help & Support</h2>
-            <p className="text-sm text-gray-300 mt-4 leading-relaxed">
+          <section className="rounded-2xl bg-[#101010] border border-border-2 shadow-sm px-6 py-8 text-center">
+            <h2 className="text-xl font-bold text-text-1">Help & Support</h2>
+            <p className="text-sm text-text-2 mt-4 leading-relaxed">
               Facing any issue with <span className="font-semibold">Confique</span>?<br />
               Email us at:
             </p>
@@ -120,15 +120,15 @@ let list = [...storedAll];
           <>
             {/* Top Communities */}
             {topCommunities.length > 0 && (
-  <section className="rounded-xl bg-[#121212] border border-[#262626] shadow-sm">
-              <div className="px-4 py-3 border-b border-[#262626] text-sm font-medium text-white tracking-wide">Top Communities</div>
+  <section className="rounded-xl bg-[#121212] border border-border-2 shadow-sm">
+              <div className="px-4 py-3 border-b border-border-2 text-sm font-medium text-text-1 tracking-wide">Top Communities</div>
               <ul className="p-2">
                 {topCommunities.map((c, index) => (
                   <li key={c.id} onClick={() => handleCommunityClick(c)} className="px-3 py-2 rounded-lg hover:bg-[#111] transition flex items-start gap-2 cursor-pointer group">
-                    <span className="text-xs text-gray-500 mt-0.5">#{index + 1}</span>
+                    <span className="text-xs text-text-4 mt-0.5">#{index + 1}</span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-200 truncate group-hover:text-purple-400 transition-colors">{c.name}</p>
-                      <p className="text-xs text-gray-400 truncate">{c.members || `${c.membersCount} members`}</p>
+                      <p className="text-xs text-text-3 truncate">{c.members || `${c.membersCount} members`}</p>
                     </div>
                   </li>
                 ))}
@@ -137,8 +137,8 @@ let list = [...storedAll];
 )}
             {/* Popular Events Section */}
             {popularEvents.length > 0 && (
-  <section className="rounded-xl bg-[#121212] border border-[#262626] shadow-sm hover:bg-[#151515] transition-colors">
-              <div className="px-4 py-3 border-b border-[#262626] text-sm font-medium text-white tracking-wide"> Events</div>
+  <section className="rounded-xl bg-[#121212] border border-border-2 shadow-sm hover:bg-[#151515] transition-colors">
+              <div className="px-4 py-3 border-b border-border-2 text-sm font-medium text-text-1 tracking-wide"> Events</div>
               <ul className="p-2">
                 {popularEvents.map((e) => (
                   <li 
@@ -151,7 +151,7 @@ let list = [...storedAll];
                       {e.title}
                     </p>
                     {/* ✅ Tagline/Description: Single line with ellipsis */}
-                    <p className="text-xs text-gray-500 mt-0.5 truncate italic">
+                    <p className="text-xs text-text-4 mt-0.5 truncate italic">
                       {e.tagline}
                     </p>
                   </li>

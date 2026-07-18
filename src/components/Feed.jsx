@@ -147,7 +147,7 @@ const logoImg = c.iconUrl || null;
   return (
     <article
   onClick={() => isJoined && onOpen && onOpen(c)}
-className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-white/15 hover:border-white/30 cursor-pointer transition-all flex flex-col h-full ${className}`}
+className={`rounded-2xl overflow-hidden shadow-2xl bg-bg-4 border border-white/15 hover:border-white/30 cursor-pointer transition-all flex flex-col h-full ${className}`}
 
     >
       <div className="h-36 w-full overflow-hidden flex-shrink-0 rounded-t-2xl bg-gray-900">
@@ -174,7 +174,7 @@ className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-wh
 
   ) : (
     <div
-      className="w-full h-full flex items-center justify-center text-3xl font-bold text-white"
+      className="w-full h-full flex items-center justify-center text-3xl font-bold text-text-1"
       style={{ background: gradientStyle }}
     >
       {c.name?.charAt(0)}
@@ -184,16 +184,16 @@ className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-wh
 
 
       <div className="p-5 lg:px-4 lg:pt-3 lg:pb-3 flex flex-col h-full">
-        <h3 className="text-lg font-bold text-white">{c.name}</h3>
+        <h3 className="text-lg font-bold text-text-1">{c.name}</h3>
 
         <p
-  className="mt-1 text-sm text-gray-300 lg:text-xs flex-grow"
+  className="mt-1 text-sm text-text-2 lg:text-xs flex-grow"
   style={clampStyle}
 >
 
           {description}
         </p>
-        <p className="mt-3 lg:mt-2 text-sm lg:text-xs text-gray-400 font-medium">
+        <p className="mt-3 lg:mt-2 text-sm lg:text-xs text-text-3 font-medium">
   {c.members || (typeof c.membersCount === "number" ? `${c.membersCount.toLocaleString()} members` : "0 members")}
 </p>
 
@@ -208,7 +208,7 @@ className={`rounded-2xl overflow-hidden shadow-2xl bg-[#0d0d0d] border border-wh
         e.stopPropagation();
         onJoin(c);
       }}
-      className="px-3 py-1 text-xs font-semibold rounded-full bg-purple-600 hover:bg-purple-700 text-white"
+      className="px-3 py-1 text-xs font-semibold rounded-full bg-purple-600 hover:bg-purple-700 text-text-1"
     >
       Join
     </button>
@@ -242,20 +242,20 @@ function FeaturedEventSingle({ event, onViewDetails }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
 
           <div className="absolute left-6 top-6">
-            <span className="inline-block bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold text-sm px-3 py-1 rounded-full">
+            <span className="inline-block bg-gradient-to-r from-purple-500 to-violet-600 text-text-1 font-semibold text-sm px-3 py-1 rounded-full">
               Featured Event
             </span>
           </div>
 
           <div className="absolute left-1/2 transform -translate-x-1/2 bottom-6 w-[90%] sm:w-[78%] md:w-[70%] lg:w-[64%]">
-            <div className="bg-gradient-to-r from-[#0b0b0b]/80 to-[#0b0b0b]/70 border border-gray-800 rounded-xl p-5 shadow-xl">
-              <h3 className="text-xl md:text-2xl font-extrabold text-white leading-tight mb-2">{event.title}</h3>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-sm text-gray-300 mb-4">
+            <div className="bg-gradient-to-r from-[#0b0b0b]/80 to-[#0b0b0b]/70 border border-border-2 rounded-xl p-5 shadow-xl">
+              <h3 className="text-xl md:text-2xl font-extrabold text-text-1 leading-tight mb-2">{event.title}</h3>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-sm text-text-2 mb-4">
                 <div className="flex items-center gap-2">
-                  <CalendarIcon className="w-4 h-4 text-gray-300" />
+                  <CalendarIcon className="w-4 h-4 text-text-2" />
                   <span>{dateText}</span>
                 </div>
-                {locationText ? <div className="text-sm text-gray-400">• {locationText}</div> : null}
+                {locationText ? <div className="text-sm text-text-3">• {locationText}</div> : null}
               </div>
 
               <div className="flex items-center gap-6">
@@ -264,7 +264,7 @@ function FeaturedEventSingle({ event, onViewDetails }) {
                     e.stopPropagation();
                     onViewDetails && onViewDetails(event.id);
                   }}
-                  className="inline-flex items-center bg-gradient-to-r from-purple-600 to-violet-600 text-white font-semibold px-5 py-3 rounded-full"
+                  className="inline-flex items-center bg-gradient-to-r from-purple-600 to-violet-600 text-text-1 font-semibold px-5 py-3 rounded-full"
                 >
                   View Details →
                 </button>
@@ -388,7 +388,7 @@ function EventCard({ event, onOpen }) {
   return (
     <div
       onClick={() => onOpen(event.id)}
-      className="rounded-2xl overflow-hidden bg-[#0d0d0d] border border-white/10 hover:border-white/25 cursor-pointer transition shadow-lg"
+      className="rounded-2xl overflow-hidden bg-bg-4 border border-white/10 hover:border-white/25 cursor-pointer transition shadow-lg"
     >
       <div className="h-40 w-full overflow-hidden">
         <img
@@ -400,13 +400,13 @@ function EventCard({ event, onOpen }) {
       </div>
 
       <div className="p-4">
-        <p className="text-white font-semibold line-clamp-1">
+        <p className="text-text-1 font-semibold line-clamp-1">
           {event.title}
         </p>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-text-3 mt-1">
           {event.datetime}
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-text-4">
           {event.location}
         </p>
       </div>
@@ -418,7 +418,7 @@ function EventRow({ event, onOpen }) {
   return (
     <div
       onClick={() => onOpen(event.id)}
-      className="flex gap-4 p-4 rounded-xl bg-[#0d0d0d] border border-white/10 hover:border-white/25 cursor-pointer transition"
+      className="flex gap-4 p-4 rounded-xl bg-bg-4 border border-white/10 hover:border-white/25 cursor-pointer transition"
     >
       <img
         src={event.poster}
@@ -427,13 +427,13 @@ function EventRow({ event, onOpen }) {
       />
 
       <div className="flex flex-col flex-grow">
-        <p className="font-semibold text-white line-clamp-1">
+        <p className="font-semibold text-text-1 line-clamp-1">
           {event.title}
         </p>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-text-3 mt-1">
           {event.datetime}
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-text-4">
           {event.location}
         </p>
       </div>
@@ -553,19 +553,19 @@ React.useEffect(() => {
 const visibleCommunities = (communitiesState || []).slice(0, 3);
 
 return (
-  <div className="min-h-screen bg-[#0d0d0d]">
+  <div className="min-h-screen bg-bg-4">
 
  <div className="w-full py-4">
     <div className="mx-auto max-w-[1300px] px-4">
 
       <section className="pt-0 pb-8">
         <div className="mb-6">
-          <h2 className="text-3xl font-bold text-white">
+          <h2 className="text-3xl font-bold text-text-1">
   Communities
 </h2>
 
 
-          <p className="mt-1 text-sm text-gray-400 sm:mt-0 sm:text-right">
+          <p className="mt-1 text-sm text-text-3 sm:mt-0 sm:text-right">
             Discover communities you may like
           </p>
         </div>
@@ -614,7 +614,7 @@ return (
 
       {/* Featured events */}
       <div className="flex items-center justify-between mt-10 mb-3">
-        <h2 className="text-2xl font-extrabold text-white">Featured Events</h2>
+        <h2 className="text-2xl font-extrabold text-text-1">Featured Events</h2>
         <button
           onClick={() => router.push("/events")}
           className="text-sm text-purple-400 hover:text-purple-300"

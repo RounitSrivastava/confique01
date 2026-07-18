@@ -36,7 +36,6 @@ const buildUserPayload = (u, groups = { created: [], joined: [] }) => {
     const email = u.email || "";
     const name = u.name || "";
     const safeUsername = u.username || normalizeUsername(name) || deriveUsernameFromEmail(email);
-
     return {
         id: u._id.toString(),
         name,
@@ -47,6 +46,9 @@ const buildUserPayload = (u, groups = { created: [], joined: [] }) => {
         bio: u.bio || "",
         location: u.location || "",
         website: u.website || "",
+        referralCode: u.referralCode || "",
+        points: u.points || 0,
+        totalReferrals: u.totalReferrals || 0,
         createdGroups: groups.created,
         joinedGroups: groups.joined,
     };
@@ -93,6 +95,16 @@ export async function GET(req) {
                 { user: null, error: "User not found in database" },
                 { status: 401, headers: HEADERS }
             );
+        }
+
+        // Auto-generate referral code for existing users who don't have one
+        // ⚡ Fire-and-forget: don't block the response for this non-critical write
+        if (!user.referralCode) {
+            const crypto = require("crypto");
+            const newReferralCode = crypto.randomBytes(4).toString('hex');
+            user.referralCode = newReferralCode;
+            // Non-blocking update
+            UserModel.findByIdAndUpdate(user._id, { referralCode: newReferralCode }).catch(() => {});
         }
 
         // ... rest of your existing groups logic ...

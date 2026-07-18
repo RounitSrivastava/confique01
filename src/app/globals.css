@@ -11,6 +11,20 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  /* Restored missing custom colors */
+  --color-bg-1: #000000;
+  --color-bg-2: #050505;
+  --color-bg-3: #111111;
+  --color-bg-4: #0a0a0a;
+  
+  --color-border-1: #333333;
+  --color-border-2: #262626;
+  
+  --color-text-1: #ffffff;
+  --color-text-2: #a3a3a3;
+  --color-text-3: #737373;
+  --color-text-4: #525252;
 }
 
 /* Dark theme */

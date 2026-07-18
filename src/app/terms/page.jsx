@@ -13,19 +13,19 @@ const TermsPage = () => {
       <section className="mx-auto w-full max-w-4xl px-6 sm:px-10 py-20">
 
         <div className="mb-16">
-          <h1 className="text-5xl font-bold text-white tracking-tight mb-4">
+          <h1 className="text-5xl font-bold text-text-1 tracking-tight mb-4">
             Terms & Conditions
           </h1>
-          <p className="text-sm text-gray-400 max-w-2xl">
+          <p className="text-sm text-text-3 max-w-2xl">
             This document constitutes a legally binding agreement between you and Confique under the laws of India. By using this platform, you acknowledge that you have read, understood, and accepted these Terms in full.
           </p>
         </div>
 
         <div className="mb-16 border border-indigo-800 bg-indigo-950/40 rounded-lg p-6">
-          <h2 className="text-white font-semibold mb-3 uppercase tracking-wide">
+          <h2 className="text-text-1 font-semibold mb-3 uppercase tracking-wide">
             ⚠️ Extreme Legal Notice
           </h2>
-          <p className="text-sm text-gray-300 leading-7">
+          <p className="text-sm text-text-2 leading-7">
             Confique is only a technology platform. We do not organize, supervise, verify, control, or guarantee any communities, events, content, organizers, or users.  
             <br /><br />
             Every interaction, transaction, participation, or communication you engage in through Confique is undertaken entirely at your own risk.
@@ -35,7 +35,7 @@ const TermsPage = () => {
         <div className="space-y-16 text-sm leading-7">
 
           <section>
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               1. Acceptance & Legal Binding
             </h2>
             <p>
@@ -44,7 +44,7 @@ const TermsPage = () => {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               2. Eligibility & Capacity
             </h2>
             <p>
@@ -53,7 +53,7 @@ const TermsPage = () => {
           </section>
 
           <section className="border-l-4 border-indigo-700 pl-6">
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               3. Account Security & Absolute Responsibility
             </h2>
             <p>
@@ -62,7 +62,7 @@ const TermsPage = () => {
           </section>
 
           <section className="bg-zinc-950 border border-indigo-800 rounded-xl p-6">
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               ⚠️ Community Conduct & Zero Liability
             </h2>
             <p>
@@ -71,7 +71,7 @@ const TermsPage = () => {
           </section>
 
           <section className="border border-zinc-800 rounded-lg p-6 bg-zinc-900/40">
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               4. Events — Complete Assumption of Risk
             </h2>
             <p>
@@ -80,7 +80,7 @@ const TermsPage = () => {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               5. Content License
             </h2>
             <p>
@@ -89,7 +89,7 @@ const TermsPage = () => {
           </section>
 
           <section className="bg-indigo-950/30 border border-indigo-800 rounded-xl p-6">
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               ⚖️ Indian IT Act & Law Enforcement
             </h2>
             <p>
@@ -98,7 +98,7 @@ const TermsPage = () => {
           </section>
 
           <section className="border-l-4 border-indigo-700 pl-6">
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               6. Suspension & Termination
             </h2>
             <p>
@@ -107,7 +107,7 @@ const TermsPage = () => {
           </section>
 
           <section className="bg-indigo-950/30 border border-indigo-800 rounded-xl p-6">
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               7. Disclaimer & Liability
             </h2>
             <p>
@@ -116,7 +116,7 @@ const TermsPage = () => {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               8. Governing Law 🇮🇳
             </h2>
             <p>
@@ -125,11 +125,11 @@ const TermsPage = () => {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-text-1 mb-3">
               9. Contact
             </h2>
-            <p className="text-gray-400">
-              Legal inquiries: <span className="text-white">confique01@gmail.com</span>
+            <p className="text-text-3">
+              Legal inquiries: <span className="text-text-1">confique01@gmail.com</span>
             </p>
           </section>
 

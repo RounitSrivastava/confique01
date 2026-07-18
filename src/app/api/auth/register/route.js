@@ -19,7 +19,7 @@ export async function POST(req) {
       );
     }
 
-    const { name, email, password } = body || {};
+    const { name, email, password, ref } = body || {};
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Missing name/email/password" },
@@ -46,14 +46,38 @@ export async function POST(req) {
       name || normalizedEmail
     )}`;
 
+    // Generate unique referral code
+    const crypto = require("crypto");
+    const newReferralCode = crypto.randomBytes(4).toString('hex');
+
+    let referredBy = null;
+    let initialPoints = 0;
+
+    // Process referral if provided
+    if (ref) {
+      const inviter = await User.findOne({ referralCode: ref });
+      if (inviter) {
+        referredBy = inviter._id;
+        initialPoints = 75; // Reward for registering via invite
+
+        // Reward the inviter
+        inviter.points = (inviter.points || 0) + 150;
+        inviter.totalReferrals = (inviter.totalReferrals || 0) + 1;
+        await inviter.save();
+      }
+    }
+
     const user = await User.create({
       name: String(name).trim(),
       email: normalizedEmail,
       passwordHash: hashedPassword,
       avatar: defaultAvatar,
+      referralCode: newReferralCode,
+      referredBy,
+      points: initialPoints
     });
 
-    const token = createToken({
+    const token = await createToken({
       userId: String(user._id),
       email: user.email,
     });

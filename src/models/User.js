@@ -60,7 +60,13 @@ const UserSchema = new Schema(
     // ----------------------------
     bio: { type: String, trim: true, default: "" },
     location: { type: String, trim: true, default: "" },
-    website: { type: String, trim: true, default: "" },
+    // ----------------------------
+    // Referral & Rewards Fields
+    // ----------------------------
+    referralCode: { type: String, unique: true, sparse: true, index: true },
+    referredBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    points: { type: Number, default: 0 },
+    totalReferrals: { type: Number, default: 0 },
 
     // Communities
     createdGroups: [{ type: Schema.Types.ObjectId, ref: "Group" }],

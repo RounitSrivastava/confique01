@@ -55,13 +55,13 @@ export default function CreatePoll() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] text-white">
+    <div className="min-h-screen bg-bg-4 text-text-1">
 
       {/* Header */}
       <div className="flex items-center justify-center relative px-6 py-4 border-b border-white/10">
         <ArrowLeft
           onClick={() => router.back()}
-          className="absolute left-6 w-5 h-5 cursor-pointer text-gray-400 hover:text-white"
+          className="absolute left-6 w-5 h-5 cursor-pointer text-text-3 hover:text-text-1"
         />
         <h1 className="font-semibold text-lg">Create Poll</h1>
       </div>
@@ -70,7 +70,7 @@ export default function CreatePoll() {
       <div className="max-w-2xl mx-auto px-6 pt-8 pb-16">
 
         {/* Question */}
-        <label className="text-sm text-gray-400">Poll Question</label>
+        <label className="text-sm text-text-3">Poll Question</label>
         <textarea
           rows={3}
           maxLength={120}
@@ -80,13 +80,13 @@ export default function CreatePoll() {
           className="mt-2 w-full bg-gray-900 border border-white/10 rounded-xl p-4 text-lg resize-none outline-none focus:ring-2 focus:ring-purple-600"
         />
 
-        <p className="text-xs text-gray-400 text-right mt-1">
+        <p className="text-xs text-text-3 text-right mt-1">
           {question.length}/120
         </p>
 
         {/* Options */}
         <div className="mt-8 space-y-3">
-          <label className="text-sm text-gray-400">Options</label>
+          <label className="text-sm text-text-3">Options</label>
 
           {options.map((o, i) => (
             <div
@@ -108,7 +108,7 @@ export default function CreatePoll() {
                 {options.length > 2 && (
                   <Trash2
                     onClick={() => removeOption(i)}
-                    className="w-4 h-4 text-gray-500 hover:text-red-500 cursor-pointer"
+                    className="w-4 h-4 text-text-4 hover:text-red-500 cursor-pointer"
                   />
                 )}
               </div>

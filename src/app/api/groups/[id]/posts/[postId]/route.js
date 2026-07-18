@@ -135,11 +135,12 @@ export async function DELETE(req, context) {
       );
     }
 
-    // Permission Logic: Author OR Community Owner can delete
+    // Permission Logic: Author OR Community Owner OR Global Admin can delete
     const isAuthor = post.author?.toString() === actor.id.toString();
     const isCommunityOwner = post.group?.ownerEmail?.toLowerCase() === actor.email?.toLowerCase();
+    const isGlobalAdmin = actor.email?.toLowerCase() === "confique01@gmail.com";
 
-    if (!isAuthor && !isCommunityOwner) {
+    if (!isAuthor && !isCommunityOwner && !isGlobalAdmin) {
       return NextResponse.json(
         { error: "Forbidden: You do not have permission to delete this post" },
         { status: 403 }

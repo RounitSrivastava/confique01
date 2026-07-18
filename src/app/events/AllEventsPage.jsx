@@ -18,8 +18,8 @@ const CategoryButton = ({ name, Icon, isActive, onClick }) => (
       text-sm font-medium rounded-full transition-all
       ${
         isActive
-          ? "bg-purple-600 text-white shadow-lg shadow-purple-500/50"
-          : "text-gray-300 bg-gray-800 hover:bg-gray-700 hover:text-white"
+          ? "bg-purple-600 text-text-1 shadow-lg shadow-purple-500/50"
+          : "text-text-2 bg-bg-3 hover:bg-gray-700 hover:text-text-1"
       }
       whitespace-nowrap
     `}
@@ -64,7 +64,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
                 tag.includes("Free")
                   ? "bg-green-500/90"
                   : "bg-gray-700/90"
-              } text-white`}
+              } text-text-1`}
             >
               {tag}
             </span>
@@ -80,7 +80,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
       {/* CONTENT */}
       <div className="p-4 flex flex-col">
         {/* META */}
-        <div className="flex justify-between text-xs text-gray-400 mb-1">
+        <div className="flex justify-between text-xs text-text-3 mb-1">
           <span className="flex items-center space-x-2">
             <span>
               {event.venue.includes("Online") ? "Online" : "On-site"}
@@ -100,7 +100,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
         <div className="flex justify-end mb-3">
           <button
             onClick={handleShare}
-            className="flex items-center text-xs text-gray-400 hover:text-purple-400 transition-colors"
+            className="flex items-center text-xs text-text-3 hover:text-purple-400 transition-colors"
             title="Share event"
           >
             <Share2 className="w-4 h-4 mr-1" />
@@ -109,12 +109,12 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
         </div>
 
         {/* TITLE */}
-        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-purple-300">
+        <h3 className="text-xl font-bold text-text-1 mb-2 line-clamp-2 group-hover:text-purple-300">
           {event.title}
         </h3>
 
         {/* VENUE */}
-        <p className="text-sm text-gray-400 flex items-center mb-4">
+        <p className="text-sm text-text-3 flex items-center mb-4">
           <MapPin className="w-4 h-4 mr-2 text-purple-400" />
           {event.venue.split("|").pop().trim()}
         </p>
@@ -186,13 +186,13 @@ const AllEventsPage = ({
         {/* SEARCH */}
         <div className="flex justify-center mb-8">
           <div className="relative w-64 sm:w-80 md:w-[28rem] lg:w-[32rem]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-3" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search..."
-              className="w-full py-2.5 pl-9 pr-3 rounded-md bg-gray-800 border border-gray-700 text-white text-sm"
+              className="w-full py-2.5 pl-9 pr-3 rounded-md bg-bg-3 border border-gray-700 text-text-1 text-sm"
             />
           </div>
         </div>
@@ -225,10 +225,10 @@ const AllEventsPage = ({
         ) : (
           <div className="text-center py-20 bg-gray-900 rounded-xl">
             <ZapOff className="w-12 h-12 mx-auto text-red-500 mb-4" />
-            <p className="text-xl text-white font-semibold">
+            <p className="text-xl text-text-1 font-semibold">
               No events found
             </p>
-            <p className="text-gray-400">
+            <p className="text-text-3">
               Try another category or search term.
             </p>
           </div>

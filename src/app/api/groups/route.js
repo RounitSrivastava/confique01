@@ -8,6 +8,10 @@ import { getCurrentUser } from "@/lib/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const GROUPS_CACHE_DURATION = 15; // seconds
+let groupsCache = null;
+let groupsCacheTime = 0;
+
 /* ======================================================
    Helper → Normalize Category (SINGLE SOURCE OF TRUTH)
 ====================================================== */
@@ -46,18 +50,27 @@ export async function GET() {
       }
     }
 
-    const groups = await Group.find()
-      .sort({ membersCount: -1 })
-      .lean();
+    // Use cached public groups list if fresh and user data unchanged
+    const now = Date.now();
+    let responseGroups;
+    if (groupsCache && (now - groupsCacheTime) < GROUPS_CACHE_DURATION * 1000) {
+      responseGroups = groupsCache;
+    } else {
+      const groups = await Group.find()
+        .select("_id name description category slug iconUrl bannerUrl members membersCount ownerEmail")
+        .sort({ membersCount: -1 })
+        .lean();
 
-    // ✅ Normalize category on READ (critical)
-    const responseGroups = groups.map((g) => ({
-      ...g,
-      id: g._id.toString(),
-      category: normalizeCategory(g.category),
-      membersCount: g.members?.length || 0,
-      members: undefined,
-    }));
+      responseGroups = groups.map((g) => ({
+        ...g,
+        id: g._id.toString(),
+        category: normalizeCategory(g.category),
+        membersCount: g.members?.length || 0,
+        members: undefined,
+      }));
+      groupsCache = responseGroups;
+      groupsCacheTime = now;
+    }
 
     return NextResponse.json({
       groups: responseGroups,

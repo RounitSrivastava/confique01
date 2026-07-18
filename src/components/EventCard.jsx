@@ -21,7 +21,7 @@ const EventCard = ({ event }) => {
         <p className="text-sm text-gray-600 mb-2">{event.description}</p>
 
         {/* Event Info */}
-        <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center justify-between text-xs text-text-4">
           <div className="flex items-center gap-1">
             <Calendar size={14} /> {event.date}
           </div>

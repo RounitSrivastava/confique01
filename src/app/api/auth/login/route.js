@@ -39,7 +39,7 @@ export async function POST(req) {
       .select("+passwordHash")
       .lean();
 
-    if (!user) {
+    if (!user || !user.passwordHash) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
@@ -80,7 +80,7 @@ export async function POST(req) {
   } catch (err) {
     console.error("LOGIN API ERROR:", err.message);
     return NextResponse.json(
-      { error: "Authentication failed" },
+      { error: "Authentication failed", details: err.message },
       { status: 500 }
     );
   }

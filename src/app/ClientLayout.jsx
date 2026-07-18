@@ -27,7 +27,7 @@ export default function ClientLayout({ children }) {
     const renderContent = () => {
       if (isAuthPage) {
         return (
-          <div className="min-h-screen w-full bg-[#0d0d0d] text-white">
+          <div className="min-h-screen w-full bg-bg-4 text-text-1">
             {children}
           </div>
         );
@@ -35,7 +35,7 @@ export default function ClientLayout({ children }) {
 
       if (isEventsPage) {
         return (
-          <div className="h-screen w-full bg-[#0d0d0d] text-white overflow-hidden">
+          <div className="h-screen w-full bg-bg-4 text-text-1 overflow-hidden">
             <main className="h-full w-full overflow-y-auto">
               {children}
             </main>
@@ -44,7 +44,7 @@ export default function ClientLayout({ children }) {
       }
 
       return (
-        <div className="h-screen w-full bg-[#0d0d0d] text-white overflow-hidden flex flex-col">
+        <div className="h-screen w-full bg-bg-4 text-text-1 overflow-hidden flex flex-col">
           <Topbar
             onToggleSidebar={() =>
               setSidebarOpen((prev) => !prev)

@@ -66,7 +66,7 @@
 //                   </h2>
 //                   <p className="text-sm text-gray-600 mt-1">{item.snippet}</p>
 //                 </div>
-//                 <p className="text-xs text-gray-400 mt-3">{item.date}</p>
+//                 <p className="text-xs text-text-3 mt-3">{item.date}</p>
 //               </div>
 //             </div>
 //           </div>

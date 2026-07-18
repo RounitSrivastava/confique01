@@ -130,8 +130,8 @@ const CategoryPill = ({ name, isSelected, onClick }) => (
       px-4 py-2 text-sm rounded-full whitespace-nowrap transition-all duration-200
       ${
         isSelected
-          ? "bg-purple-600 text-white shadow-[0_0_0_1px_rgba(168,85,247,0.6)]"
-          : "bg-[#1f1f1f] text-gray-300 border border-white/10 hover:bg-[#2a2a2a] hover:text-white"
+          ? "bg-purple-600 text-text-1 shadow-[0_0_0_1px_rgba(168,85,247,0.6)]"
+          : "bg-[#1f1f1f] text-text-2 border border-white/10 hover:bg-[#2a2a2a] hover:text-text-1"
       }
     `}
   >
@@ -149,7 +149,7 @@ const TrendingCard = ({ community, gradient, onNavigate, isJoined, onJoin }) => 
   className="w-40 min-h-[190px] flex-shrink-0 rounded-xl overflow-hidden bg-black-900 border border-white/8 relative"
 >
       {/* COVER IMAGE */}
-      <div className="w-full h-28 bg-gray-800 overflow-hidden">
+      <div className="w-full h-28 bg-bg-3 overflow-hidden">
         {logo ? (
           <img
             src={logo}
@@ -167,11 +167,11 @@ const TrendingCard = ({ community, gradient, onNavigate, isJoined, onJoin }) => 
 
       {/* TEXT */}
             {/* TEXT */}
-      <div className="p-3 text-white">
+      <div className="p-3 text-text-1">
         <p className="font-semibold text-sm truncate">
           {community.name}
         </p>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-text-3 mt-1">
           {community.membersCount || 0} members
         </p>
       </div>
@@ -188,7 +188,7 @@ const TrendingCard = ({ community, gradient, onNavigate, isJoined, onJoin }) => 
               e.stopPropagation();
               onJoin(community);
             }}
-            className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700">
+            className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-600 text-text-1 hover:bg-purple-700">
             Join
           </button>
         )}
@@ -229,7 +229,7 @@ const AdminMenu = ({
                         onEdit();
                         onClose();
                     }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                    className="w-full flex items-center px-4 py-2 text-sm text-text-2 hover:bg-gray-700 hover:text-text-1"
                 >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit Community
@@ -240,7 +240,7 @@ const AdminMenu = ({
                         onEditMedia();
                         onClose();
                     }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                    className="w-full flex items-center px-4 py-2 text-sm text-text-2 hover:bg-gray-700 hover:text-text-1"
                 >
                     <Image className="w-4 h-4 mr-2" />
                     Edit Logo & Banner
@@ -303,11 +303,11 @@ const RecommendedItem = ({
       </div>
 
       <div>
-        <p className="font-medium text-white">{community.name}</p>
-        <p className="text-sm text-gray-400 line-clamp-1">
+        <p className="font-medium text-text-1">{community.name}</p>
+        <p className="text-sm text-text-3 line-clamp-1">
           {community.description}
         </p>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-text-4 mt-1">
           {community.membersCount || 0} members
         </p>
 
@@ -318,7 +318,7 @@ const RecommendedItem = ({
         )}
 
         {community.category && (
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-text-3 mt-1">
             Category: {community.category}
           </p>
         )}
@@ -333,7 +333,7 @@ const RecommendedItem = ({
             e.stopPropagation();
             onJoin();
           }}
-          className="bg-purple-600 hover:bg-purple-700 text-white py-1.5 px-4 rounded-full text-sm"
+          className="bg-purple-600 hover:bg-purple-700 text-text-1 py-1.5 px-4 rounded-full text-sm"
         >
           Join
         </button>
@@ -355,7 +355,7 @@ const RecommendedItem = ({
               e.stopPropagation();
               setShowAdminMenu(!showAdminMenu);
             }}
-            className="p-1.5 rounded-full hover:bg-gray-700 text-gray-400 hover:text-white"
+            className="p-1.5 rounded-full hover:bg-gray-700 text-text-3 hover:text-text-1"
           >
             <MoreVertical className="w-5 h-5" />
           </button>
@@ -377,16 +377,20 @@ const RecommendedItem = ({
 };
 
 // --- MODIFIED: Wrapper for data fetching (FIXED NAVIGATION) ---
-export default function ExplorePageWrapper() {
+export default function ExplorePageWrapper(props) {
     const [loading, setLoading] = React.useState(true);
     const [userGroups, setUserGroups] = React.useState({ created: [], joined: [] });
-    const [currentUserEmail, setCurrentUserEmail] = React.useState(null);
+    const [currentUserEmail, setCurrentUserEmail] = React.useState(
+        typeof window !== "undefined" ? localStorage.getItem("userEmail") : null
+    );
     const router = useRouter();
 
     React.useEffect(() => {
+        let mounted = true;
         const loadUserGroups = async () => {
             const { user, created, joined } = await fetchMeData();
             
+            if (!mounted) return;
             if (!user) {
                 router.replace("/auth/login"); 
                 return; 
@@ -398,41 +402,17 @@ export default function ExplorePageWrapper() {
         };
         
         loadUserGroups();
+        return () => { mounted = false; };
     }, [router]);
 
-    // 1️⃣ MOVE THESE UP: Define these BEFORE the loading check
-    const handleNavigateToCommunity = (community) => {
-        if (community.slug) {
-            router.push(`/groups/${community.slug}`);
-        } else {
-            console.error("Cannot navigate: Community slug is missing.", community);
-        }
-    };
-    
-    const dummyProps = {
-        onNavigateToCommunity: handleNavigateToCommunity,
-        onCreateNewCommunity: (c) => console.log("Created", c.name),
-        onDeleteCommunity: (c) => console.log("Deleted", c.name),
-    };
-
-    // 2️⃣ LOADING GUARD: Uses the Full-Screen Black Overlay
-    if (loading || !currentUserEmail) {
-        return (
-            <div className="fixed inset-0 z-[9999] bg-[#0d0d0d] flex flex-col items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-gray-400 font-medium animate-pulse"></p>
-                </div>
-            </div>
-        );
-    }
-    
-    // 3️⃣ RENDER: Now dummyProps is guaranteed to be defined
+    // RENDER: Pass props from AppContainer along with the fetched user data
     return (
-        <ExplorePage 
-            {...dummyProps}
+        <ExplorePage
+            {...props}
             userCreatedCommunities={userGroups.created}
             initialRecommended={userGroups.joined}
+            currentUserEmail={currentUserEmail}
+            isLoadingUser={loading}
         />
     );
 }
@@ -533,15 +513,15 @@ const handleFileChange = (e) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
-            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-white shadow-2xl">
+            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-text-1 shadow-2xl">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                     <div>
                         <h2 className="text-xl font-semibold">Create community</h2>
-                        <p className="text-sm text-gray-400">Build your own space</p>
+                        <p className="text-sm text-text-3">Build your own space</p>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">
+                    <button onClick={onClose} className="text-text-3 hover:text-text-1">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -610,7 +590,7 @@ const handleFileChange = (e) => {
       }}
       className="absolute top-2 right-2 bg-black/10 hover:bg-black/60 rounded-full p-1 backdrop-blur"
     >
-      <X className="w-4 h-4 text-white" />
+      <X className="w-4 h-4 text-text-1" />
     </button>
   )}
 
@@ -646,7 +626,7 @@ const handleFileChange = (e) => {
       }}
       className="absolute top-2 right-2 bg-black/10 hover:bg-black/60 rounded-full p-1 backdrop-blur"
     >
-      <X className="w-4 h-4 text-white" />
+      <X className="w-4 h-4 text-text-1" />
     </button>
   )}
 
@@ -667,7 +647,7 @@ const handleFileChange = (e) => {
                     </div>
                     {/* Banner Preview */}
 
-<p className="text-xs text-gray-500 mt-2">
+<p className="text-xs text-text-4 mt-2">
   Logo is required • Max image size: 3 MB
 </p>
 
@@ -754,15 +734,15 @@ const EditCommunityForm = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
-            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-white shadow-2xl">
+            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-text-1 shadow-2xl">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                     <div>
                         <h2 className="text-xl font-semibold">Edit community</h2>
-                        <p className="text-sm text-gray-400">Update details</p>
+                        <p className="text-sm text-text-3">Update details</p>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">
+                    <button onClick={onClose} className="text-text-3 hover:text-text-1">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -896,17 +876,17 @@ const EditCommunityMediaForm = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
-            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-white shadow-2xl">
+            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-text-1 shadow-2xl">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                     <div>
                         <h2 className="text-xl font-semibold">Edit community media</h2>
-                        <p className="text-sm text-gray-400">
+                        <p className="text-sm text-text-3">
                             Update logo or banner
                         </p>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">
+                    <button onClick={onClose} className="text-text-3 hover:text-text-1">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -958,7 +938,7 @@ const EditCommunityMediaForm = ({
                     />
 
                     {/* Helper text */}
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-text-4">
                         Logo: 1:1 ratio • Banner: 16:9 ratio
                     </p>
                 </form>
@@ -1014,6 +994,22 @@ function ExplorePage({
             [comm.id]: true 
         }), {})
     );
+
+    // Sync state when props arrive asynchronously
+    React.useEffect(() => {
+        if (initialRecommended?.length) {
+            setJoinedCommunities(prev => {
+                const next = { ...prev };
+                initialRecommended.forEach(c => { next[c.id] = true; });
+                return next;
+            });
+            setRecommendedCommunities(prev => {
+                const currentIds = new Set(prev.map(c => c.id));
+                const fresh = initialRecommended.filter(c => !currentIds.has(c.id));
+                return [...prev, ...fresh];
+            });
+        }
+    }, [initialRecommended]);
 
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
@@ -1386,7 +1382,7 @@ React.useEffect(() => {
             })}
 
             {searchTerm && list.length === 0 && (
-                <p className="text-center text-gray-500 py-4">
+                <p className="text-center text-text-4 py-4">
                     No communities found matching "{searchTerm}"
                 </p>
             )}
@@ -1394,7 +1390,7 @@ React.useEffect(() => {
     );
 
     return (
-        <div className="min-h-screen bg-[#0d0d0d] text-white w-full">
+        <div className="min-h-screen bg-bg-4 text-text-1 w-full">
 
             {/* MODALS */}
             <CreateCommunityForm
@@ -1431,7 +1427,7 @@ React.useEffect(() => {
 
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="flex items-center bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2 px-4 rounded-full transition-colors shadow-lg"
+                        className="flex items-center bg-purple-600 hover:bg-purple-700 text-text-1 text-sm font-semibold py-2 px-4 rounded-full transition-colors shadow-lg"
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Create Community
@@ -1448,16 +1444,16 @@ React.useEffect(() => {
   w-full
   pl-10 pr-4 py-2.5
   bg-[#121212]
-  border border-[#262626]
+  border border-border-2
   rounded-xl
-  text-white
+  text-text-1
   placeholder-gray-500
   focus:outline-none
   focus:ring-2
   focus:ring-purple-600/60
 "
                     />
-                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-4" />
                 </div>
             </header>
 
@@ -1477,7 +1473,7 @@ React.useEffect(() => {
                 </div>
             </section>
 
-            <hr className="border-gray-800 my-6" />
+            <hr className="border-border-2 my-6" />
 
             {/* TRENDING */}
             <section className="mb-8">
@@ -1513,14 +1509,14 @@ React.useEffect(() => {
   );
 })
   ) : (
-    <div className="w-full py-10 text-center text-gray-500">
+    <div className="w-full py-10 text-center text-text-4">
       No communities yet. Create one to get started 🚀
     </div>
   )}
 </div>
             </section>
 
-            <hr className="border-gray-800 my-6" />
+            <hr className="border-border-2 my-6" />
 
             {/* JOINED */}
             {(userJoinedCommunities.length > 0 || searchTerm) && (
@@ -1546,12 +1542,12 @@ React.useEffect(() => {
                     {displayJoined.length > 0 ? (
   renderCommunityList(displayJoined)
 ) : (
-  <p className="text-center text-gray-500 py-8">
+  <p className="text-center text-text-4 py-8">
     You haven’t joined any communities yet.
   </p>
 )}
                     {searchTerm && userJoinedCommunities.length === 0 && (
-                        <p className="text-center text-gray-500 py-4">
+                        <p className="text-center text-text-4 py-4">
                             No joined communities match "{searchTerm}"
                         </p>
                     )}
@@ -1559,7 +1555,7 @@ React.useEffect(() => {
             )}
 
             {userJoinedCommunities.length > 0 && !searchTerm && (
-                <hr className="border-gray-800 my-6" />
+                <hr className="border-border-2 my-6" />
             )}
 
             {/* RECOMMENDED */}
@@ -1585,7 +1581,7 @@ React.useEffect(() => {
                 {displayRecommended.length > 0 ? (
   renderCommunityList(displayRecommended)
 ) : (
-  <p className="text-center text-gray-500 py-8">
+  <p className="text-center text-text-4 py-8">
     No communities found. Create one to get started 🚀
   </p>
 )}

@@ -264,16 +264,16 @@ const rowData = [
 
   return (
     <>
-      <div className="min-h-screen bg-[#0d0d0d] text-white">
+      <div className="min-h-screen bg-bg-4 text-text-1">
         <div className="max-w-5xl mx-auto px-4 py-8">
-          <div className="relative bg-black backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 md:p-8 mb-6 shadow-xl">
+          <div className="relative bg-bg-1 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 md:p-8 mb-6 shadow-xl">
             <div className="flex flex-col md:flex-row gap-6 items-start">
               <div className="relative">
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden">
                   <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover border-4 border-slate-800" />
                 </div>
                 <button onClick={() => setIsEditModalOpen(true)} className="absolute bottom-0 right-0 bg-purple-600 p-2 rounded-full hover:bg-purple-700 transition-colors z-20">
-                  <Edit2 className="w-4 h-4 text-white" />
+                  <Edit2 className="w-4 h-4 text-text-1" />
                 </button>
               </div>
               <div className="flex-1">
@@ -290,18 +290,18 @@ const rowData = [
           </div>
 
           <div className="flex justify-center mb-6 relative">
-            <button onClick={handleShareProfile} className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl font-semibold flex items-center gap-2">
+            <button onClick={handleShareProfile} className="bg-purple-600 hover:bg-purple-700 text-text-1 px-5 py-2 rounded-xl font-semibold flex items-center gap-2">
               {copied ? <CheckCircle className="w-4 h-4" /> : <Share2 className="w-4 h-4" />} {copied ? "Copied!" : "Share profile"}
             </button>
             {showShareTooltip && (
-              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-sm py-2 px-3 rounded-lg shadow-lg z-50">
+              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-green-500 text-text-1 text-sm py-2 px-3 rounded-lg shadow-lg z-50">
                 Profile link copied!
                 <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-green-500 rotate-45"></div>
               </div>
             )}
           </div>
 
-          <div className="bg-black rounded-2xl border border-slate-700/50 overflow-hidden shadow-2xl mb-8">
+          <div className="bg-bg-1 rounded-2xl border border-slate-700/50 overflow-hidden shadow-2xl mb-8">
             <div className="flex border-b border-slate-700/50">
               <button onClick={() => setActiveTab("posts")} className={`flex-1 py-4 font-semibold relative ${activeTab === "posts" ? "text-purple-400" : "text-slate-400"}`}>
                 Hosted ({totalHostedEvents}) {activeTab === "posts" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />}
@@ -333,7 +333,7 @@ const rowData = [
                       <div className="flex items-center gap-2 text-slate-300 text-sm"><MapPin className="w-4 h-4 text-blue-400" /><span>{post.location}</span></div>
                       {activeTab === "posts" && <div className="flex items-center gap-2 text-purple-400 text-sm font-bold"><Users className="w-4 h-4" /><span>{post.registrationsCount} Registration(s)</span></div>}
                     </div>
-                    {activeTab === "posts" && <button onClick={(e) => { e.stopPropagation(); downloadRegistrations(post); }} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white flex items-center gap-2 shadow-lg"><Download className="w-3.5 h-3.5" /> Participants</button>}
+                    {activeTab === "posts" && <button onClick={(e) => { e.stopPropagation(); downloadRegistrations(post); }} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-text-1 flex items-center gap-2 shadow-lg"><Download className="w-3.5 h-3.5" /> Participants</button>}
                   </div>
                 </div>
               )) : <div className="text-center py-12 text-slate-400 italic text-lg">{activeTab === "registered" ? "No joined events yet." : "No hosted events found."}</div>}
@@ -345,15 +345,15 @@ const rowData = [
       {/* --- FIXED MOBILE EDIT MODAL --- */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md px-4 py-6">
-          <div className="w-full max-w-xl max-h-full rounded-2xl bg-[#0f0f0f] text-white shadow-2xl flex flex-col border border-white/5">
+          <div className="w-full max-w-xl max-h-full rounded-2xl bg-[#0f0f0f] text-text-1 shadow-2xl flex flex-col border border-white/5">
             
             {/* Header - Fixed */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
               <div>
                 <h2 className="text-xl font-semibold">Edit profile</h2>
-                <p className="text-sm text-gray-400">Manage your identity on Confique</p>
+                <p className="text-sm text-text-3">Manage your identity on Confique</p>
               </div>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+              <button onClick={() => setIsEditModalOpen(false)} className="text-text-3 hover:text-text-1 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -362,7 +362,7 @@ const rowData = [
             <form onSubmit={handleSaveProfile} className="px-6 py-5 space-y-6 overflow-y-auto scrollbar-hide flex-1">
               
               <div className="space-y-4">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Name</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-text-4">Name</label>
                 <input
                   type="text"
                   value={editForm.name}
@@ -373,7 +373,7 @@ const rowData = [
               </div>
 
               <div className="space-y-4">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Bio</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-text-4">Bio</label>
                 <input
                   type="text"
                   value={editForm.bio}
@@ -385,7 +385,7 @@ const rowData = [
               </div>
 
               <div className="space-y-4">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Location</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-text-4">Location</label>
                 <input
                   type="text"
                   value={editForm.location}
@@ -397,7 +397,7 @@ const rowData = [
 
               {/* Avatar Picker */}
               <div className="space-y-4 pt-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Choose an Avatar</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-text-4">Choose an Avatar</p>
                 <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
                   {presetAvatars.map((avatar, idx) => (
                     <button 
@@ -409,7 +409,7 @@ const rowData = [
                       <img src={avatar} alt="preset" className="w-full aspect-square object-cover" />
                       {editForm.avatar === avatar && (
                         <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-white" />
+                          <Check className="w-4 h-4 text-text-1" />
                         </div>
                       )}
                     </button>
@@ -488,7 +488,7 @@ export default function TechProfilePage() {
 
   if (authLoading && !isAuthenticated) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-[#0d0d0d] flex flex-col items-center justify-center">
+      <div className="fixed inset-0 z-[9999] bg-bg-4 flex flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
         </div>

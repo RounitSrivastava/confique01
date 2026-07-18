@@ -49,7 +49,7 @@ export default function CalendarWidget() {
       </div>
 
       {/* Days of Week */}
-      <div className="grid grid-cols-7 text-sm font-medium text-gray-500 mb-2">
+      <div className="grid grid-cols-7 text-sm font-medium text-text-4 mb-2">
         {daysOfWeek.map((day) => (
           <div key={day} className="text-center">
             {day}

@@ -261,8 +261,8 @@ const CategoryButton = ({ name, Icon, isActive, onClick }) => (
     onClick={onClick}
     className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 whitespace-nowrap ${
       isActive
-        ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20"
-        : "text-gray-300 bg-gray-800 hover:bg-gray-700 hover:text-white"
+        ? "bg-purple-600 text-text-1 shadow-lg shadow-purple-500/20"
+        : "text-text-2 bg-bg-3 hover:bg-gray-700 hover:text-text-1"
     }`}
   >
     {Icon && <Icon className="w-4 h-4" />}
@@ -296,7 +296,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
       className="group flex flex-shrink-0 flex-col bg-gray-900 rounded-xl overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-[1.02] w-[72vw] max-w-[260px] sm:w-[300px] h-[320px] cursor-pointer"
     >
       <div className="relative w-full overflow-hidden rounded-t-xl">
-        <div className="relative w-full h-[160px] bg-black">
+        <div className="relative w-full h-[160px] bg-bg-1">
           <img
             src={event.poster}
             alt={event.title}
@@ -312,7 +312,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
               <span
                 key={index}
                 className={`px-3 py-1 text-xs font-semibold rounded-full backdrop-blur-sm ${
-                  tag.includes("Free") ? "bg-green-500/90 text-white" : "bg-gray-700/90 text-white"
+                  tag.includes("Free") ? "bg-green-500/90 text-text-1" : "bg-gray-700/90 text-text-1"
                 }`}
               >
                 {tag}
@@ -325,14 +325,14 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
         </div>
       </div>
       <div className="p-3 flex flex-col justify-between flex-grow ">
-        <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-0 line-clamp-2">{event.title}</h3>
-        <p className="text-sm text-gray-400 flex items-center mb-1">
+        <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-text-1 mb-0 line-clamp-2">{event.title}</h3>
+        <p className="text-sm text-text-3 flex items-center mb-1">
           <MapPin className="w-4 h-4 mr-2 text-purple-400" />
           {event.venue?.includes("|") ? event.venue.split("|").slice(-1).pop().trim() : event.venue}
         </p>
-        <div className="flex items-center justify-between text-xs font-medium text-gray-400 mb-2 pt-2">
+        <div className="flex items-center justify-between text-xs font-medium text-text-3 mb-2 pt-2">
           <span className="flex items-center space-x-2">
-            <span className="text-gray-400">{event.venue?.includes("Online") ? "Online" : "On-site"}</span>
+            <span className="text-text-3">{event.venue?.includes("Online") ? "Online" : "On-site"}</span>
             <span className="font-semibold text-green-400">{event.tags?.includes("Free") ? "Free" : "Paid"}</span>
           </span>
           <span className="flex items-center space-x-3">
@@ -344,7 +344,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
             )}
           </span>
         </div>
-        <div className="flex items-center justify-between text-xs font-medium text-gray-400 mt-2">
+        <div className="flex items-center justify-between text-xs font-medium text-text-3 mt-2">
           <button className="mt-auto w-fit text-base font-semibold text-purple-400 hover:text-purple-300 transition-colors text-left">
             View Details &rarr;
           </button>
@@ -356,13 +356,13 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
               </span>
             ) : (
               <Share2
-                className="w-4 h-4 text-gray-500 cursor-pointer hover:text-purple-400 transition-colors"
+                className="w-4 h-4 text-text-4 cursor-pointer hover:text-purple-400 transition-colors"
                 onClick={localHandleShare}
               />
             )}
             <Heart
               className={`w-4 h-4 cursor-pointer transition-colors ml-3 ${
-                isLiked ? "text-red-500 fill-red-500" : "text-gray-500 hover:text-red-500 hover:fill-gray-900"
+                isLiked ? "text-red-500 fill-red-500" : "text-text-4 hover:text-red-500 hover:fill-gray-900"
               }`}
               onClick={handleLikeClick}
             />
@@ -393,7 +393,7 @@ const PopularEventCard = ({ event, onDetailsClick }) => {
           />
           <div className="pointer-events-none absolute inset-0 hidden sm:block bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           <div className="absolute top-4 left-4 flex items-center">
-            <span className="px-3 py-1 rounded-full bg-purple-600 text-[11px] font-semibold text-white shadow-lg shadow-purple-800/70">
+            <span className="px-3 py-1 rounded-full bg-purple-600 text-[11px] font-semibold text-text-1 shadow-lg shadow-purple-800/70">
               Popular Pick
             </span>
           </div>
@@ -447,7 +447,7 @@ const HorizontalScrollSection = ({ events, onDetailsClick, onShareClick, title, 
   return (
     <section className="py-10 relative">
       <div className="flex flex-col items-center mb-10">
-        <h2 className="text-4xl font-extrabold text-white text-center mb-6">{title}</h2>
+        <h2 className="text-4xl font-extrabold text-text-1 text-center mb-6">{title}</h2>
         <div className="w-full flex justify-end">
           <button
             onClick={onViewAllClick}
@@ -462,7 +462,7 @@ const HorizontalScrollSection = ({ events, onDetailsClick, onShareClick, title, 
         {events.length > 3 && canScrollLeft && (
           <button
             onClick={() => scroll("left")}
-            className="absolute left-2 sm:-left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-transparent text-white hover:text-purple-400 transition-colors z-20"
+            className="absolute left-2 sm:-left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-transparent text-text-1 hover:text-purple-400 transition-colors z-20"
           >
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
@@ -482,7 +482,7 @@ const HorizontalScrollSection = ({ events, onDetailsClick, onShareClick, title, 
         {events.length > 3 && canScrollRight && (
           <button
             onClick={() => scroll("right")}
-            className="absolute right-2 sm:-right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-transparent text-white hover:text-purple-400 transition-colors z-20"
+            className="absolute right-2 sm:-right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-transparent text-text-1 hover:text-purple-400 transition-colors z-20"
           >
             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
@@ -544,16 +544,16 @@ const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 500
   return (
     <>
       <div className="relative mt-8 mb-10 sm:hidden">
-        <div className="relative max-w-sm mx-auto rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-black cursor-pointer" onClick={() => onDetailsClick(event.id)}>
+        <div className="relative max-w-sm mx-auto rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-bg-1 cursor-pointer" onClick={() => onDetailsClick(event.id)}>
           <div className="relative w-full h-[260px]">
           <div className={`absolute inset-0 bg-gradient-to-br ${getFeaturedGradient(event)}`} />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
             <div className="absolute top-3 left-4 flex items-center">
-              <span className="px-3 py-1 rounded-full bg-[#5B3FFF] text-[11px] font-semibold text-white">Featured Event</span>
+              <span className="px-3 py-1 rounded-full bg-[#5B3FFF] text-[11px] font-semibold text-text-1">Featured Event</span>
             </div>
             <div className="absolute left-4 right-4 bottom-5">
               <div className="backdrop-blur-2xl bg-black/40 border border-white/10 rounded-2xl px-4 py-4">
-                <h2 className="text-lg font-bold text-white mb-2">{event.title}</h2>
+                <h2 className="text-lg font-bold text-text-1 mb-2">{event.title}</h2>
                 <div className="flex items-center text-sm text-gray-200 mb-2">
                   <Calendar className="w-4 h-4 mr-2" />
                   <span>{event.date}</span>
@@ -567,8 +567,8 @@ const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 500
         </div>
         {events.length > 1 && (
           <>
-            <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute -left-[28px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white hover:text-purple-400 z-20"><ChevronLeft className="w-6 h-6" /></button>
-            <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute -right-[28px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white hover:text-purple-400 z-20"><ChevronRight className="w-6 h-6" /></button>
+            <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute -left-[28px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-text-1 hover:text-purple-400 z-20"><ChevronLeft className="w-6 h-6" /></button>
+            <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute -right-[28px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-text-1 hover:text-purple-400 z-20"><ChevronRight className="w-6 h-6" /></button>
           </>
         )}
         <MobileDots />
@@ -578,24 +578,24 @@ const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 500
         <div className="absolute inset-0 bg-black/50 backdrop-blur-xl z-0 rounded-[2rem]" />
         {events.length > 1 && (
           <>
-            <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/20 text-white z-20 hover:bg-white/40 transition-colors"><ChevronLeft className="w-6 h-6" /></button>
-            <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/20 text-white z-20 hover:bg-white/40 transition-colors"><ChevronRight className="w-6 h-6" /></button>
+            <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/20 text-text-1 z-20 hover:bg-white/40 transition-colors"><ChevronLeft className="w-6 h-6" /></button>
+            <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/20 text-text-1 z-20 hover:bg-white/40 transition-colors"><ChevronRight className="w-6 h-6" /></button>
           </>
         )}
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between">
           <div className="md:w-1/2 p-4 md:pr-8 text-center md:text-left">
-            <h1 className="text-5xl sm:text-7xl font-extrabold text-white leading-tight mb-4 tracking-tighter">{event.title}</h1>
+            <h1 className="text-5xl sm:text-7xl font-extrabold text-text-1 leading-tight mb-4 tracking-tighter">{event.title}</h1>
             <p className="text-xl text-gray-200 font-medium mb-6 flex items-center justify-center md:justify-start"><Calendar className="w-5 h-5 mr-3 text-yellow-300" />{event.date}</p>
-            {event.impressions !== undefined && <p className="text-md text-gray-300 font-medium mb-6 flex items-center justify-center md:justify-start"><Eye className="w-5 h-5 mr-3 text-purple-300" />{event.impressions.toLocaleString()} Impressions</p>}
+            {event.impressions !== undefined && <p className="text-md text-text-2 font-medium mb-6 flex items-center justify-center md:justify-start"><Eye className="w-5 h-5 mr-3 text-purple-300" />{event.impressions.toLocaleString()} Impressions</p>}
             <div className="flex items-center justify-center md:justify-start space-x-4">
               <button className="inline-flex items-center bg-white text-gray-900 font-semibold py-3 px-8 rounded-full hover:bg-gray-200 transition-colors group">View details <span className="ml-3 transition-transform group-hover:translate-x-1">&rarr;</span></button>
-              <button onClick={localHandleShare} className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"><Share2 className="w-5 h-5" /></button>
+              <button onClick={localHandleShare} className="p-3 rounded-full bg-white/10 text-text-1 hover:bg-white/20 transition-colors"><Share2 className="w-5 h-5" /></button>
             </div>
           </div>
           <div className="md:w-1/2 p-4 mt-8 md:mt-0 flex justify-center">
-            <div className="w-full max-w-xs aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl ring-4 ring-white/20 bg-black">
+            <div className="w-full max-w-xs aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl ring-4 ring-white/20 bg-bg-1">
              <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${getFeaturedGradient(event)}`}>
-  <h3 className="text-white text-xl font-extrabold text-center px-6">
+  <h3 className="text-text-1 text-xl font-extrabold text-center px-6">
     {event.title}
   </h3>
 </div>
@@ -905,11 +905,11 @@ const upcomingEvents = useMemo(() => {
   return result;
 }, [ALL_EVENTS, featuredEventIds, selectedCategory, searchQuery]);
   return (
-    <div className="min-h-screen text-white font-sans antialiased relative bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000]">
+    <div className="min-h-screen text-text-1 font-sans antialiased relative bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000]">
       <div onClick={() => setSidebarOpen(false)} className={`fixed inset-0 bg-black/50 z-[100] transition-opacity ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"} lg:hidden`} />
       
-      <aside className={`fixed top-0 left-0 z-[110] h-full w-64 bg-[#050509] border-r border-[#262626] transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden`}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
+      <aside className={`fixed top-0 left-0 z-[110] h-full w-64 bg-[#050509] border-r border-border-2 transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden`}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-2">
           <span className="text-lg font-extrabold bg-gradient-to-r from-purple-400 to-purple-400 bg-clip-text text-transparent">Confique</span>
           <button onClick={() => setSidebarOpen(false)}><X className="w-7 h-7" /></button>
         </div>
@@ -919,7 +919,7 @@ const upcomingEvents = useMemo(() => {
             <Link
   key={item.href}
   href={item.href}
-  className="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-gray-800 transition"
+  className="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-bg-3 transition"
 >
   <item.icon className="w-5 h-5" />
   {item.label}
@@ -927,7 +927,7 @@ const upcomingEvents = useMemo(() => {
           ))}
           <button
   onClick={handleHostClick}
-  className="flex items-center gap-4 w-full text-left px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-gray-800 transition"
+  className="flex items-center gap-4 w-full text-left px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-bg-3 transition"
 >
   <CalendarPlus className="w-5 h-5" />
   Create Event
@@ -942,18 +942,18 @@ const upcomingEvents = useMemo(() => {
             <h1 className="text-2xl font-extrabold text-purple-400 hidden lg:block">Confique</h1>
             {isSearching ? (
               <div className="relative flex-grow max-w-lg" ref={searchRef}>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search..." className="w-full py-2 pl-10 bg-gray-800 rounded-lg text-white" autoFocus />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-3" />
+                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search..." className="w-full py-2 pl-10 bg-bg-3 rounded-lg text-text-1" autoFocus />
               </div>
             ) : (
               <nav className="hidden md:flex gap-2">
-                {TOP_NAV.map(item => <Link key={item.href} href={item.href} className="px-3 py-2 text-sm text-gray-300 hover:text-white">{item.label}</Link>)}
+                {TOP_NAV.map(item => <Link key={item.href} href={item.href} className="px-3 py-2 text-sm text-text-2 hover:text-text-1">{item.label}</Link>)}
               </nav>
             )}
           </div>
           <div className="flex items-center space-x-4">
             <button onClick={handleHostClick} className="hidden lg:flex items-center bg-purple-600 px-4 py-2 rounded-full text-sm font-medium"><Plus className="w-4 h-4 mr-1" />Host</button>
-            <button onClick={() => setIsSearching(!isSearching)}><Search className="w-5 h-5 text-gray-400" /></button>
+            <button onClick={() => setIsSearching(!isSearching)}><Search className="w-5 h-5 text-text-3" /></button>
             
             <div className="relative" ref={profileRef}>
               <button 
@@ -967,12 +967,12 @@ const upcomingEvents = useMemo(() => {
               </button>
 
               {isProfileOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-[#111111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in zoom-in duration-200">
+                <div className="absolute right-0 mt-3 w-64 bg-bg-2 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in zoom-in duration-200">
                   <div className="p-6 flex flex-col items-center border-b border-white/5 bg-gradient-to-b from-slate-900/50 to-transparent">
                     <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-purple-500 to-pink-500 mb-3">
                       <img src={user.avatar} alt="Large User Avatar" className="w-full h-full rounded-full object-cover border-2 border-[#111]" />
                     </div>
-                    <h3 className="text-lg font-bold text-white text-center line-clamp-1">{user.name}</h3>
+                    <h3 className="text-lg font-bold text-text-1 text-center line-clamp-1">{user.name}</h3>
                   </div>
                   
                   <div className="p-2">
@@ -1038,7 +1038,7 @@ const upcomingEvents = useMemo(() => {
                 />
             )}
             <section className="py-10">
-              <h2 className="text-4xl font-extrabold text-white text-center mb-10">Upcoming Events</h2>
+              <h2 className="text-4xl font-extrabold text-text-1 text-center mb-10">Upcoming Events</h2>
               <div className="flex space-x-3 overflow-x-auto pb-4 md:justify-center">
                 {categories.map(cat => <CategoryButton key={cat.name} name={cat.name} Icon={cat.icon} isActive={selectedCategory === cat.name} onClick={() => setSelectedCategory(cat.name)} />)}
               </div>
@@ -1065,7 +1065,7 @@ const upcomingEvents = useMemo(() => {
         )}
       </main>
 
-      <footer className="py-6 text-center text-gray-500 text-sm border-t border-gray-800">
+      <footer className="py-6 text-center text-text-4 text-sm border-t border-border-2">
         &copy; {new Date().getFullYear()} All rights reserved.
       </footer>
     </div>
@@ -1102,10 +1102,10 @@ export default function EventsPageWrapper({ searchParams }) {
     // 🔥 FLICKER-FREE UI: This fixed overlay covers EVERYTHING (Headers, Sidebars, Gradients)
     if (authLoading || !isAuthenticated) {
         return (
-            <div className="fixed inset-0 z-[9999] bg-[#0d0d0d] flex flex-col items-center justify-center">
+            <div className="fixed inset-0 z-[9999] bg-bg-4 flex flex-col items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-gray-400 font-medium tracking-wide animate-pulse">
+                    <p className="text-text-3 font-medium tracking-wide animate-pulse">
                        
                     </p>
                 </div>

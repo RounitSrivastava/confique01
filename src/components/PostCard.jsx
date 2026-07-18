@@ -13,7 +13,7 @@
 //         />
 //         <div>
 //           <h3 className="text-sm font-semibold text-gray-800">{post.user.name}</h3>
-//           <p className="text-xs text-gray-500">{post.time}</p>
+//           <p className="text-xs text-text-4">{post.time}</p>
 //         </div>
 //       </div>
 

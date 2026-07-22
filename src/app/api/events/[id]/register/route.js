@@ -1,5 +1,7 @@
 import dbConnect from "@/lib/mongoose";
 import Event from "@/models/Event";
+import User from "@/models/User";
+import Notification from "@/models/Notification";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import cloudinary from "@/lib/cloudinary";
@@ -252,6 +254,34 @@ if (ticketSelectionRaw) {
     event.registrationsCount = event.registrations.length;
 
     await event.save();
+
+    // ====================================================
+    // 🔔 DISPATCH NOTIFICATIONS
+    // ====================================================
+    try {
+      // 1. Notify the registering user
+      await Notification.create({
+        targetEmail: userEmail.toLowerCase(),
+        type: "EVENT_REGISTRATION",
+        message: `You have successfully registered for ${event.title}.`,
+        postId: id,
+      });
+
+      // 2. Try to notify the host (by looking up the user whose name matches event.hostedBy)
+      if (event.hostedBy) {
+        const hostUser = await User.findOne({ name: event.hostedBy }).lean();
+        if (hostUser && hostUser.email && hostUser.email.toLowerCase() !== userEmail.toLowerCase()) {
+          await Notification.create({
+            targetEmail: hostUser.email.toLowerCase(),
+            type: "NEW_REGISTRATION",
+            message: `New registration for your event: ${event.title}.`,
+            postId: id,
+          });
+        }
+      }
+    } catch (notifErr) {
+      console.error("⚠️ Failed to dispatch registration notifications:", notifErr);
+    }
 
     return NextResponse.json({
       success: true,

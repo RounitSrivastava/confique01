@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Bell, LogOut, User, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "./ThemeToggle";
 
 const CREDENTIALS = "include";
 
@@ -385,7 +386,8 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
           {/* Notifications */}
           <div className="relative" ref={bellRef}>
             <button onClick={handleBellClick} className={`relative flex items-center justify-center w-9 h-9 rounded-xl hover:bg-bg-3 ${isBellShaking ? "animate-bell-wiggle" : ""}`}>

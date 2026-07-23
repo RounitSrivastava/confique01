@@ -38,19 +38,34 @@
 /* ---------------------------------------------------
    WHITE MODE OVERRIDES
 --------------------------------------------------- */
-.light-mode {
-  --color-bg-1: #ffffff; /* pure white */
-  --color-bg-2: #f9fafb; /* gray-50 */
-  --color-bg-3: #f3f4f6; /* gray-100 */
-  --color-bg-4: #f8fafc; /* slate-50 - softer background */
+:root.light {
+  --color-bg-1: #ffffff;
+  --color-bg-2: #f9fafb;
+  --color-bg-3: #f3f4f6;
+  --color-bg-4: #f8fafc;
 
-  --color-border-1: #e5e7eb; /* gray-200 */
-  --color-border-2: #d1d5db; /* gray-300 */
+  --color-border-1: #e5e7eb;
+  --color-border-2: #d1d5db;
 
-  --color-text-1: #111827; /* gray-900 (almost black) */
-  --color-text-2: #374151; /* gray-700 (dark gray) */
-  --color-text-3: #4b5563; /* gray-600 */
-  --color-text-4: #6b7280; /* gray-500 */
+  --color-text-1: #111827;
+  --color-text-2: #374151;
+  --color-text-3: #4b5563;
+  --color-text-4: #6b7280;
+}
+
+.force-dark {
+  --color-bg-1: #000000 !important;
+  --color-bg-2: #050505 !important;
+  --color-bg-3: #111111 !important;
+  --color-bg-4: #0a0a0a !important;
+  
+  --color-border-1: #333333 !important;
+  --color-border-2: #262626 !important;
+  
+  --color-text-1: #ffffff !important;
+  --color-text-2: #a3a3a3 !important;
+  --color-text-3: #737373 !important;
+  --color-text-4: #525252 !important;
 }
 
 
@@ -75,18 +90,18 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #2a0640, #6a0dad);
+  background: rgba(156, 163, 175, 0.5); /* Neutral gray */
   border-radius: 20px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background:linear-gradient(180deg, #3b0a5a, #8f28ff);
+  background: rgba(156, 163, 175, 0.8);
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #0c0c0c transparent;
+  scrollbar-color: #9ca3af transparent;
 }
 /* Hide scrollbars (Chrome, Edge, Safari) */
 .scrollbar-hide::-webkit-scrollbar {

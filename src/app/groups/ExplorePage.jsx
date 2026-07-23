@@ -130,7 +130,7 @@ const CategoryPill = ({ name, isSelected, onClick }) => (
       px-4 py-2 text-sm rounded-full whitespace-nowrap transition-all duration-200
       ${
         isSelected
-          ? "bg-purple-600 text-text-1 shadow-[0_0_0_1px_rgba(168,85,247,0.6)]"
+            ? "bg-purple-600 text-white shadow-[0_0_0_1px_rgba(168,85,247,0.6)]"
           : "bg-[#1f1f1f] text-text-2 border border-border-2 hover:bg-[#2a2a2a] hover:text-text-1"
       }
     `}
@@ -146,7 +146,7 @@ const TrendingCard = ({ community, gradient, onNavigate, isJoined, onJoin }) => 
   return (
   <div
   onClick={() => isJoined && onNavigate(community)}
-  className="w-40 min-h-[190px] flex-shrink-0 rounded-xl overflow-hidden bg-bg-1-900 border border-white/8 relative"
+  className={`w-40 min-h-[190px] flex-shrink-0 rounded-2xl overflow-hidden bg-bg-2 border border-border-2 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 relative ${isJoined ? 'cursor-pointer' : ''}`}
 >
       {/* COVER IMAGE */}
       <div className="w-full h-28 bg-bg-3 overflow-hidden">
@@ -188,7 +188,7 @@ const TrendingCard = ({ community, gradient, onNavigate, isJoined, onJoin }) => 
               e.stopPropagation();
               onJoin(community);
             }}
-            className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-600 text-text-1 hover:bg-purple-700">
+            className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700">
             Join
           </button>
         )}
@@ -275,15 +275,15 @@ const RecommendedItem = ({
     const [showAdminMenu, setShowAdminMenu] = React.useState(false);
 
     return (
-  <div
-    className={`flex items-center justify-between py-3 border-b border-border-2
-      rounded-xl px-3 transition-all
-      ${
-        isJoined
-          ? "cursor-pointer hover:ring-1 hover:ring-purple-500/40 hover:bg-white/[0.02]"
-          : "cursor-default"
-      }
-    `}
+    <div
+      className={`flex items-center justify-between py-3 border-b border-border-2
+        rounded-xl px-3 transition-all hover:bg-bg-3 hover:shadow-sm
+        ${
+          isJoined
+            ? "cursor-pointer hover:border-transparent"
+            : "cursor-default"
+        }
+      `}
   >
     {/* LEFT – CLICKABLE CONTENT */}
     <div
@@ -333,7 +333,7 @@ const RecommendedItem = ({
             e.stopPropagation();
             onJoin();
           }}
-          className="bg-purple-600 hover:bg-purple-700 text-text-1 py-1.5 px-4 rounded-full text-sm"
+          className="bg-purple-600 hover:bg-purple-700 text-white py-1.5 px-4 rounded-full text-sm"
         >
           Join
         </button>
@@ -663,7 +663,7 @@ const handleFileChange = (e) => {
     type="submit"
     onClick={handleSubmit}
     disabled={isCreating}
-    className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+    className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed"
 >
     {isCreating ? "Creating..." : "Create"}
 </button>
@@ -814,7 +814,7 @@ const EditCommunityForm = ({
                         type="submit"
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold disabled:opacity-60"
+                        className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold text-white disabled:opacity-60"
                     >
                         {loading ? "Updating..." : "Update"}
                     </button>
@@ -949,7 +949,7 @@ const EditCommunityMediaForm = ({
                         type="submit"
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold disabled:opacity-60"
+                        className="rounded-full bg-purple-600 hover:bg-purple-700 px-8 py-2 text-sm font-semibold text-white disabled:opacity-60"
                     >
                         {loading ? "Updating..." : "Update"}
                     </button>
@@ -1427,7 +1427,7 @@ React.useEffect(() => {
 
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="flex items-center bg-purple-600 hover:bg-purple-700 text-text-1 text-sm font-semibold py-2 px-4 rounded-full transition-colors shadow-lg"
+                        className="flex items-center bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2 px-4 rounded-full transition-colors shadow-lg"
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Create Community

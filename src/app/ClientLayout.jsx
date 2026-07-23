@@ -44,7 +44,7 @@ export default function ClientLayout({ children }) {
       }
 
       return (
-        <div className={`h-screen w-full bg-bg-4 text-text-1 overflow-hidden flex flex-col ${!isEventsPage ? "light-mode" : ""}`}>
+        <div className={`h-screen w-full bg-bg-4 text-text-1 overflow-hidden flex flex-col ${isEventsPage ? "force-dark" : ""}`}>
           <Topbar
             onToggleSidebar={() =>
               setSidebarOpen((prev) => !prev)

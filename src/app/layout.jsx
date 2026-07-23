@@ -1,5 +1,6 @@
 import "./globals.css";
 import ClientLayout from "./ClientLayout";
+import { ThemeProvider } from "../components/ThemeProvider";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import Script from "next/script";
 
@@ -11,7 +12,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Google Analytics Script */}
         <Script
@@ -34,7 +35,9 @@ export default function RootLayout({ children }) {
 
       <body className="bg-bg-1 text-text-1">
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
-          <ClientLayout>{children}</ClientLayout>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+            <ClientLayout>{children}</ClientLayout>
+          </ThemeProvider>
         </GoogleOAuthProvider>
       </body>
     </html> 

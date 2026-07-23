@@ -5,8 +5,10 @@ import Post from "@/models/Post";
 import Group from "@/models/Group";
 import User from "@/models/User";
 import Vote from "@/models/Vote";
+import GroupComment from "@/models/GroupComment";
 import { getCurrentUser } from "@/lib/auth";
 import cloudinary from "@/lib/cloudinary";
+import Groq from "groq-sdk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -193,6 +195,65 @@ if (imageBase64) {
       value: 1,
     });
 
+    // ====================================================
+    // 🤖 AI AGENT AUTO-REPLY LOGIC
+    // ====================================================
+    let initialCommentsCount = 0;
+    try {
+      const postText = `${title || ""} ${content || ""}`.toLowerCase();
+      if (postText.includes("?")) {
+        // Find or create AI User
+        const aiUser = await User.findOneAndUpdate(
+          { email: "ai@confique.com" },
+          {
+            $setOnInsert: {
+              name: "Confique AI",
+              username: "confique-ai",
+              provider: "local",
+            },
+          },
+          { upsert: true, new: true }
+        );
+
+        // Fetch AI Response
+        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+        const chatCompletion = await groq.chat.completions.create({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content: `You are a helpful, expert AI assistant participating in a community forum about "${group.category}". Provide a concise, friendly, and highly accurate answer to the user's question. Format your response cleanly.`,
+            },
+            {
+              role: "user",
+              content: `Title: ${title}\n\nContent: ${content || ""}`,
+            },
+          ],
+        });
+
+        const aiResponse = chatCompletion.choices?.[0]?.message?.content;
+
+        if (aiResponse) {
+          // Add comment
+          await GroupComment.create({
+            group: group._id,
+            post: post._id,
+            author: aiUser._id,
+            authorEmail: aiUser.email,
+            authorName: aiUser.name,
+            text: aiResponse,
+          });
+
+          // Update post comment count
+          post.commentsCount = (post.commentsCount || 0) + 1;
+          await post.save();
+          initialCommentsCount = 1;
+        }
+      }
+    } catch (aiError) {
+      console.error("⚠️ AI Agent Error:", aiError);
+    }
+
     return NextResponse.json(
       {
         post: {
@@ -207,7 +268,7 @@ if (imageBase64) {
           authorImage: user.avatar || null,
 
           upvotes: 1,
-          commentsCount: 0,
+          commentsCount: initialCommentsCount,
           reactions: [],
           poll: post.poll || null,
           userVote: 1,

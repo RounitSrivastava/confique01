@@ -131,7 +131,7 @@ const CategoryPill = ({ name, isSelected, onClick }) => (
       ${
         isSelected
           ? "bg-purple-600 text-text-1 shadow-[0_0_0_1px_rgba(168,85,247,0.6)]"
-          : "bg-[#1f1f1f] text-text-2 border border-white/10 hover:bg-[#2a2a2a] hover:text-text-1"
+          : "bg-[#1f1f1f] text-text-2 border border-border-2 hover:bg-[#2a2a2a] hover:text-text-1"
       }
     `}
   >
@@ -146,7 +146,7 @@ const TrendingCard = ({ community, gradient, onNavigate, isJoined, onJoin }) => 
   return (
   <div
   onClick={() => isJoined && onNavigate(community)}
-  className="w-40 min-h-[190px] flex-shrink-0 rounded-xl overflow-hidden bg-black-900 border border-white/8 relative"
+  className="w-40 min-h-[190px] flex-shrink-0 rounded-xl overflow-hidden bg-bg-1-900 border border-white/8 relative"
 >
       {/* COVER IMAGE */}
       <div className="w-full h-28 bg-bg-3 overflow-hidden">
@@ -221,7 +221,7 @@ const AdminMenu = ({
     return (
         <div 
             ref={menuRef}
-            className="absolute right-0 top-8 z-10 w-48 bg-[#121212] border border-gray-700 rounded-lg shadow-xl"
+            className="absolute right-0 top-8 z-10 w-48 bg-bg-2 border border-border-2 rounded-lg shadow-xl"
         >
             <div className="py-1">
                 <button
@@ -229,7 +229,7 @@ const AdminMenu = ({
                         onEdit();
                         onClose();
                     }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-text-2 hover:bg-gray-700 hover:text-text-1"
+                    className="w-full flex items-center px-4 py-2 text-sm text-text-2 hover:bg-bg-4 hover:text-text-1"
                 >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit Community
@@ -240,7 +240,7 @@ const AdminMenu = ({
                         onEditMedia();
                         onClose();
                     }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-text-2 hover:bg-gray-700 hover:text-text-1"
+                    className="w-full flex items-center px-4 py-2 text-sm text-text-2 hover:bg-bg-4 hover:text-text-1"
                 >
                     <Image className="w-4 h-4 mr-2" />
                     Edit Logo & Banner
@@ -276,7 +276,7 @@ const RecommendedItem = ({
 
     return (
   <div
-    className={`flex items-center justify-between py-3 border-b border-gray-700
+    className={`flex items-center justify-between py-3 border-b border-border-2
       rounded-xl px-3 transition-all
       ${
         isJoined
@@ -290,7 +290,7 @@ const RecommendedItem = ({
       className="flex items-center flex-grow pr-4"
       onClick={() => isJoined && onNavigate(community)}
     >
-      <div className="w-12 h-12 rounded-md mr-3 bg-gray-700 flex items-center justify-center text-lg font-bold overflow-hidden">
+      <div className="w-12 h-12 rounded-md mr-3 bg-bg-4 flex items-center justify-center text-lg font-bold overflow-hidden">
         {displayIconUrl ? (
           <img
             src={displayIconUrl}
@@ -355,7 +355,7 @@ const RecommendedItem = ({
               e.stopPropagation();
               setShowAdminMenu(!showAdminMenu);
             }}
-            className="p-1.5 rounded-full hover:bg-gray-700 text-text-3 hover:text-text-1"
+            className="p-1.5 rounded-full hover:bg-bg-4 text-text-3 hover:text-text-1"
           >
             <MoreVertical className="w-5 h-5" />
           </button>
@@ -512,11 +512,11 @@ const handleFileChange = (e) => {
 };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
-            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-text-1 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-1/70 backdrop-blur-md px-4">
+            <div className="w-full max-w-xl rounded-2xl bg-bg-2 text-text-1 shadow-2xl">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border-2">
                     <div>
                         <h2 className="text-xl font-semibold">Create community</h2>
                         <p className="text-sm text-text-3">Build your own space</p>
@@ -535,7 +535,7 @@ const handleFileChange = (e) => {
                         value={formData.name}
                         onChange={handleChange}
                         placeholder="Community name"
-                        className="w-full bg-transparent border-b border-white/10 focus:border-purple-500 outline-none py-2 text-lg"
+                        className="w-full bg-transparent border-b border-border-2 focus:border-purple-500 outline-none py-2 text-lg"
                     />
 
                     {/* Description */}
@@ -550,7 +550,7 @@ const handleFileChange = (e) => {
         w-full
         bg-transparent
         border-b
-        border-white/10
+        border-border-2
         focus:border-purple-500
         outline-none
         py-2
@@ -564,7 +564,7 @@ const handleFileChange = (e) => {
                         name="category"
                         value={formData.category}
                         onChange={handleChange}
-                        className="w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-sm"
+                        className="w-full bg-bg-3 border border-border-2 rounded-xl px-4 py-3 text-sm"
                     >
                         {categories.filter(c => c !== "For You").map(c => (
                             <option key={c}>{c}</option>
@@ -576,7 +576,7 @@ const handleFileChange = (e) => {
                       <button
   type="button"
   onClick={() => logoRef.current.click()}
-  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500 relative"
+  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-border-2 bg-bg-3 py-3 text-sm hover:border-purple-500 relative"
 >
   {/* ❌ Cancel Logo */}
   {logoPreview && (
@@ -588,7 +588,7 @@ const handleFileChange = (e) => {
         setLogoPreview(null);
         if (logoRef.current) logoRef.current.value = "";
       }}
-      className="absolute top-2 right-2 bg-black/10 hover:bg-black/60 rounded-full p-1 backdrop-blur"
+      className="absolute top-2 right-2 bg-bg-1/10 hover:bg-bg-1/60 rounded-full p-1 backdrop-blur"
     >
       <X className="w-4 h-4 text-text-1" />
     </button>
@@ -599,7 +599,7 @@ const handleFileChange = (e) => {
       <img
         src={logoPreview}
         alt="Logo preview"
-        className="w-20 h-20 rounded-xl object-cover border border-white/10"
+        className="w-20 h-20 rounded-xl object-cover border border-border-2"
       />
     </div>
   )}
@@ -612,7 +612,7 @@ const handleFileChange = (e) => {
                        <button
   type="button"
   onClick={() => bannerRef.current.click()}
-  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500 relative"
+  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-border-2 bg-bg-3 py-3 text-sm hover:border-purple-500 relative"
 >
   {/* ❌ Cancel Banner */}
   {bannerPreview && (
@@ -624,7 +624,7 @@ const handleFileChange = (e) => {
         setBannerPreview(null);
         if (bannerRef.current) bannerRef.current.value = "";
       }}
-      className="absolute top-2 right-2 bg-black/10 hover:bg-black/60 rounded-full p-1 backdrop-blur"
+      className="absolute top-2 right-2 bg-bg-1/10 hover:bg-bg-1/60 rounded-full p-1 backdrop-blur"
     >
       <X className="w-4 h-4 text-text-1" />
     </button>
@@ -636,7 +636,7 @@ const handleFileChange = (e) => {
       <img
         src={bannerPreview}
         alt="Banner preview"
-        className="w-full h-20 rounded-xl object-cover border border-white/10"
+        className="w-full h-20 rounded-xl object-cover border border-border-2"
       />
     </div>
   )}
@@ -658,7 +658,7 @@ const handleFileChange = (e) => {
                 </form>
 
                 {/* Footer */}
-                <div className="flex justify-end px-6 py-4 border-t border-white/10">
+                <div className="flex justify-end px-6 py-4 border-t border-border-2">
                   <button
     type="submit"
     onClick={handleSubmit}
@@ -733,11 +733,11 @@ const EditCommunityForm = ({
     if (!isOpen || !community) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
-            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-text-1 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-1/70 backdrop-blur-md px-4">
+            <div className="w-full max-w-xl rounded-2xl bg-bg-2 text-text-1 shadow-2xl">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border-2">
                     <div>
                         <h2 className="text-xl font-semibold">Edit community</h2>
                         <p className="text-sm text-text-3">Update details</p>
@@ -761,7 +761,7 @@ const EditCommunityForm = ({
                             w-full
                             bg-transparent
                             border-b
-                            border-white/10
+                            border-border-2
                             focus:border-purple-500
                             outline-none
                             py-2
@@ -782,7 +782,7 @@ const EditCommunityForm = ({
                             w-full
                             bg-transparent
                             border-b
-                            border-white/10
+                            border-border-2
                             focus:border-purple-500
                             outline-none
                             py-2
@@ -796,7 +796,7 @@ const EditCommunityForm = ({
                         name="category"
                         value={formData.category}
                         onChange={handleChange}
-                        className="w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-sm"
+                        className="w-full bg-bg-3 border border-border-2 rounded-xl px-4 py-3 text-sm"
                     >
                         {categories
                             .filter((c) => c !== "For You")
@@ -809,7 +809,7 @@ const EditCommunityForm = ({
                 </form>
 
                 {/* Footer */}
-                <div className="flex justify-end px-6 py-4 border-t border-white/10">
+                <div className="flex justify-end px-6 py-4 border-t border-border-2">
                     <button
                         type="submit"
                         onClick={handleSubmit}
@@ -875,11 +875,11 @@ const EditCommunityMediaForm = ({
     if (!isOpen || !community) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
-            <div className="w-full max-w-xl rounded-2xl bg-[#0f0f0f] text-text-1 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-1/70 backdrop-blur-md px-4">
+            <div className="w-full max-w-xl rounded-2xl bg-bg-2 text-text-1 shadow-2xl">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border-2">
                     <div>
                         <h2 className="text-xl font-semibold">Edit community media</h2>
                         <p className="text-sm text-text-3">
@@ -899,7 +899,7 @@ const EditCommunityMediaForm = ({
                         <button
                             type="button"
                             onClick={() => logoRef.current.click()}
-                            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500"
+                            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-border-2 bg-bg-3 py-3 text-sm hover:border-purple-500"
                         >
                             <Image className="w-4 h-4 text-purple-400" />
                             {logoFile ? "Logo selected" : "Update logo"}
@@ -908,7 +908,7 @@ const EditCommunityMediaForm = ({
                         <button
                             type="button"
                             onClick={() => bannerRef.current.click()}
-                            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500"
+                            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-border-2 bg-bg-3 py-3 text-sm hover:border-purple-500"
                         >
                             <Upload className="w-4 h-4 text-purple-400" />
                             {bannerFile ? "Banner selected" : "Update banner"}
@@ -944,7 +944,7 @@ const EditCommunityMediaForm = ({
                 </form>
 
                 {/* Footer */}
-                <div className="flex justify-end px-6 py-4 border-t border-white/10">
+                <div className="flex justify-end px-6 py-4 border-t border-border-2">
                     <button
                         type="submit"
                         onClick={handleSubmit}
@@ -1443,7 +1443,7 @@ React.useEffect(() => {
                        className="
   w-full
   pl-10 pr-4 py-2.5
-  bg-[#121212]
+  bg-bg-2
   border border-border-2
   rounded-xl
   text-text-1

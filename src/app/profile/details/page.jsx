@@ -344,11 +344,11 @@ const rowData = [
 
       {/* --- FIXED MOBILE EDIT MODAL --- */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md px-4 py-6">
-          <div className="w-full max-w-xl max-h-full rounded-2xl bg-[#0f0f0f] text-text-1 shadow-2xl flex flex-col border border-white/5">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-bg-1/70 backdrop-blur-md px-4 py-6">
+          <div className="w-full max-w-xl max-h-full rounded-2xl bg-bg-2 text-text-1 shadow-2xl flex flex-col border border-border-1">
             
             {/* Header - Fixed */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border-2 shrink-0">
               <div>
                 <h2 className="text-xl font-semibold">Edit profile</h2>
                 <p className="text-sm text-text-3">Manage your identity on Confique</p>
@@ -368,7 +368,7 @@ const rowData = [
                   value={editForm.name}
                   onChange={(e) => setEditForm(p => ({ ...p, name: e.target.value }))}
                   placeholder="Your name"
-                  className="w-full bg-transparent border-b border-white/10 focus:border-purple-500 outline-none py-2 text-lg transition-colors"
+                  className="w-full bg-transparent border-b border-border-2 focus:border-purple-500 outline-none py-2 text-lg transition-colors"
                 />
               </div>
 
@@ -380,7 +380,7 @@ const rowData = [
                   onChange={(e) => setEditForm(p => ({ ...p, bio: e.target.value }))}
                   placeholder="Tell us about yourself"
                   maxLength={120}
-                  className="w-full bg-transparent border-b border-white/10 focus:border-purple-500 outline-none py-2 text-sm placeholder-gray-400 transition-colors"
+                  className="w-full bg-transparent border-b border-border-2 focus:border-purple-500 outline-none py-2 text-sm placeholder-gray-400 transition-colors"
                 />
               </div>
 
@@ -391,7 +391,7 @@ const rowData = [
                   value={editForm.location}
                   onChange={(e) => setEditForm(p => ({ ...p, location: e.target.value }))}
                   placeholder="Where are you located?"
-                  className="w-full bg-transparent border-b border-white/10 focus:border-purple-500 outline-none py-2 text-sm placeholder-gray-400 transition-colors"
+                  className="w-full bg-transparent border-b border-border-2 focus:border-purple-500 outline-none py-2 text-sm placeholder-gray-400 transition-colors"
                 />
               </div>
 
@@ -420,7 +420,7 @@ const rowData = [
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#151515] py-3 text-sm hover:border-purple-500 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-border-2 bg-bg-3 py-3 text-sm hover:border-purple-500 transition-colors"
                   >
                     <Upload className="w-4 h-4 text-purple-400" />
                     Upload Custom
@@ -444,7 +444,7 @@ const rowData = [
             </form>
 
             {/* Footer - Fixed */}
-            <div className="px-6 py-4 border-t border-white/10 bg-[#0f0f0f] shrink-0">
+            <div className="px-6 py-4 border-t border-border-2 bg-bg-2 shrink-0">
               <button
                 type="submit"
                 onClick={handleSaveProfile}

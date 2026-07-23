@@ -206,7 +206,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
     <div className="min-h-screen bg-bg-4 text-text-1">
 
       {/* HEADER */}
-      <div className="flex items-center justify-center relative px-6 py-4 border-b border-white/10">
+      <div className="flex items-center justify-center relative px-6 py-4 border-b border-border-2">
         <ArrowLeft
           onClick={() => router.back()}
           className="absolute left-6 w-5 h-5 cursor-pointer text-text-3 hover:text-text-1"
@@ -223,14 +223,14 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Quiz Title"
-          className="w-full bg-gray-900 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 focus:ring-purple-600"
+          className="w-full bg-bg-2 border border-border-2 rounded-xl p-4 outline-none focus:ring-2 focus:ring-purple-600"
         />
 
         {/* QUESTIONS */}
         {questions.map((q, qIndex) => (
           <div
             key={qIndex}
-            className="bg-gray-900/60 border border-white/10 rounded-2xl p-6 space-y-6"
+            className="bg-bg-2/60 border border-border-2 rounded-2xl p-6 space-y-6"
           >
             <div className="flex justify-between items-center">
               <h3 className="font-semibold">
@@ -252,7 +252,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
                 updateQuestion(qIndex, "question", e.target.value)
               }
               placeholder="Enter question"
-              className="w-full bg-gray-900 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 focus:ring-purple-600"
+              className="w-full bg-bg-2 border border-border-2 rounded-xl p-4 outline-none focus:ring-2 focus:ring-purple-600"
             />
 
             <div className="space-y-3">
@@ -262,7 +262,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
                   className={`flex items-center gap-3 p-3 rounded-xl border ${
                     q.correctIndex === oIndex
                       ? "border-green-500"
-                      : "border-white/10"
+                      : "border-border-2"
                   }`}
                 >
                   <span className="text-purple-400 font-bold">
@@ -321,7 +321,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
         </button>
 
         {/* 🔥 SCHEDULE SECTION */}
-        <div className="bg-gray-900/60 border border-white/10 rounded-xl p-6 space-y-4">
+        <div className="bg-bg-2/60 border border-border-2 rounded-xl p-6 space-y-4">
           <h3 className="font-semibold">Quiz Schedule</h3>
 
           <div>
@@ -332,7 +332,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
               type="datetime-local"
               value={startAt}
               onChange={(e) => setStartAt(e.target.value)}
-              className="bg-gray-900 border border-white/10 rounded-lg p-3 w-full"
+              className="bg-bg-2 border border-border-2 rounded-lg p-3 w-full"
             />
           </div>
 
@@ -345,7 +345,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
   value={closeAt}
   min={startAt}
   onChange={(e) => setCloseAt(e.target.value)}
-  className="bg-gray-900 border border-white/10 rounded-lg p-3 w-full"
+  className="bg-bg-2 border border-border-2 rounded-lg p-3 w-full"
 />
           </div>
           <div>
@@ -359,7 +359,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
   max="120"
   value={attemptTime}
   onChange={(e) => setAttemptTime(Math.max(1, Number(e.target.value)))}
-  className="bg-gray-900 border border-white/10 rounded-lg p-3 w-full"
+  className="bg-bg-2 border border-border-2 rounded-lg p-3 w-full"
 />
 </div>
         </div>
@@ -372,7 +372,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
             className={`w-full max-w-md py-3 rounded-xl font-semibold text-lg transition ${
               isValid
                 ? "bg-purple-600 hover:bg-purple-700 active:scale-95"
-                : "bg-gray-700 cursor-not-allowed"
+                : "bg-bg-4 cursor-not-allowed"
             }`}
           >
             {loading

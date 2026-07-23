@@ -2,7 +2,7 @@ import React from "react";
 
 const TermsPage = () => {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black text-gray-200">
+    <main className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black text-text-2">
 
       <div className="sticky top-0 z-50 bg-indigo-950/90 border-b border-indigo-700 px-6 py-3 backdrop-blur">
         <p className="text-indigo-200 text-xs tracking-widest uppercase text-center">

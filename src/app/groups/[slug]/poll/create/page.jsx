@@ -58,7 +58,7 @@ export default function CreatePoll() {
     <div className="min-h-screen bg-bg-4 text-text-1">
 
       {/* Header */}
-      <div className="flex items-center justify-center relative px-6 py-4 border-b border-white/10">
+      <div className="flex items-center justify-center relative px-6 py-4 border-b border-border-2">
         <ArrowLeft
           onClick={() => router.back()}
           className="absolute left-6 w-5 h-5 cursor-pointer text-text-3 hover:text-text-1"
@@ -77,7 +77,7 @@ export default function CreatePoll() {
           placeholder="Ask something engaging..."
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          className="mt-2 w-full bg-gray-900 border border-white/10 rounded-xl p-4 text-lg resize-none outline-none focus:ring-2 focus:ring-purple-600"
+          className="mt-2 w-full bg-bg-2 border border-border-2 rounded-xl p-4 text-lg resize-none outline-none focus:ring-2 focus:ring-purple-600"
         />
 
         <p className="text-xs text-text-3 text-right mt-1">
@@ -91,7 +91,7 @@ export default function CreatePoll() {
           {options.map((o, i) => (
             <div
               key={i}
-              className="bg-gray-900 border border-white/10 rounded-xl px-4 py-3 hover:border-purple-500 transition"
+              className="bg-bg-2 border border-border-2 rounded-xl px-4 py-3 hover:border-purple-500 transition"
             >
               <div className="flex items-center">
                 <span className="text-purple-400 font-bold mr-3">
@@ -113,7 +113,7 @@ export default function CreatePoll() {
                 )}
               </div>
 
-              <div className="h-1 bg-gray-700 mt-3 rounded">
+              <div className="h-1 bg-bg-4 mt-3 rounded">
                 <div className="h-1 bg-purple-500 rounded w-0" />
               </div>
             </div>
@@ -139,7 +139,7 @@ export default function CreatePoll() {
               ${
                 isValid
                   ? "bg-purple-600 hover:bg-purple-700 active:scale-95"
-                  : "bg-gray-700 cursor-not-allowed"
+                  : "bg-bg-4 cursor-not-allowed"
               }
             `}
           >

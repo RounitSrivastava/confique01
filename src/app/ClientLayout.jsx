@@ -21,7 +21,7 @@ export default function ClientLayout({ children }) {
     pathname === "/auth/forgot-password" ||
     pathname === "/terms";
 
-  const isEventsPage = pathname === "/events";
+  const isEventsPage = pathname.startsWith("/events");
 
   const contentWithAuth = useMemo(() => {
     const renderContent = () => {
@@ -44,7 +44,7 @@ export default function ClientLayout({ children }) {
       }
 
       return (
-        <div className="h-screen w-full bg-bg-4 text-text-1 overflow-hidden flex flex-col">
+        <div className={`h-screen w-full bg-bg-4 text-text-1 overflow-hidden flex flex-col ${!isEventsPage ? "light-mode" : ""}`}>
           <Topbar
             onToggleSidebar={() =>
               setSidebarOpen((prev) => !prev)

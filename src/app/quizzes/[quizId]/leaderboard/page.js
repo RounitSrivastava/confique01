@@ -99,7 +99,7 @@ export default function Leaderboard() {
 
   if (!quiz) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[#0b1d3a] text-white">
+      <div className="fixed inset-0 flex items-center justify-center bg-bg-1 text-text-1">
         Loading...
       </div>
     );
@@ -119,12 +119,12 @@ export default function Leaderboard() {
   };
 
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-y-auto bg-gradient-to-br from-[#0b1d3a] via-[#142850] to-[#0b1d3a] text-white z-[9999]">
+    <div className="fixed inset-0 w-screen h-screen overflow-y-auto bg-gradient-to-br from-[#0b1d3a] via-[#142850] to-[#0b1d3a] text-text-1 z-[9999]">
 
       {/* Back Button */}
       <button
         onClick={() => router.push("/quizzes")}
-        className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-2 text-blue-200 hover:text-white transition text-sm sm:text-base"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-2 text-blue-200 hover:text-text-1 transition text-sm sm:text-base"
       >
         <ArrowLeft size={18} />
         Back
@@ -132,11 +132,11 @@ export default function Leaderboard() {
 
       <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:py-10">
 
-        <div className="relative w-full max-w-[650px] p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-blue-400/40 shadow-[0_0_50px_rgba(59,130,246,0.5)] bg-[#132043]">
+        <div className="relative w-full max-w-[650px] p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-blue-400/40 shadow-[0_0_50px_rgba(59,130,246,0.5)] bg-bg-2">
 
           {/* Title */}
           <div className="flex justify-center mb-6 sm:mb-10">
-            <div className="relative px-6 py-3 sm:px-10 sm:py-4 rounded-xl sm:rounded-2xl border border-blue-400/40 bg-[#102a57] text-lg sm:text-2xl md:text-3xl font-bold tracking-[0.18em] sm:tracking-[0.28em] shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+            <div className="relative px-6 py-3 sm:px-10 sm:py-4 rounded-xl sm:rounded-2xl border border-blue-400/40 bg-bg-3 text-lg sm:text-2xl md:text-3xl font-bold tracking-[0.18em] sm:tracking-[0.28em] shadow-[0_0_15px_rgba(59,130,246,0.4)]">
               <div className="absolute inset-0 rounded-2xl blur-lg bg-blue-500/20 opacity-30"></div>
 
               <div className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-blue-300 to-blue-200">
@@ -225,7 +225,7 @@ export default function Leaderboard() {
             </AnimatePresence>
 
             {sorted.length === 0 && (
-              <div className="text-center text-gray-400">
+              <div className="text-center text-text-3">
                 No submissions yet.
               </div>
             )}

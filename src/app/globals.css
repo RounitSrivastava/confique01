@@ -27,14 +27,32 @@
   --color-text-4: #525252;
 }
 
-/* Dark theme */
+/* Dark theme (Default) */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-   
   }
 }
+
+/* ---------------------------------------------------
+   WHITE MODE OVERRIDES
+--------------------------------------------------- */
+.light-mode {
+  --color-bg-1: #ffffff; /* pure white */
+  --color-bg-2: #f9fafb; /* gray-50 */
+  --color-bg-3: #f3f4f6; /* gray-100 */
+  --color-bg-4: #f8fafc; /* slate-50 - softer background */
+
+  --color-border-1: #e5e7eb; /* gray-200 */
+  --color-border-2: #d1d5db; /* gray-300 */
+
+  --color-text-1: #111827; /* gray-900 (almost black) */
+  --color-text-2: #374151; /* gray-700 (dark gray) */
+  --color-text-3: #4b5563; /* gray-600 */
+  --color-text-4: #6b7280; /* gray-500 */
+}
+
 
 /* Body styling */
 body {

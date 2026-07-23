@@ -109,14 +109,14 @@ const sendToWeb3Forms = async (type, message) => {
       {/* TWO CARDS SIDE BY SIDE */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* FEEDBACK CARD */}
-        <div className="bg-[#101010] border border-border-2 rounded-2xl p-6 shadow-xl hover:shadow-purple-500/10 transition">
+        <div className="bg-bg-2 border border-border-2 rounded-2xl p-6 shadow-xl hover:shadow-purple-500/10 transition">
           <h2 className="text-xl font-semibold mb-2">Feedback</h2>
           <p className="text-sm text-text-3 mb-4">
             Tell us what you like or what we can improve.
           </p>
 
           <textarea
-            className="w-full rounded-xl bg-[#141414] border border-border-2 px-4 py-3 text-sm outline-none 
+            className="w-full rounded-xl bg-bg-3 border border-border-2 px-4 py-3 text-sm outline-none 
             focus:border-purple-500 transition resize-none"
             rows={4}
             placeholder="Write your feedback..."
@@ -139,14 +139,14 @@ const sendToWeb3Forms = async (type, message) => {
         </div>
 
         {/* COMPLAINT CARD */}
-        <div className="bg-[#101010] border border-border-2 rounded-2xl p-6 shadow-xl hover:shadow-purple-500/10 transition">
+        <div className="bg-bg-2 border border-border-2 rounded-2xl p-6 shadow-xl hover:shadow-purple-500/10 transition">
           <h2 className="text-xl font-semibold mb-2">Complaint</h2>
           <p className="text-sm text-text-3 mb-4">
             Run into an issue? Share it with Confique for a quick fix.
           </p>
 
           <textarea
-            className="w-full rounded-xl bg-[#141414] border border-border-2 px-4 py-3 text-sm outline-none 
+            className="w-full rounded-xl bg-bg-3 border border-border-2 px-4 py-3 text-sm outline-none 
             focus:border-purple-500 transition resize-none"
             rows={4}
             placeholder="Write your complaint..."

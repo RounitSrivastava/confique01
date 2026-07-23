@@ -104,7 +104,7 @@ let list = [...storedAll];
       <div className="mx-auto w-full max-w-[340px] p-4 pb-10 space-y-6">
         
         {isSettingsPage ? (
-          <section className="rounded-2xl bg-[#101010] border border-border-2 shadow-sm px-6 py-8 text-center">
+          <section className="rounded-2xl bg-bg-2 border border-border-2 shadow-sm px-6 py-8 text-center">
             <h2 className="text-xl font-bold text-text-1">Help & Support</h2>
             <p className="text-sm text-text-2 mt-4 leading-relaxed">
               Facing any issue with <span className="font-semibold">Confique</span>?<br />
@@ -120,11 +120,11 @@ let list = [...storedAll];
           <>
             {/* Top Communities */}
             {topCommunities.length > 0 && (
-  <section className="rounded-xl bg-[#121212] border border-border-2 shadow-sm">
+  <section className="rounded-xl bg-bg-2 border border-border-2 shadow-sm">
               <div className="px-4 py-3 border-b border-border-2 text-sm font-medium text-text-1 tracking-wide">Top Communities</div>
               <ul className="p-2">
                 {topCommunities.map((c, index) => (
-                  <li key={c.id} onClick={() => handleCommunityClick(c)} className="px-3 py-2 rounded-lg hover:bg-[#111] transition flex items-start gap-2 cursor-pointer group">
+                  <li key={c.id} onClick={() => handleCommunityClick(c)} className="px-3 py-2 rounded-lg hover:bg-bg-3 transition flex items-start gap-2 cursor-pointer group">
                     <span className="text-xs text-text-4 mt-0.5">#{index + 1}</span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-200 truncate group-hover:text-purple-400 transition-colors">{c.name}</p>
@@ -137,14 +137,14 @@ let list = [...storedAll];
 )}
             {/* Popular Events Section */}
             {popularEvents.length > 0 && (
-  <section className="rounded-xl bg-[#121212] border border-border-2 shadow-sm hover:bg-[#151515] transition-colors">
+  <section className="rounded-xl bg-bg-2 border border-border-2 shadow-sm hover:bg-bg-3 transition-colors">
               <div className="px-4 py-3 border-b border-border-2 text-sm font-medium text-text-1 tracking-wide"> Events</div>
               <ul className="p-2">
                 {popularEvents.map((e) => (
                   <li 
                     key={e.id} 
                     onClick={() => handlePopularEventClick(e)} 
-                    className="px-3 py-2 rounded-lg hover:bg-[#111] cursor-pointer transition group"
+                    className="px-3 py-2 rounded-lg hover:bg-bg-3 cursor-pointer transition group"
                   >
                     {/* ✅ Title: Single line with ellipsis */}
                     <p className="text-sm font-medium text-slate-200 truncate group-hover:text-purple-400 transition-colors">

@@ -139,10 +139,10 @@
 //         alt=""
 //         className="pointer-events-none select-none fixed inset-0 h-full w-full object-cover opacity-30"
 //       />
-//       <div className="fixed inset-0 bg-black/60" />
+//       <div className="fixed inset-0 bg-bg-1/60" />
 
 //       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
-//         <div className="w-full max-w-5xl rounded-3xl border border-white/10 bg-gray-900/70 backdrop-blur-xl overflow-hidden">
+//         <div className="w-full max-w-5xl rounded-3xl border border-border-2 bg-bg-2/70 backdrop-blur-xl overflow-hidden">
 //           <div className="grid grid-cols-1 md:grid-cols-2">
 
 //             {/* LEFT SLIDESHOW */}
@@ -157,12 +157,12 @@
 //                   }`}
 //                 />
 //               ))}
-//               <div className="absolute inset-0 bg-black/45" />
+//               <div className="absolute inset-0 bg-bg-1/45" />
 //               <div className="absolute left-6 right-6 bottom-6">
 //                 <p className="text-2xl font-semibold leading-tight">
 //                   “Design with intention, execute with elegance.”
 //                 </p>
-//                 <p className="mt-1 text-sm text-white/70">
+//                 <p className="mt-1 text-sm text-text-1/70">
 //                   A mindful builder
 //                 </p>
 //               </div>
@@ -186,7 +186,7 @@
 //                     value={email}
 //                     onChange={(e) => setEmail(e.target.value)}
 //                     placeholder="name@company.com"
-//                     className="w-full rounded-xl bg-bg-1 border border-gray-700 px-4 py-3"
+//                     className="w-full rounded-xl bg-bg-1 border border-border-2 px-4 py-3"
 //                   />
 //                 </div>
 
@@ -205,7 +205,7 @@
 //                     value={password}
 //                     onChange={(e) => setPassword(e.target.value)}
 //                     placeholder="••••••••"
-//                     className="w-full rounded-xl bg-bg-1 border border-gray-700 px-4 py-3"
+//                     className="w-full rounded-xl bg-bg-1 border border-border-2 px-4 py-3"
 //                   />
 //                 </div>
 

@@ -158,7 +158,7 @@ useEffect(() => {
 
   if (loading || !quiz || attemptLimit === null){
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[#0b1d3a] text-white">
+      <div className="fixed inset-0 flex items-center justify-center bg-bg-1 text-text-1">
         Loading...
       </div>
     );
@@ -275,18 +275,18 @@ quiz.questions.forEach((q, qIndex) => {
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-gradient-to-br from-[#0b1d3a] via-[#142850] to-[#0b1d3a] text-white overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] bg-gradient-to-br from-[#0b1d3a] via-[#142850] to-[#0b1d3a] text-text-1 overflow-y-auto">
 
       <button
         onClick={() => router.push("/quizzes")}
-        className="absolute top-4 left-4 flex items-center gap-1 text-blue-200 hover:text-white transition"
+        className="absolute top-4 left-4 flex items-center gap-1 text-blue-200 hover:text-text-1 transition"
       >
         <ArrowLeft size={18} />
         Back
       </button>
 
       <div className="min-h-screen flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-4xl bg-[#132043] rounded-3xl p-8 border border-blue-400/30 shadow-xl">
+        <div className="w-full max-w-4xl bg-bg-2 rounded-3xl p-8 border border-blue-400/30 shadow-xl">
 
           <h1 className="text-3xl font-bold text-center text-blue-300 mb-6">
             {quiz.title}

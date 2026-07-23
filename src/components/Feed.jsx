@@ -150,7 +150,7 @@ const logoImg = c.iconUrl || null;
 className={`rounded-2xl overflow-hidden shadow-2xl bg-bg-4 border border-white/15 hover:border-white/30 cursor-pointer transition-all flex flex-col h-full ${className}`}
 
     >
-      <div className="h-36 w-full overflow-hidden flex-shrink-0 rounded-t-2xl bg-gray-900">
+      <div className="h-36 w-full overflow-hidden flex-shrink-0 rounded-t-2xl bg-bg-2">
   {bannerImg ? (
     <img
       src={bannerImg}
@@ -318,10 +318,10 @@ const FeaturedCarousel = ({ events = [], interval = 3000, onViewDetails }) => {
   ref={containerRef}
   className="relative overflow-hidden"
 >
-      <button aria-label="Previous" onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+      <button aria-label="Previous" onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-bg-1/50 flex items-center justify-center">
         <ChevronLeft className="w-5 h-5" />
       </button>
-      <button aria-label="Next" onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+      <button aria-label="Next" onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-bg-1/50 flex items-center justify-center">
         <ChevronRight className="w-5 h-5" />
       </button>
 
@@ -388,7 +388,7 @@ function EventCard({ event, onOpen }) {
   return (
     <div
       onClick={() => onOpen(event.id)}
-      className="rounded-2xl overflow-hidden bg-bg-4 border border-white/10 hover:border-white/25 cursor-pointer transition shadow-lg"
+      className="rounded-2xl overflow-hidden bg-bg-4 border border-border-2 hover:border-white/25 cursor-pointer transition shadow-lg"
     >
       <div className="h-40 w-full overflow-hidden">
         <img
@@ -418,7 +418,7 @@ function EventRow({ event, onOpen }) {
   return (
     <div
       onClick={() => onOpen(event.id)}
-      className="flex gap-4 p-4 rounded-xl bg-bg-4 border border-white/10 hover:border-white/25 cursor-pointer transition"
+      className="flex gap-4 p-4 rounded-xl bg-bg-4 border border-border-2 hover:border-white/25 cursor-pointer transition"
     >
       <img
         src={event.poster}

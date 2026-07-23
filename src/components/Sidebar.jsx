@@ -78,7 +78,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
   return (
     <>
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:block w-[260px] shrink-0 border-r border-[#262626] bg-bg-4 overflow-y-auto custom-scrollbar">
+      <aside className="hidden lg:block w-[260px] shrink-0 border-r border-border-2 bg-bg-4 overflow-y-auto custom-scrollbar">
         <div className="mx-auto max-w-[240px] py-6">
           <nav className="space-y-1">
             {nav.map((n) => {
@@ -90,7 +90,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
                   className={`${baseLink} ${
                     active
                       ? "bg-bg-3 border-border-1 text-text-1"
-                      : "text-text-2 hover:bg-bg-3 hover:border-[#262626]"
+                      : "text-text-2 hover:bg-bg-3 hover:border-border-2"
                   }`}
                 >
                   <n.icon className="h-4 w-4" />
@@ -104,7 +104,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
           <div className="mt-6">
             <button
               onClick={() => setOpenQuick((s) => !s)}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-text-2 hover:bg-bg-3 border border-[#262626]"
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-text-2 hover:bg-bg-3 border border-border-2"
             >
               <span>Quick Access</span>
               <ChevronDown
@@ -119,12 +119,12 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
               
                 <button
   onClick={() => router.push("/groups?view=create")}
-  className="block w-full text-left rounded-xl px-3 py-2 text-sm text-text-2 hover:bg-bg-3 border border-[#262626]">
+  className="block w-full text-left rounded-xl px-3 py-2 text-sm text-text-2 hover:bg-bg-3 border border-border-2">
   Create Community
 </button>
                 <button
   onClick={() => router.push("/events?view=host")}
-  className="block w-full text-left rounded-xl px-3 py-2 text-sm text-text-2 hover:bg-bg-3 border border-[#262626]"
+  className="block w-full text-left rounded-xl px-3 py-2 text-sm text-text-2 hover:bg-bg-3 border border-border-2"
 >
   Create Event
 </button>
@@ -137,7 +137,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
           <div className="mt-4">
             <Link
               href="/settings"
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-text-2 hover:bg-bg-3 border border-[#262626]"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-text-2 hover:bg-bg-3 border border-border-2"
             >
               <Settings className="h-4 w-4" />   {/* ✅ ICON ADDED */}
               <span>Help & Support</span>
@@ -148,11 +148,11 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
 
       {/* MOBILE SIDEBAR */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-bg-4 border-r border-[#262626] transform transition-transform duration-300 lg:hidden ${
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-bg-4 border-r border-border-2 transform transition-transform duration-300 lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-[#262626]">
+        <div className="flex items-center justify-between p-4 border-b border-border-2">
           <h2 className="text-lg font-extrabold text-purple-400">Confique</h2>
           <button onClick={onClose} className="p-1">
             <X className="h-5 w-5 text-text-3" />
@@ -168,7 +168,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
                 href={n.href}
                 onClick={handleMobileClose}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-bg-3 ${
-                  active ? "bg-bg-3 text-text-1" : "text-gray-200"
+                  active ? "bg-bg-3 text-text-1" : "text-text-2"
                 }`}
               >
                 <n.icon className="h-4 w-4" />
@@ -181,14 +181,14 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
           <Link
             href="/settings"
             onClick={handleMobileClose}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-bg-3 text-gray-200"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-bg-3 text-text-2"
           >
             <Settings className="h-4 w-4" />   {/* ✅ ICON ADDED */}
             <span>Help & Support</span>
           </Link>
         </nav>
 
-        <div className="p-4 border-t border-[#262626] space-y-2">
+        <div className="p-4 border-t border-border-2 space-y-2">
           <button
   onClick={() => {
     router.push("/quizzes/create");
@@ -221,7 +221,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-bg-1/50 backdrop-blur-sm lg:hidden"
         />
       )}
     </>

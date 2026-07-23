@@ -158,7 +158,7 @@ const isOngoing =
     };
 
     return (
-     <div className="relative p-6 rounded-2xl border border-white/10 bg-gradient-to-br from-[#1e1e2f] via-[#1a1a2e] to-[#12121c] backdrop-blur-xl shadow-md transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20">
+     <div className="relative p-6 rounded-2xl border border-border-2 bg-gradient-to-br from-[#1e1e2f] via-[#1a1a2e] to-[#12121c] backdrop-blur-xl shadow-md transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20">
         {/* ===== Scheduled Timer ===== */}
         {isScheduled && (
           <div className="absolute top-4 right-4 text-xs font-semibold bg-purple-600/20 text-purple-400 px-3 py-1 rounded-full">
@@ -189,7 +189,7 @@ const isOngoing =
             </button>
 
             {openMenu === quiz._id && (
-              <div className="absolute right-0 mt-2 w-36 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-36 bg-bg-3 border border-border-2 rounded-xl shadow-xl overflow-hidden z-50">
                 <button
                   onClick={() =>
                     router.push(`/quizzes/create?edit=${quiz._id}`)
@@ -213,18 +213,18 @@ const isOngoing =
           {quiz.title}
         </h3>
 
-        <p className="text-sm text-gray-400 mb-6">
+        <p className="text-sm text-text-3 mb-6">
           {quiz.questions?.length || 0} Questions
         </p>
 
         {!isPrevious && (
           <div className="flex gap-4 flex-wrap">
             {isScheduled ? (
-              <button disabled className="bg-gray-700 px-4 py-2 rounded-lg text-sm opacity-60">
+              <button disabled className="bg-bg-4 px-4 py-2 rounded-lg text-sm opacity-60">
                 Starts Soon
               </button>
             ) : alreadyAttempted ? (
-              <button disabled className="bg-gray-700 px-4 py-2 rounded-lg text-sm opacity-60">
+              <button disabled className="bg-bg-4 px-4 py-2 rounded-lg text-sm opacity-60">
                 Attempted
               </button>
             ) : (
@@ -264,12 +264,12 @@ const isOngoing =
   if (authLoading) return null;
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] text-white px-6 py-10">
+    <div className="min-h-screen bg-bg-2/80 text-text-1 px-6 py-10">
 
       <div className="flex justify-between items-center mb-12">
         <div>
           <h1 className="text-3xl font-bold">Quizzes</h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-text-3 text-sm mt-1">
             Manage and track your quizzes easily
           </p>
         </div>
@@ -294,7 +294,7 @@ const isOngoing =
       </div>
 
       {loading ? (
-        <div className="text-center text-gray-400">
+        <div className="text-center text-text-3">
           Loading quizzes...
         </div>
       ) : (
@@ -313,7 +313,7 @@ const isOngoing =
         <h2 className="text-xl font-semibold mb-6">{title}</h2>
 
         {data.length === 0 ? (
-          <p className="text-gray-500">No quizzes available.</p>
+          <p className="text-text-4">No quizzes available.</p>
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
             {data.map((quiz) => (

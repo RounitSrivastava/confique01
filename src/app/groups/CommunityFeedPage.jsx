@@ -311,13 +311,13 @@ const PostOptionsMenu = React.forwardRef(
         return (
             <div
                 ref={ref}
-                className="absolute right-0 top-8 z-30 w-64 bg-gray-900 rounded-lg shadow-xl p-2 border border-gray-700"
+                className="absolute right-0 top-8 z-30 w-64 bg-bg-2 rounded-lg shadow-xl p-2 border border-border-2"
             >
                 {!reporting ? (
                     <>
                         <button
                             onClick={() => setReporting(true)}
-                            className="flex items-center w-full px-3 py-2 text-sm text-purple-400 hover:bg-gray-900 rounded-md"
+                            className="flex items-center w-full px-3 py-2 text-sm text-purple-400 hover:bg-bg-2 rounded-md"
                         >
                             <Flag className="w-4 h-4 mr-2" /> Report
                         </button>
@@ -390,7 +390,7 @@ const ImagePreviewModal = ({ imageUrl, onClose }) => {
             >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-10 p-2 bg-gray-800/70 rounded-full text-text-1 hover:bg-gray-900 transition-colors"
+                    className="absolute top-4 right-4 z-10 p-2 bg-bg-3/70 rounded-full text-text-1 hover:bg-bg-2 transition-colors"
                     aria-label="Close image preview"
                 >
                     <X className="w-6 h-6" />
@@ -491,7 +491,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
     <div
   className="
     fixed inset-0 z-50
-    bg-black/70
+    bg-bg-1/70
     flex items-center justify-center
     px-3
     transition-transform duration-300 ease-out
@@ -543,7 +543,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
               w-full bg-transparent
               text-text-1
               placeholder-gray-500
-              border-b border-gray-700
+              border-b border-border-2
               pb-2
               focus:outline-none focus:border-[#a855f7]
             "
@@ -588,7 +588,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
                 onClick={handleClearImage}
                 className="
                   absolute top-2 right-2
-                  bg-black/60 p-1.5 rounded-full
+                  bg-bg-1/60 p-1.5 rounded-full
                   hover:bg-red-600 transition
                 "
               >
@@ -631,7 +631,7 @@ const CreatePostModal = ({ communityName, onClose, onSubmit }) => {
   disabled={!title.trim() || isPosting}
   className={`ml-auto px-6 py-2 rounded-full font-semibold transition active:scale-95
     ${isPosting
-      ? "bg-gray-700 text-text-2 cursor-not-allowed"
+      ? "bg-bg-4 text-text-2 cursor-not-allowed"
       : "bg-[#c084fc] text-text-1 hover:bg-purple-700"}
   `}
 >
@@ -698,7 +698,7 @@ const InviteMenu = React.forwardRef(
            <div
   ref={ref}
   className="
-  z-50 bg-gray-900 rounded-lg shadow-xl p-2 border border-gray-600 w-56
+  z-50 bg-bg-2 rounded-lg shadow-xl p-2 border border-gray-600 w-56
   absolute right-0 top-10
 "
 >
@@ -734,7 +734,7 @@ InviteMenu.displayName = "InviteMenu";
 const CreateMenu = React.forwardRef(({ onSelect, onClose }, ref) => (
   <div
     ref={ref}
-    className="absolute right-0 top-10 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50"
+    className="absolute right-0 top-10 w-44 bg-bg-2 border border-border-2 rounded-lg shadow-xl z-50"
   >
     <button
       onClick={() => {
@@ -761,7 +761,7 @@ const AuthorProfileModal = ({ email, onClose, userData }) => {
     : "";
     return (
        <div
-  className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+  className="fixed inset-0 z-50 flex items-center justify-center bg-bg-1/80 p-4"
   onMouseDown={onClose}
 >
             <div className="bg-bg-4 rounded-lg max-w-sm w-full p-4" onClick={(e) => e.stopPropagation()}>
@@ -1050,7 +1050,7 @@ const FilterBar = ({ selected, setActiveFilter, eventsCount = 0 }) => (
                 className={`px-3 py-1 rounded-full text-sm transition-colors ${
                     selected === f
                         ? "bg-[#c084fc] text-text-1"
-                        : "bg-gray-900 text-text-2 hover:bg-bg-3"
+                        : "bg-bg-2 text-text-2 hover:bg-bg-3"
                 }`}
             >
                 {f}
@@ -1062,7 +1062,7 @@ const FilterBar = ({ selected, setActiveFilter, eventsCount = 0 }) => (
             className={`px-3 py-1 rounded-full text-sm transition-colors ${
                 selected === "Events"
                     ? "bg-[#c084fc] text-text-1"
-                    : "bg-gray-900 text-text-2 hover:bg-bg-3"
+                    : "bg-bg-2 text-text-2 hover:bg-bg-3"
             }`}
         >
             Events {eventsCount > 0 ? `(${eventsCount})` : ""}
@@ -1122,16 +1122,16 @@ const CommentItem = ({ comment, allComments, onReply, currentUserEmail, currentU
                     <span className="text-text-1 font-semibold">{comment.author}</span> ·{" "}
                     {comment.time}
                 </p>
-                <p className="text-sm text-gray-200 mt-1">{comment.text}</p>
+                <p className="text-sm text-text-2 mt-1">{comment.text}</p>
                 <button
                     onClick={() => onReply(comment)}
-                    className="text-gray-200 text-xs font-semibold mt-1 hover:underline"
+                    className="text-text-2 text-xs font-semibold mt-1 hover:underline"
                 >
                     Reply
                 </button>
 
                 {replies.length > 0 && (
-                    <div className="mt-3 border-l-2 border-gray-700 pl-3 space-y-3">
+                    <div className="mt-3 border-l-2 border-border-2 pl-3 space-y-3">
                         {replies.map((reply) => (
                             <CommentItem
                                 key={reply.id}
@@ -1442,7 +1442,7 @@ setIsSubmitting(true);
                             className={`
     p-2 rounded-full text-text-1 transition-colors
     ${isSubmitting
-        ? "bg-gray-700 cursor-not-allowed"
+        ? "bg-bg-4 cursor-not-allowed"
         : "bg-[#c084fc] hover:bg-purple-700"}
 `}
                             aria-disabled={!commentText.trim()}
@@ -1616,7 +1616,7 @@ const PostCard = ({
 )}
 
             {post.imageUrl && (
-                <div className="mt-3 bg-gray-900 rounded-lg overflow-hidden cursor-pointer" onClick={() => onImageClick(post.imageUrl)}>
+                <div className="mt-3 bg-bg-2 rounded-lg overflow-hidden cursor-pointer" onClick={() => onImageClick(post.imageUrl)}>
                     <img
                         src={post.imageUrl}
                         className="w-full object-cover max-h-96"
@@ -1667,7 +1667,7 @@ const PostCard = ({
 const EventListItem = ({ event, onOpenDetails }) => {
     return (
         <div className="flex items-start gap-4 p-4 border-b border-border-2">
-            <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-900 flex-shrink-0">
+            <div className="w-24 h-24 rounded-lg overflow-hidden bg-bg-2 flex-shrink-0">
                 <img
                     src={event.poster}
                     alt={event.title}
@@ -2833,7 +2833,7 @@ React.useEffect(() => {
                                         
                                         {/* Dropdown Menu */}
                                         {menuOpenId === p.id && (
-                                            <div className={`absolute ${dropdownPositionClass} ${isSelf ? 'right-2' : 'left-[calc(100%-28px)]'} z-50 bg-[#121212] rounded-xl shadow-2xl py-2 w-52 border border-[#222] overflow-hidden flex flex-col`}>
+                                            <div className={`absolute ${dropdownPositionClass} ${isSelf ? 'right-2' : 'left-[calc(100%-28px)]'} z-50 bg-bg-2 rounded-xl shadow-2xl py-2 w-52 border border-[#222] overflow-hidden flex flex-col`}>
                                                 <div className="flex items-center justify-around px-3 py-2 mb-1 border-b border-[#222]">
                                                     {["👍", "❤️", "😂", "😮", "😢", "🙏"].map(emoji => (
                                                         <span 
@@ -2882,7 +2882,7 @@ React.useEffect(() => {
 
                                         {/* Reply Quote Box */}
                                         {replyData && (
-                                            <div className={`mb-1 p-2 rounded bg-black/20 border-l-4 ${isSelf ? 'border-[#53bdeb]' : 'border-[#a855f7]'}`}>
+                                            <div className={`mb-1 p-2 rounded bg-bg-1/20 border-l-4 ${isSelf ? 'border-[#53bdeb]' : 'border-[#a855f7]'}`}>
                                                 <div className={`text-[12px] font-semibold ${isSelf ? 'text-[#53bdeb]' : 'text-[#a855f7]'} mb-0.5`}>{replyData.replyAuthor}</div>
                                                 <div className="text-[13px] text-text-2 opacity-80 truncate">{replyData.replyText}</div>
                                             </div>
@@ -2909,7 +2909,7 @@ React.useEffect(() => {
                                                             <div 
                                                                 key={i} 
                                                                 onClick={(e) => { e.stopPropagation(); handleVotePoll(p.id, i); }}
-                                                                className="relative bg-black/20 rounded-md overflow-hidden cursor-pointer hover:bg-black/30 transition-colors border border-border-1"
+                                                                className="relative bg-bg-1/20 rounded-md overflow-hidden cursor-pointer hover:bg-bg-1/30 transition-colors border border-border-1"
                                                             >
                                                                 <div 
                                                                     className="absolute top-0 left-0 bottom-0 bg-[#c084fc]/30 transition-all duration-500"
@@ -2944,7 +2944,7 @@ React.useEffect(() => {
                                                         <div 
                                                             key={idx} 
                                                             onClick={(e) => { e.stopPropagation(); handleReact(p.id, r.emoji); }}
-                                                            className={`bg-black/30 rounded-full px-1.5 py-0.5 flex items-center gap-1 cursor-pointer hover:bg-black/50 text-[11px] ${hasReacted ? 'border border-[#a855f7]' : 'border border-transparent'}`}
+                                                            className={`bg-bg-1/30 rounded-full px-1.5 py-0.5 flex items-center gap-1 cursor-pointer hover:bg-bg-1/50 text-[11px] ${hasReacted ? 'border border-[#a855f7]' : 'border border-transparent'}`}
                                                         >
                                                             <span>{r.emoji}</span>
                                                             <span className="text-text-3 font-medium">{r.users.length}</span>
@@ -2971,7 +2971,7 @@ React.useEffect(() => {
                 {selectedImagePreview && (
                     <div className="bg-bg-2 px-4 py-2 border-b border-border-3 relative flex justify-center">
                         <img src={selectedImagePreview} alt="Preview" className="h-24 object-contain rounded border border-border-1" />
-                        <button onClick={handleClearImage} className="absolute top-3 right-4 bg-black/60 p-1 rounded-full text-text-1 hover:bg-black/80">
+                        <button onClick={handleClearImage} className="absolute top-3 right-4 bg-bg-1/60 p-1 rounded-full text-text-1 hover:bg-bg-1/80">
                             <svg viewBox="0 0 24 24" width="18" height="18" className="fill-current"><path d="M19.1 17.2l-5.3-5.3 5.3-5.3-1.8-1.8-5.3 5.3-5.3-5.3-1.8 1.8 5.3 5.3-5.3 5.3 1.8 1.8 5.3-5.3 5.3 5.3z"></path></svg>
                         </button>
                     </div>
@@ -3026,7 +3026,7 @@ React.useEffect(() => {
         </div>
         {/* Poll Modal */}
         {isPollModalOpen && (
-            <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-bg-1/80 z-[100] flex items-center justify-center p-4">
                 <div className="bg-bg-2 border border-border-1 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
                     <button onClick={() => setIsPollModalOpen(false)} className="absolute top-4 right-4 text-text-3 hover:text-[#d1d7db]">
                         <X className="w-6 h-6" />

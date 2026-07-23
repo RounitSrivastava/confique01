@@ -176,7 +176,7 @@ export default function RewardsPage() {
         
         {/* Info Box */}
         <div className="bg-bg-4 border border-border-2 rounded-2xl p-6 text-sm text-text-3 leading-relaxed">
-          <h4 className="font-semibold text-gray-200 mb-2">How do rewards work?</h4>
+          <h4 className="font-semibold text-text-2 mb-2">How do rewards work?</h4>
           <p>
             Every time a new user registers using your unique invite link, your points will automatically increase. We are currently working on a feature that will allow you to redeem these points directly into money or exclusive platform prizes. Stay tuned!
           </p>

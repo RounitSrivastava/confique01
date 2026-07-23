@@ -32,7 +32,7 @@ export default function RootLayout({ children }) {
         </Script>
       </head>
 
-      <body className="bg-black text-white">
+      <body className="bg-bg-1 text-text-1">
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
           <ClientLayout>{children}</ClientLayout>
         </GoogleOAuthProvider>

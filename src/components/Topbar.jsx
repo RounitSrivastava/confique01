@@ -354,7 +354,7 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
   const safeAvatar = typeof displayAvatar === "string" && displayAvatar !== "" ? displayAvatar : "/employee.jpg";
 
   return (
-    <header className="sticky top-0 z-[100] border-b border-border-2 bg-[#0d0d0d]/80 backdrop-blur">
+    <header className="sticky top-0 z-[100] border-b border-border-2 bg-bg-2/80 backdrop-blur">
       <div className="mx-auto max-w-[1600px] px-3 md:px-6 h-16 flex items-center justify-between">
         
         {/* Left Section */}
@@ -399,14 +399,14 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
               <div className="fixed sm:absolute left-1/2 sm:left-auto right-auto sm:right-0 top-16 sm:top-auto mt-2 w-[92vw] sm:w-80 -translate-x-1/2 sm:translate-x-0 rounded-xl bg-bg-3 border border-border-2 shadow-lg overflow-hidden z-[9999]">
                 <div className="px-4 py-3 border-b border-border-2 font-medium flex items-center justify-between">
                   <span>Notifications</span>
-                  <button onClick={() => setOpenBell(false)} className="p-1 hover:bg-[#262626] rounded-lg transition-colors">
+                  <button onClick={() => setOpenBell(false)} className="p-1 hover:bg-bg-4 rounded-lg transition-colors">
                     <X className="h-4 w-4 text-text-3" />
                   </button>
                 </div>
                 <ul className="max-h-[60vh] sm:max-h-80 overflow-y-auto">
                   {notifications.length === 0 && <li className="px-4 py-3 text-sm text-text-3">No notifications yet.</li>}
                   {notifications.map((n) => (
-                    <li key={n.id} className="px-4 py-3 hover:bg-[#111] border-b border-[#262626]/60 flex flex-col gap-2">
+                    <li key={n.id} className="px-4 py-3 hover:bg-bg-3 border-b border-border-2/60 flex flex-col gap-2">
                       <p className="text-sm">{n.title || n.message || "Notification"}</p>
                       <p className="text-xs text-text-3">{formatTime(n)}</p>
                       {n.type === "REPORT" && (
@@ -423,8 +423,8 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
                           <button 
                             onClick={() => handleKeepReport(n.id)}
                             disabled={processingNotifId === n.id}
-                            className={`px-3 py-1 bg-[#262626] text-text-2 rounded text-xs font-medium transition-colors ${
-                               processingNotifId === n.id ? "opacity-50 cursor-not-allowed" : "hover:bg-[#333]"
+                            className={`px-3 py-1 bg-bg-4 text-text-2 rounded text-xs font-medium transition-colors ${
+                               processingNotifId === n.id ? "opacity-50 cursor-not-allowed" : "hover:bg-bg-4"
                             }`}
                           >
                             {processingNotifId === n.id ? "Dismissing..." : "Keep & Dismiss"}
@@ -454,22 +454,22 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
             </button>
 
             {openUser && (
-              <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#121212] shadow-xl border border-border-2 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-64 rounded-xl bg-bg-2 shadow-xl border border-border-2 overflow-hidden">
                 <div className="px-4 py-4 flex flex-col items-center border-b border-border-2">
-                  <div className="h-16 w-16 rounded-full overflow-hidden border border-gray-700 mb-2">
+                  <div className="h-16 w-16 rounded-full overflow-hidden border border-border-2 mb-2">
                     <img src={safeAvatar} alt="User" width={64} height={64} className="object-cover w-full h-full" />
                   </div>
                   <p className="text-sm font-semibold text-text-1">{displayName}</p>
                   <p className="text-xs text-text-3 mt-1">{displayEmail}</p>
                 </div>
 
-                <button onClick={() => { setOpenUser(false); router.push("/profile/details"); }} className="w-full px-4 py-3 text-sm flex items-center gap-2 hover:bg-[#181818]">
+                <button onClick={() => { setOpenUser(false); router.push("/profile/details"); }} className="w-full px-4 py-3 text-sm flex items-center gap-2 hover:bg-bg-3">
                   <User className="h-4 w-4 text-text-2" /> Profile
                 </button>
 
                 <div className="border-t border-border-2" />
 
-                <button onClick={handleLogout} className="w-full px-4 py-3 text-sm flex items-center gap-2 text-red-400 hover:bg-[#181818]">
+                <button onClick={handleLogout} className="w-full px-4 py-3 text-sm flex items-center gap-2 text-red-400 hover:bg-bg-3">
                   <LogOut className="h-4 w-4" /> Logout
                 </button>
               </div>

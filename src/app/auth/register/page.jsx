@@ -109,11 +109,11 @@ function RegisterForm() {
         alt="Background"
         className="fixed inset-0 h-full w-full object-cover"
       />
-      <div className="fixed inset-0 bg-black/40" />
+      <div className="fixed inset-0 bg-bg-1/40" />
 
       {/* LOADING */}
       {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-1/40 backdrop-blur-sm">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
         </div>
       )}
@@ -127,7 +127,7 @@ function RegisterForm() {
               rounded-3xl
               bg-white/[0.06]
               backdrop-blur-[44px]
-              border border-white/10
+              border border-border-2
               px-6 py-8
               shadow-[0_30px_80px_rgba(0,0,0,0.6)]
             "
@@ -243,7 +243,7 @@ function RegisterForm() {
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-black">
+      <div className="flex min-h-screen items-center justify-center bg-bg-1">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
       </div>
     }>

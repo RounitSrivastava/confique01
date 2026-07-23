@@ -5,10 +5,8 @@ import Post from "@/models/Post";
 import Group from "@/models/Group";
 import User from "@/models/User";
 import Vote from "@/models/Vote";
-import GroupComment from "@/models/GroupComment";
 import { getCurrentUser } from "@/lib/auth";
 import cloudinary from "@/lib/cloudinary";
-import Groq from "groq-sdk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -194,68 +192,6 @@ if (imageBase64) {
       postId: post._id,
       value: 1,
     });
-
-    // ====================================================
-    // 🤖 AI AGENT AUTO-REPLY LOGIC
-    // ====================================================
-    let initialCommentsCount = 0;
-    try {
-      const postText = `${title || ""} ${content || ""}`.toLowerCase();
-      if (postText.includes("?")) {
-        // Find or create AI User
-        const aiUser = await User.findOneAndUpdate(
-          { email: "ai@confique.com" },
-          {
-            $setOnInsert: {
-              name: "Confique AI",
-              username: "confique-ai",
-              provider: "local",
-            },
-          },
-          { upsert: true, new: true }
-        );
-
-        // Fetch AI Response
-        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-        const chatCompletion = await groq.chat.completions.create({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            {
-              role: "system",
-              content: `You are a helpful, expert AI assistant participating in a community forum about "${group.category}". Provide a concise, friendly, and highly accurate answer to the user's question. Format your response cleanly.`,
-            },
-            {
-              role: "user",
-              content: `Title: ${title}\n\nContent: ${content || ""}`,
-            },
-          ],
-        });
-
-        const aiResponse = chatCompletion.choices?.[0]?.message?.content;
-
-        if (aiResponse) {
-          // Format as a quote reply for the chat UI
-          const payload = {
-            isReply: true,
-            replyId: post._id.toString(),
-            replyAuthor: user.name || user.username || "User",
-            replyText: title || content,
-            text: aiResponse
-          };
-
-          // Add a new post by the AI User
-          await Post.create({
-            group: group._id,
-            title: aiResponse.substring(0, 47) + (aiResponse.length > 47 ? "..." : ""),
-            content: JSON.stringify(payload),
-            author: aiUser._id,
-            upvotes: 1
-          });
-        }
-      }
-    } catch (aiError) {
-      console.error("⚠️ AI Agent Error:", aiError);
-    }
 
     return NextResponse.json(
       {

@@ -850,8 +850,8 @@ const EventDetailsPage = ({
                     type="button"
                     onClick={() => setTeamMode("create")}
                     className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${teamMode === "create"
-                        ? "bg-purple-600 text-text-1"
-                        : "bg-gray-700 text-text-2"
+                      ? "bg-purple-600 text-text-1"
+                      : "bg-gray-700 text-text-2"
                       }`}
                   >
                     Create Team
@@ -861,8 +861,8 @@ const EventDetailsPage = ({
                     type="button"
                     onClick={() => setTeamMode("join")}
                     className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${teamMode === "join"
-                        ? "bg-purple-600 text-text-1"
-                        : "bg-gray-700 text-text-2"
+                      ? "bg-purple-600 text-text-1"
+                      : "bg-gray-700 text-text-2"
                       }`}
                   >
                     Join Team
@@ -1111,8 +1111,8 @@ const EventDetailsPage = ({
                             }
                           }}
                           className={`w-full mt-2 px-3 py-2 rounded-lg bg-gray-900 border text-text-1 text-sm ${formErrors.paymentScreenshot
-                              ? "border-red-500"
-                              : "border-gray-600"
+                            ? "border-red-500"
+                            : "border-gray-600"
                             }`}
                         />
 
@@ -1193,8 +1193,8 @@ const EventDetailsPage = ({
                     setShowBilling(true);
                   }}
                   className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${isSubmitting
-                      ? "bg-gray-700 cursor-not-allowed"
-                      : "bg-purple-600 hover:bg-purple-700 text-text-1"
+                    ? "bg-gray-700 cursor-not-allowed"
+                    : "bg-purple-600 hover:bg-purple-700 text-text-1"
                     }`}
                 >
                   {isSubmitting
@@ -1224,17 +1224,17 @@ const EventDetailsPage = ({
                     )
                   }
                   className={`px-6 py-2 rounded-lg text-sm font-semibold text-text-1 flex items-center transition-all ${isSubmitting ||
-                      (pricingMode === "flexible" && totalAmount === 0) ||
+                    (pricingMode === "flexible" && totalAmount === 0) ||
+                    (
+                      paymentMethod === "qr" &&
+                      !isFree &&
                       (
-                        paymentMethod === "qr" &&
-                        !isFree &&
-                        (
-                          (formData["Payment Ref (Last 4 digits)"] || "").length !== 4 ||
-                          !formData.paymentScreenshot
-                        )
+                        (formData["Payment Ref (Last 4 digits)"] || "").length !== 4 ||
+                        !formData.paymentScreenshot
                       )
-                      ? "bg-gray-700 cursor-not-allowed"
-                      : "bg-green-600 hover:bg-green-700"
+                    )
+                    ? "bg-gray-700 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
                     }`}
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />

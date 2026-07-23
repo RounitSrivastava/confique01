@@ -234,20 +234,23 @@ if (imageBase64) {
         const aiResponse = chatCompletion.choices?.[0]?.message?.content;
 
         if (aiResponse) {
-          // Add comment
-          await GroupComment.create({
-            group: group._id,
-            post: post._id,
-            author: aiUser._id,
-            authorEmail: aiUser.email,
-            authorName: aiUser.name,
-            text: aiResponse,
-          });
+          // Format as a quote reply for the chat UI
+          const payload = {
+            isReply: true,
+            replyId: post._id.toString(),
+            replyAuthor: user.name || user.username || "User",
+            replyText: title || content,
+            text: aiResponse
+          };
 
-          // Update post comment count
-          post.commentsCount = (post.commentsCount || 0) + 1;
-          await post.save();
-          initialCommentsCount = 1;
+          // Add a new post by the AI User
+          await Post.create({
+            group: group._id,
+            title: aiResponse.substring(0, 47) + (aiResponse.length > 47 ? "..." : ""),
+            content: JSON.stringify(payload),
+            author: aiUser._id,
+            upvotes: 1
+          });
         }
       }
     } catch (aiError) {
@@ -268,7 +271,7 @@ if (imageBase64) {
           authorImage: user.avatar || null,
 
           upvotes: 1,
-          commentsCount: initialCommentsCount,
+          commentsCount: 0,
           reactions: [],
           poll: post.poll || null,
           userVote: 1,

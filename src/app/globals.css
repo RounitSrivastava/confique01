@@ -1,73 +1,90 @@
 @import "tailwindcss";
 
-/* Light theme */
+/* Force Tailwind v4 dark: variants to respect the .dark class instead of OS prefers-color-scheme */
+@custom-variant dark (&:is(.dark, .dark *));
+
+/* Base CSS variables for dynamic theming (Dark by default) */
 :root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  
+  --theme-bg-1: #000000;
+  --theme-bg-2: #050505;
+  --theme-bg-3: #111111;
+  --theme-bg-4: #0a0a0a;
+  
+  --theme-border-1: #333333;
+  --theme-border-2: #262626;
+  
+  --theme-text-1: #ffffff;
+  --theme-text-2: #a3a3a3;
+  --theme-text-3: #737373;
+  --theme-text-4: #525252;
+}
+
+/* Light mode overrides */
+:root.light {
   --background: #ffffff;
   --foreground: #171717;
+
+  --theme-bg-1: #ffffff;
+  --theme-bg-2: #f9fafb;
+  --theme-bg-3: #f3f4f6;
+  --theme-bg-4: #f8fafc;
+
+  --theme-border-1: #e5e7eb;
+  --theme-border-2: #d1d5db;
+
+  --theme-text-1: #111827;
+  --theme-text-2: #374151;
+  --theme-text-3: #4b5563;
+  --theme-text-4: #6b7280;
 }
 
-/* Tailwind inline theme */
-@theme inline {
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  
-  /* Restored missing custom colors */
-  --color-bg-1: #000000;
-  --color-bg-2: #050505;
-  --color-bg-3: #111111;
-  --color-bg-4: #0a0a0a;
-  
-  --color-border-1: #333333;
-  --color-border-2: #262626;
-  
-  --color-text-1: #ffffff;
-  --color-text-2: #a3a3a3;
-  --color-text-3: #737373;
-  --color-text-4: #525252;
-}
-
-/* Dark theme (Default) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-/* ---------------------------------------------------
-   WHITE MODE OVERRIDES
---------------------------------------------------- */
-:root.light {
-  --color-bg-1: #ffffff;
-  --color-bg-2: #f9fafb;
-  --color-bg-3: #f3f4f6;
-  --color-bg-4: #f8fafc;
-
-  --color-border-1: #e5e7eb;
-  --color-border-2: #d1d5db;
-
-  --color-text-1: #111827;
-  --color-text-2: #374151;
-  --color-text-3: #4b5563;
-  --color-text-4: #6b7280;
-}
-
+/* Force dark for specific layouts */
 .force-dark {
+  --theme-bg-1: #000000 !important;
+  --theme-bg-2: #050505 !important;
+  --theme-bg-3: #111111 !important;
+  --theme-bg-4: #0a0a0a !important;
+  --theme-border-1: #333333 !important;
+  --theme-border-2: #262626 !important;
+  --theme-text-1: #ffffff !important;
+  --theme-text-2: #a3a3a3 !important;
+  --theme-text-3: #737373 !important;
+  --theme-text-4: #525252 !important;
+
   --color-bg-1: #000000 !important;
   --color-bg-2: #050505 !important;
   --color-bg-3: #111111 !important;
   --color-bg-4: #0a0a0a !important;
-  
   --color-border-1: #333333 !important;
   --color-border-2: #262626 !important;
-  
   --color-text-1: #ffffff !important;
   --color-text-2: #a3a3a3 !important;
   --color-text-3: #737373 !important;
   --color-text-4: #525252 !important;
 }
 
+/* Tell Tailwind to map these utility classes to the CSS variables */
+@theme inline {
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  
+  --color-bg-1: var(--theme-bg-1);
+  --color-bg-2: var(--theme-bg-2);
+  --color-bg-3: var(--theme-bg-3);
+  --color-bg-4: var(--theme-bg-4);
+  
+  --color-border-1: var(--theme-border-1);
+  --color-border-2: var(--theme-border-2);
+  
+  --color-text-1: var(--theme-text-1);
+  --color-text-2: var(--theme-text-2);
+  --color-text-3: var(--theme-text-3);
+  --color-text-4: var(--theme-text-4);
+}
 
 /* Body styling */
 body {
@@ -79,10 +96,19 @@ body {
 /* ---------------------------------------------------
    GLOBAL BEAUTIFUL MINIMAL DARK SCROLLBAR (FINAL)
 --------------------------------------------------- */
-
 *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
+}
+
+/* Chrome autofill fix for transparent inputs */
+.transparent-autofill:-webkit-autofill,
+.transparent-autofill:-webkit-autofill:hover,
+.transparent-autofill:-webkit-autofill:focus,
+.transparent-autofill:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 9999px white inset !important;
+    -webkit-text-fill-color: #111827 !important;
+    background-color: transparent !important;
 }
 
 *::-webkit-scrollbar-track {
@@ -90,18 +116,18 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.5); /* Neutral gray */
+  background: rgba(156, 163, 175, 0.15); /* Ultra-light Neutral gray */
   border-radius: 20px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.8);
+  background: rgba(156, 163, 175, 0.3);
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #9ca3af transparent;
+  scrollbar-color: rgba(156, 163, 175, 0.2) transparent;
 }
 /* Hide scrollbars (Chrome, Edge, Safari) */
 .scrollbar-hide::-webkit-scrollbar {

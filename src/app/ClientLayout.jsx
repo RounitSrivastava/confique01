@@ -35,8 +35,8 @@ export default function ClientLayout({ children }) {
 
       if (isEventsPage) {
         return (
-          <div className="h-screen w-full bg-bg-4 text-text-1 overflow-hidden">
-            <main className="h-full w-full overflow-y-auto">
+          <div className="h-screen w-full overflow-hidden" style={{ backgroundColor: "#0a0a0a", color: "#ffffff" }}>
+            <main className="h-full w-full overflow-y-auto" style={{ backgroundColor: "#0a0a0a", color: "#ffffff" }}>
               {children}
             </main>
           </div>
@@ -90,9 +90,7 @@ export default function ClientLayout({ children }) {
     return (
       <GoogleOAuthProvider clientId={googleClientId}>
         <Suspense fallback={null}>
-          <GoogleAnalytics
-            gaId={process.env.NEXT_PUBLIC_GA_ID}
-          />
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         </Suspense>
 
         {renderContent()}

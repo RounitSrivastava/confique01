@@ -105,11 +105,10 @@ function RegisterForm() {
     <main className="relative min-h-screen bg-bg-1 text-text-1 overflow-hidden">
       {/* BACKGROUND */}
       <img
-        src="/website bg.png"
+        src="/Black and Purple Modern Programming Presentation (1).png"
         alt="Background"
         className="fixed inset-0 h-full w-full object-cover"
       />
-      <div className="fixed inset-0 bg-bg-1/40" />
 
       {/* LOADING */}
       {loading && (
@@ -125,15 +124,15 @@ function RegisterForm() {
           <div
             className="
               rounded-3xl
-              bg-white/[0.06]
-              backdrop-blur-[44px]
-              border border-border-2
+              bg-white/80
+              backdrop-blur-2xl
+              border border-gray-200
               px-6 py-8
-              shadow-[0_30px_80px_rgba(0,0,0,0.6)]
+              shadow-[0_8px_30px_rgb(0,0,0,0.12)]
             "
           >
             {/* SUBTITLE ONLY */}
-            <p className="mb-4 text-text-3 text-sm">
+            <p className="mb-4 text-gray-600 text-sm">
               Sign up to get started
             </p>
 
@@ -142,13 +141,13 @@ function RegisterForm() {
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => setError("Google sign up failed")}
-                theme="filled_black"
+                theme="outline"
                 shape="pill"
                 width="100%"
               />
             </div>
 
-            <div className="my-5 text-center text-xs text-text-3">OR</div>
+            <div className="my-5 text-center text-xs text-gray-500">OR</div>
 
             {/* FORM */}
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -158,9 +157,9 @@ function RegisterForm() {
                 onChange={handleChange}
                 type="text"
                 placeholder="Full Name"
-                className="w-full rounded-full bg-bg-3
-                           px-5 py-3 text-sm text-text-1
-                           placeholder-gray-400 outline-none"
+                className="w-full rounded-full bg-white border border-gray-300
+                           px-5 py-3 text-sm text-gray-900 transparent-autofill
+                           placeholder-gray-500 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all shadow-sm"
               />
 
               <input
@@ -169,9 +168,9 @@ function RegisterForm() {
                 onChange={handleChange}
                 type="email"
                 placeholder="Email"
-                className="w-full rounded-full bg-bg-3
-                           px-5 py-3 text-sm text-text-1
-                           placeholder-gray-400 outline-none"
+                className="w-full rounded-full bg-white border border-gray-300
+                           px-5 py-3 text-sm text-gray-900 transparent-autofill
+                           placeholder-gray-500 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all shadow-sm"
               />
 
               <input
@@ -180,9 +179,9 @@ function RegisterForm() {
                 onChange={handleChange}
                 type="password"
                 placeholder="Password"
-                className="w-full rounded-full bg-bg-3
-                           px-5 py-3 text-sm text-text-1
-                           placeholder-gray-400 outline-none"
+                className="w-full rounded-full bg-white border border-gray-300
+                           px-5 py-3 text-sm text-gray-900 transparent-autofill
+                           placeholder-gray-500 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all shadow-sm"
               />
 
               <input
@@ -191,23 +190,25 @@ function RegisterForm() {
                 onChange={handleChange}
                 type="password"
                 placeholder="Confirm Password"
-                className="w-full rounded-full bg-bg-3
-                           px-5 py-3 text-sm text-text-1
-                           placeholder-gray-400 outline-none"
+                className="w-full rounded-full bg-white border border-gray-300
+                           px-5 py-3 text-sm text-gray-900 transparent-autofill
+                           placeholder-gray-500 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all shadow-sm"
               />
 
-              <label className="flex items-start gap-2 text-xs text-text-2">
+              <label className="flex items-start gap-2 text-xs text-gray-700">
                 <input
                   type="checkbox"
-                  checked={agree}
-                  onChange={(e) => setAgree(e.target.checked)}
-                  className="mt-1"
+                  name="agree"
+                  checked={form.agree}
+                  onChange={handleChange}
+                  className="mt-0.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 shadow-sm"
                 />
                 <span>
                   I agree to the{" "}
-                  <Link href="/terms" className="text-blue-400 underline">
-                    Terms &amp; Conditions
-                  </Link>
+                  <Link href="/terms" className="text-purple-600 font-semibold hover:underline">
+                    Terms & Conditions
+                  </Link>{" "}
+                  and Privacy Policy.
                 </span>
               </label>
 
@@ -218,7 +219,7 @@ function RegisterForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full py-3 font-medium text-text-1
+                className="w-full rounded-full py-3 font-medium text-white
                            bg-gradient-to-r from-[#8B5CF6] to-[#5AC8FA]
                            hover:opacity-90 transition"
               >
@@ -226,10 +227,10 @@ function RegisterForm() {
               </button>
             </form>
 
-            <p className="mt-5 text-center text-xs text-text-3">
+            <p className="mt-5 text-center text-xs text-gray-600">
               Already have an account?{" "}
-              <Link href="/auth/login" className="text-blue-400">
-                Log in
+              <Link href="/auth/login" className="text-purple-600 font-semibold hover:text-purple-500 transition-colors">
+                Log In
               </Link>
             </p>
           </div>

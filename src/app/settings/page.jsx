@@ -130,7 +130,7 @@ const sendToWeb3Forms = async (type, message) => {
     const ok = await sendToWeb3Forms("Feedback", feedback);
     if (ok) setFeedback("");
   }}
-  className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-full disabled:opacity-50"
+  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full disabled:opacity-50"
 >
   {feedbackLoading ? "Sending..." : "Submit Feedback"}
 </button>
@@ -160,7 +160,7 @@ const sendToWeb3Forms = async (type, message) => {
     const ok = await sendToWeb3Forms("Complaint", complaint);
     if (ok) setComplaint("");
   }}
-  className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-full disabled:opacity-50"
+  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full disabled:opacity-50"
 >
   {complaintLoading ? "Sending..." : "Submit Complaint"}
 </button>

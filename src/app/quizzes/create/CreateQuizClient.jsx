@@ -27,6 +27,7 @@ export default function Page() {
   const [startAt, setStartAt] = useState("");
   const [closeAt, setCloseAt] = useState("");
   const [attemptTime, setAttemptTime] = useState(20);
+  const [hasTimeLimit, setHasTimeLimit] = useState(true);
 
   /* ---------------- LOAD QUIZ (EDIT MODE) ---------------- */
 
@@ -59,8 +60,11 @@ const data = await res.json();
         setCloseAt(new Date(data.closeAt).toLocaleString("sv-SE").slice(0, 16));
       }
       if (data.attemptTime) {
-  setAttemptTime(data.attemptTime);
-}
+        setAttemptTime(data.attemptTime);
+        setHasTimeLimit(true);
+      } else if (data.attemptTime === null || data.attemptTime === 0) {
+        setHasTimeLimit(false);
+      }
     };
 
     loadQuiz();
@@ -173,7 +177,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
       })),
       startAt: startTimestamp,
       closeAt: closeTimestamp,
-      attemptTime: Number(attemptTime) || 1,
+      attemptTime: hasTimeLimit ? (Number(attemptTime) || 1) : null,
       status,
     };
 
@@ -349,30 +353,42 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
 />
           </div>
           <div>
-  <label className="block text-sm text-text-3 mt-4">
-    Time Limit Per Attempt (minutes)
-  </label>
+            <div className="flex items-center justify-between mt-4 mb-2">
+              <label className="block text-sm text-text-3">
+                Time Limit Per Attempt (minutes)
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!hasTimeLimit}
+                  onChange={(e) => setHasTimeLimit(!e.target.checked)}
+                  className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-600 dark:border-gray-600 dark:bg-gray-700"
+                />
+                <span className="text-sm text-text-3 font-medium">No Time Limit</span>
+              </label>
+            </div>
 
-  <input
-  type="number"
-  min="1"
-  max="120"
-  value={attemptTime}
-  onChange={(e) => setAttemptTime(Math.max(1, Number(e.target.value)))}
-  className="bg-bg-2 border border-border-2 rounded-lg p-3 w-full"
-/>
-</div>
+            <input
+              type="number"
+              min="1"
+              max="120"
+              value={attemptTime}
+              disabled={!hasTimeLimit}
+              onChange={(e) => setAttemptTime(Math.max(1, Number(e.target.value)))}
+              className={`bg-bg-2 border border-border-2 rounded-lg p-3 w-full ${!hasTimeLimit ? 'opacity-50 cursor-not-allowed' : ''}`}
+            />
+          </div>
         </div>
 
         {/* PUBLISH */}
-        <div className="flex justify-center pt-6">
+        <div className="flex justify-end pt-6">
           <button
             disabled={!isValid || loading}
             onClick={saveQuiz}
-            className={`w-full max-w-md py-3 rounded-xl font-semibold text-lg transition ${
+            className={`px-8 py-3 w-auto rounded-xl font-bold text-white transition-all shadow-sm ${
               isValid
-                ? "bg-purple-600 hover:bg-purple-700 active:scale-95"
-                : "bg-bg-4 cursor-not-allowed"
+                ? "bg-purple-600 hover:bg-purple-700 shadow-md active:scale-95"
+                : "bg-gray-400 dark:bg-gray-700 cursor-not-allowed opacity-60"
             }`}
           >
             {loading

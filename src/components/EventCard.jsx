@@ -8,12 +8,13 @@ const EventCard = ({ event }) => {
       href={`/events/${event.id}`}
       className="bg-white rounded-xl shadow hover:shadow-lg transition block overflow-hidden"
     >
-      {/* Event Banner */}
-      <img
-        src={event.banner}
-        alt={event.title}
-        className="w-full h-40 object-cover"
-      />
+      <div className="relative">
+        <img
+          src={event.banner || event.poster}
+          alt={event.title}
+          className="w-full h-40 object-contain bg-gray-100 dark:bg-bg-3"
+        />
+      </div>
 
       {/* Event Content */}
       <div className="p-4">

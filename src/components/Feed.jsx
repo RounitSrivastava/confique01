@@ -147,10 +147,10 @@ const logoImg = c.iconUrl || null;
   return (
     <article
   onClick={() => isJoined && onOpen && onOpen(c)}
-className={`rounded-2xl overflow-hidden shadow-2xl bg-bg-4 border border-white/15 hover:border-white/30 cursor-pointer transition-all flex flex-col h-full ${className}`}
+className={`rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-2xl bg-bg-4 border border-border-2 hover:border-purple-400/60 dark:border-white/15 dark:hover:border-white/30 cursor-pointer transition-all flex flex-col h-full ${className}`}
 
     >
-      <div className="h-36 w-full overflow-hidden flex-shrink-0 rounded-t-2xl bg-bg-2">
+      <div className="h-36 w-full overflow-hidden flex-shrink-0 rounded-t-2xl bg-bg-2 border-b border-border-2 dark:border-transparent">
   {bannerImg ? (
     <img
       src={bannerImg}
@@ -208,7 +208,7 @@ className={`rounded-2xl overflow-hidden shadow-2xl bg-bg-4 border border-white/1
         e.stopPropagation();
         onJoin(c);
       }}
-      className="px-3 py-1 text-xs font-semibold rounded-full bg-purple-600 hover:bg-purple-700 text-text-1"
+      className="px-3 py-1 text-xs font-semibold rounded-full bg-purple-600 hover:bg-purple-700 text-white"
     >
       Join
     </button>
@@ -228,12 +228,12 @@ function FeaturedEventSingle({ event, onViewDetails }) {
 
   return (
     <div className="relative w-full">
-      <div className="rounded-[22px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] bg-transparent">
-        <div className="relative w-full h-[240px] sm:h-[280px] md:h-[300px] lg:h-[320px] rounded-[22px] overflow-hidden">
+      <div className="rounded-[22px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] bg-black">
+        <div className="relative w-full h-[240px] sm:h-[280px] md:h-[300px] lg:h-[320px] rounded-[22px] overflow-hidden bg-black">
           <img
             src={event.poster}
-            alt={event.title}
-            className="w-full h-full object-cover"
+            alt="Event Poster"
+            className="w-full h-full object-contain bg-gray-100 dark:bg-bg-3"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = "https://placehold.co/1600x900/111827/ffffff?text=No+Image";
@@ -242,20 +242,20 @@ function FeaturedEventSingle({ event, onViewDetails }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
 
           <div className="absolute left-6 top-6">
-            <span className="inline-block bg-gradient-to-r from-purple-500 to-violet-600 text-text-1 font-semibold text-sm px-3 py-1 rounded-full">
+            <span className="inline-block bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold text-sm px-3 py-1 rounded-full">
               Featured Event
             </span>
           </div>
 
           <div className="absolute left-1/2 transform -translate-x-1/2 bottom-6 w-[90%] sm:w-[78%] md:w-[70%] lg:w-[64%]">
-            <div className="bg-gradient-to-r from-[#0b0b0b]/80 to-[#0b0b0b]/70 border border-border-2 rounded-xl p-5 shadow-xl">
-              <h3 className="text-xl md:text-2xl font-extrabold text-text-1 leading-tight mb-2">{event.title}</h3>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-sm text-text-2 mb-4">
+            <div className="bg-white/30 border border-white/30 rounded-xl p-5 shadow-xl">
+              <h3 className="text-xl md:text-2xl font-extrabold text-white leading-tight mb-2">{event.title}</h3>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-sm text-white/90 mb-4">
                 <div className="flex items-center gap-2">
-                  <CalendarIcon className="w-4 h-4 text-text-2" />
+                  <CalendarIcon className="w-4 h-4 text-white/90" />
                   <span>{dateText}</span>
                 </div>
-                {locationText ? <div className="text-sm text-text-3">• {locationText}</div> : null}
+                {locationText ? <div className="text-sm text-white/70">• {locationText}</div> : null}
               </div>
 
               <div className="flex items-center gap-6">
@@ -264,7 +264,7 @@ function FeaturedEventSingle({ event, onViewDetails }) {
                     e.stopPropagation();
                     onViewDetails && onViewDetails(event.id);
                   }}
-                  className="inline-flex items-center bg-gradient-to-r from-purple-600 to-violet-600 text-text-1 font-semibold px-5 py-3 rounded-full"
+                  className="inline-flex items-center bg-gradient-to-r from-purple-600 to-violet-600 text-white font-semibold px-5 py-3 rounded-full"
                 >
                   View Details →
                 </button>
@@ -318,10 +318,10 @@ const FeaturedCarousel = ({ events = [], interval = 3000, onViewDetails }) => {
   ref={containerRef}
   className="relative overflow-hidden"
 >
-      <button aria-label="Previous" onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-bg-1/50 flex items-center justify-center">
+      <button aria-label="Previous" onClick={(e) => { e.stopPropagation(); prev(); }} className="absolute left-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/40 transition">
         <ChevronLeft className="w-5 h-5" />
       </button>
-      <button aria-label="Next" onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-bg-1/50 flex items-center justify-center">
+      <button aria-label="Next" onClick={(e) => { e.stopPropagation(); next(); }} className="absolute right-1 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/40 transition">
         <ChevronRight className="w-5 h-5" />
       </button>
 
@@ -388,13 +388,13 @@ function EventCard({ event, onOpen }) {
   return (
     <div
       onClick={() => onOpen(event.id)}
-      className="rounded-2xl overflow-hidden bg-bg-4 border border-border-2 hover:border-white/25 cursor-pointer transition shadow-lg"
+      className="rounded-2xl overflow-hidden bg-bg-4 border border-border-2 hover:border-white/25 cursor-pointer transition shadow-lg flex flex-col"
     >
-      <div className="h-40 w-full overflow-hidden">
+      <div className="w-full aspect-video overflow-hidden bg-gray-100 dark:bg-bg-3 relative">
         <img
           src={event.poster}
           alt={event.title}
-          className="w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
           onError={(e) => (e.target.src = "https://placehold.co/600x400")}
         />
       </div>
@@ -422,7 +422,8 @@ function EventRow({ event, onOpen }) {
     >
       <img
         src={event.poster}
-        className="w-28 h-20 object-cover rounded-lg"
+        alt="event"
+        className="w-28 h-20 object-contain rounded-lg bg-gray-100 dark:bg-bg-3"
         onError={(e) => (e.target.src = "https://placehold.co/300x200")}
       />
 

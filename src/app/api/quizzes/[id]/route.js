@@ -199,6 +199,57 @@ console.log("Submitting score:", {
 }
 
 /* ===================================================
+   UPDATE QUIZ (EDIT)
+=================================================== */
+
+export async function PUT(req, context) {
+  try {
+    await dbConnect();
+
+    const { id } = await context.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid quiz ID" }, { status: 400 });
+    }
+
+    const actor = await getCurrentUser();
+    const rawUserId = actor?.id || actor?.userId;
+
+    if (!rawUserId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const quiz = await Quiz.findById(id);
+
+    if (!quiz) {
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    }
+
+    if (quiz.createdBy.toString() !== rawUserId.toString()) {
+      return NextResponse.json({ error: "Forbidden: Not quiz creator" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    
+    // Update fields
+    if (body.title !== undefined) quiz.title = body.title;
+    if (body.groupId !== undefined) quiz.groupId = body.groupId;
+    if (body.startAt !== undefined) quiz.startAt = body.startAt ? new Date(body.startAt) : null;
+    if (body.closeAt !== undefined) quiz.closeAt = body.closeAt ? new Date(body.closeAt) : null;
+    if (body.attemptTime !== undefined) quiz.attemptTime = body.attemptTime;
+    if (body.questions !== undefined) quiz.questions = body.questions;
+
+    await quiz.save();
+
+    return NextResponse.json(quiz);
+
+  } catch (err) {
+    console.error("PUT QUIZ ERROR:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+/* ===================================================
    DELETE QUIZ
 =================================================== */
 

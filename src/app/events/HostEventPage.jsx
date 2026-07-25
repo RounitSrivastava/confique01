@@ -53,7 +53,7 @@ const uploadToCloudinary = async (file, folder = "events") => {
 };
 
 const SectionTitle = ({ children, icon: Icon, className = "" }) => (
-  <h2 className={`text-2xl font-bold text-text-1 mb-6 border-b border-border-2 pb-3 flex items-center ${className}`}>
+  <h2 className={`text-2xl font-bold text-gray-900 dark:text-text-1 mb-6 border-b border-gray-200 dark:border-border-1 pb-3 flex items-center ${className}`}>
     {Icon && <Icon className="w-6 h-6 mr-3 text-purple-400" />}
     {children}
   </h2>
@@ -71,7 +71,7 @@ const InputField = ({
   disabled = false,
 }) => (
   <div className={`space-y-2 ${className}`}>
-    <label className="text-sm font-medium text-text-3 block">
+    <label className="text-sm font-medium text-gray-500 dark:text-text-3 block">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
     <input
@@ -82,7 +82,7 @@ const InputField = ({
       placeholder={placeholder}
       required={required}
       disabled={disabled}
-      className={`w-full px-4 py-2 bg-bg-3 border border-gray-700 rounded-lg text-text-1 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${disabled ? "opacity-50 cursor-not-allowed bg-gray-900" : ""}`}
+      className={`w-full px-4 py-2 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded-lg text-gray-900 dark:text-text-1 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${disabled ? "opacity-50 cursor-not-allowed bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1" : ""}`}
     />
   </div>
 );
@@ -97,7 +97,7 @@ const SelectField = ({
   disabled = false,
 }) => (
   <div className="space-y-2">
-    <label className="text-sm font-medium text-text-3 block">
+    <label className="text-sm font-medium text-gray-500 dark:text-text-3 block">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
 
@@ -107,7 +107,7 @@ const SelectField = ({
       onChange={onChange}
       required={required}
       disabled={disabled}
-      className={`w-full px-4 py-2 bg-bg-3 border border-gray-700 rounded-lg text-text-1 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
+      className={`w-full px-4 py-2 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded-lg text-gray-900 dark:text-text-1 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       }`}
     >
@@ -117,7 +117,7 @@ const SelectField = ({
         <option
           key={option.name || option}
           value={option.name || option}
-          className="bg-bg-3 text-text-1"
+          className="bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 text-gray-900 dark:text-text-1"
         >
           {option.name || option}
         </option>
@@ -128,7 +128,7 @@ const SelectField = ({
 
 const TagSelector = ({ selectedTags, onTagToggle }) => (
   <div className="space-y-2">
-    <label className="text-sm font-medium text-text-3 block">Event Tags</label>
+    <label className="text-sm font-medium text-gray-500 dark:text-text-3 block">Event Tags</label>
     <div className="flex flex-wrap gap-2">
       {TagOptions.map((tag) => (
         <button
@@ -137,8 +137,8 @@ const TagSelector = ({ selectedTags, onTagToggle }) => (
           onClick={() => onTagToggle(tag)}
           className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all duration-200 ${
             selectedTags.includes(tag)
-              ? "bg-purple-600 border-purple-600 text-text-1 shadow-md shadow-purple-500/30"
-              : "bg-bg-3 border-gray-700 text-text-2 hover:bg-gray-700"
+              ? "bg-purple-500 border-purple-500 text-gray-900 dark:text-text-1 shadow-md shadow-purple-500/30"
+              : "bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border-gray-200 dark:border-border-1 text-gray-600 dark:text-text-2 hover:bg-gray-700"
           }`}
         >
           {tag}
@@ -163,11 +163,11 @@ const ImageUploader = ({
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-text-3 block">
+      <label className="text-sm font-medium text-gray-500 dark:text-text-3 block">
         {label} {isRequired && <span className="text-red-500">*</span>}
       </label>
       {ratioTip && (
-        <p className="text-xs text-purple-300 bg-bg-3 p-2 rounded-lg">
+        <p className="text-xs text-purple-300 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 p-2 rounded-lg">
           {ratioTip}
         </p>
       )}
@@ -184,21 +184,21 @@ const ImageUploader = ({
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="w-full py-3 bg-bg-3 border border-gray-700 rounded-lg text-text-1 hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
+        className="w-full py-3 bg-purple-500 rounded-lg text-white font-semibold hover:bg-purple-600 transition-colors flex items-center justify-center space-x-2 shadow-md shadow-purple-500/20"
       >
-        <Upload className="w-5 h-5 text-purple-400" />
+        <Upload className="w-5 h-5 text-white" />
         <span>{file instanceof File ? file.name : (file ? "Image Uploaded" : "Click to Upload Image")}</span>
       </button>
 
       {previewUrl && (
-        <div className="mt-4 p-4 bg-bg-3 rounded-lg flex items-center space-x-4">
+        <div className="mt-4 p-4 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 rounded-lg flex items-center space-x-4">
           <img
             src={previewUrl}
             alt="Preview"
             className="w-20 h-28 object-cover rounded-md border border-purple-500"
           />
-          <div className="text-sm text-text-3">
-            <p className="text-text-1 font-medium line-clamp-1">{file instanceof File ? file.name : "Current Event Image"}</p>
+          <div className="text-sm text-gray-500 dark:text-text-3">
+            <p className="text-gray-900 dark:text-text-1 font-medium line-clamp-1">{file instanceof File ? file.name : "Current Event Image"}</p>
             {file instanceof File && <p>{(file.size / 1024 / 1024).toFixed(2)} MB</p>}
             <button
               type="button"
@@ -799,14 +799,14 @@ if (
 
     try {
       const posterUrl = await uploadToCloudinary(eventData.posterFile, "event-posters");
-      let bannerUrl = DEFAULT_BANNER_URL;
-
-if (eventData.bannerFile) {
-  bannerUrl = await uploadToCloudinary(
-    eventData.bannerFile,
-    "event-banners"
-  );
-}
+      let bannerUrl = posterUrl;
+      
+      if (eventData.bannerFile) {
+        bannerUrl = await uploadToCloudinary(
+          eventData.bannerFile,
+          "event-banners"
+        );
+      }
       
       let qrCodeUrl = eventData.qrCodePreviewUrl;
       if (showQrCodeFields && eventData.qrCodeFile && eventData.qrCodeFile instanceof File) {
@@ -825,7 +825,7 @@ eventEnd: eventData.eventEnd,
         venue: eventData.venue,
         isOnline: eventData.isOnline,
         poster: posterUrl,
-        banner: bannerUrl,
+        banner: posterUrl,
         hostedBy: eventData.hostedBy,
         eligibility: eventData.eligibility,
         isFree: eventData.isFree,
@@ -860,12 +860,12 @@ paymentMethod: eventData.paymentMethod,
 
   if (submissionStatus === "success") {
     return (
-      <div className="max-w-4xl mx-auto py-20 px-4 sm:px-6 lg:px-8 text-center min-h-screen bg-gray-950">
+      <div className="max-w-4xl mx-auto py-20 px-4 sm:px-6 lg:px-8 text-center min-h-screen bg-gray-50 dark:bg-bg-1">
         <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
-        <h2 className="text-4xl font-extrabold text-text-1 mb-4">Event {isEditMode ? "updated" : "hosted"} successfully!</h2>
-        <p className="text-lg text-text-2">Your event <span className="font-bold">{eventData.title}</span> is now live.</p>
+        <h2 className="text-4xl font-extrabold text-gray-900 dark:text-text-1 mb-4">Event {isEditMode ? "updated" : "hosted"} successfully!</h2>
+        <p className="text-lg text-gray-600 dark:text-text-2">Your event <span className="font-bold">{eventData.title}</span> is now live.</p>
         <div className="mt-8">
-          <button onClick={() => { setSubmissionStatus(null); router.replace(parentPathname, { scroll: true }); }} className="inline-flex items-center bg-purple-600 text-text-1 font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
+          <button onClick={() => { setSubmissionStatus(null); router.replace(parentPathname, { scroll: true }); }} className="inline-flex items-center bg-purple-500 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-purple-600 transition-colors">
             <ArrowLeft className="w-5 h-5 mr-2" /> Go Back to Events
           </button>
         </div>
@@ -874,34 +874,34 @@ paymentMethod: eventData.paymentMethod,
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-text-1 font-sans antialiased">
+    <div className="min-h-screen bg-gray-50 dark:bg-bg-1 text-gray-900 dark:text-text-1 font-sans antialiased">
       <div className="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8 relative">
-        <button onClick={handleCancelHost} className="absolute top-10 right-4 sm:right-6 lg:right-8 p-2 rounded-full bg-bg-3 text-text-3 hover:bg-gray-700 hover:text-text-1 transition-colors z-10" title="Cancel Hosting and Go Back">
+        <button onClick={handleCancelHost} className="absolute top-10 right-4 sm:right-6 lg:right-8 p-2 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors z-10" title="Cancel Hosting and Go Back">
           <X className="w-6 h-6" />
         </button>
 
         <SectionTitle className="justify-center">{isEditMode ? "Edit Your Event 📝" : "Host Your Event 🚀"}</SectionTitle>
-        <p className="text-center text-text-3 mb-10">Linking this event to your profile: <span className="text-purple-400 font-bold">{eventData.hostedBy || "Syncing profile..."}</span></p>
+        <p className="text-center text-gray-500 dark:text-text-3 mb-10">Linking this event to your profile: <span className="text-purple-400 font-bold">{eventData.hostedBy || "Syncing profile..."}</span></p>
 <div className="flex justify-center mb-10">
   <a
     href={HOST_GUIDE_DOC_URL}
     target="_blank"
     rel="noopener noreferrer"
     className="flex items-center gap-2
-           text-text-3 hover:text-gray-300 transition"
+           text-gray-500 dark:text-text-3 hover:text-gray-600 dark:text-text-2 transition"
   >
     <BookOpen className="w-5 h-5" />
     Confique Event Host Guide
     <ExternalLink className="w-4 h-4" />
   </a>
 </div>
-<div className="bg-gray-900 p-6 rounded-xl mb-10 border border-purple-500">
+<div className="bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 p-6 rounded-xl mb-10 border border-purple-500">
 
-  <h2 className="text-3xl font-bold text-text-1 mb-4">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-text-1 mb-4">
     ✨ Generate Event Using AI
   </h2>
 
-  <p className="text-text-3 mb-4">
+  <p className="text-gray-500 dark:text-text-3 mb-4">
     Describe your event idea and AI will auto-fill the form.
   </p>
 
@@ -909,7 +909,7 @@ paymentMethod: eventData.paymentMethod,
     value={aiPrompt}
     onChange={(e) => setAiPrompt(e.target.value)}
     placeholder="Example: Create a 2-day AI hackathon for 300 students with workshops, sponsors, prizes, and team participation."
-    className="w-full h-36 p-4 bg-bg-3 border border-gray-700 rounded-lg text-text-1"
+    className="w-full h-36 p-4 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded-lg text-gray-900 dark:text-text-1"
   />
 
 {/* pdf input area  */}
@@ -917,13 +917,13 @@ paymentMethod: eventData.paymentMethod,
   type="file"
   accept=".pdf,.doc,.docx,.txt"
   onChange={handleDocumentUpload}
-  className="mt-4 block w-full text-sm text-text-2"
+  className="mt-4 block w-full text-sm text-gray-600 dark:text-text-2"
 />
   <button
     type="button"
     onClick={generateWithAI}
     disabled={aiLoading}
-    className="mt-4 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-bold"
+    className="mt-4 bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg font-bold"
   >
     {aiLoading ? "Generating..." : "Generate Event"}
   </button>
@@ -939,7 +939,7 @@ paymentMethod: eventData.paymentMethod,
             }
           }}
         >
-          <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-border-2">
+          <div className="bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-200 dark:border-border-1">
             <SectionTitle icon={ClipboardList}>Basic Details</SectionTitle>
             <InputField label="Event Title" name="title" value={eventData.title} onChange={handleInputChange} placeholder="e.g., Global Tech Summit 2026" required />
             <InputField
@@ -952,7 +952,7 @@ paymentMethod: eventData.paymentMethod,
 />
 
 <div className="space-y-2">
-  <label className="text-sm font-medium text-text-3 block">
+  <label className="text-sm font-medium text-gray-500 dark:text-text-3 block">
     Full Event Description
   </label>
 
@@ -963,7 +963,7 @@ paymentMethod: eventData.paymentMethod,
       onChange={handleInputChange}
       placeholder="Write complete details about the event, rules, format, rewards, etc."
       rows={showFullDescription ? 6 : 1}
-      className="w-full px-4 py-2 bg-bg-3 border border-gray-700 rounded-lg text-text-1 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none transition-all"
+      className="w-full px-4 py-2 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded-lg text-gray-900 dark:text-text-1 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none transition-all"
     />
 
     {eventData.description.length > 80 && (
@@ -1008,16 +1008,16 @@ paymentMethod: eventData.paymentMethod,
             <TagSelector selectedTags={eventData.tags} onTagToggle={handleTagToggle} />
           </div>
 
-          <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-border-2">
+          <div className="bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-200 dark:border-border-1">
             <SectionTitle icon={MapPin}>Venue & Images</SectionTitle>
             <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
               <div className="flex items-center space-x-2">
-                <input type="checkbox" name="isOnline" id="isOnline" checked={eventData.isOnline} onChange={handleInputChange} className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500" />
-                <label htmlFor="isOnline" className="text-sm font-medium text-text-2">Online Event</label>
+                <input type="checkbox" name="isOnline" id="isOnline" checked={eventData.isOnline} onChange={handleInputChange} className="w-4 h-4 text-purple-500 bg-gray-700 border-gray-600 rounded focus:ring-purple-500" />
+                <label htmlFor="isOnline" className="text-sm font-medium text-gray-600 dark:text-text-2">Online Event</label>
               </div>
               <div className="flex items-center space-x-2">
-                <input type="checkbox" name="isFree" id="isFree" checked={eventData.isFree} onChange={handleIsFreeToggle} className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500" />
-                <label htmlFor="isFree" className="text-sm font-medium text-text-2">Free Event</label>
+                <input type="checkbox" name="isFree" id="isFree" checked={eventData.isFree} onChange={handleIsFreeToggle} className="w-4 h-4 text-purple-500 bg-gray-700 border-gray-600 rounded focus:ring-purple-500" />
+                <label htmlFor="isFree" className="text-sm font-medium text-gray-600 dark:text-text-2">Free Event</label>
               </div>
             </div>
             <InputField label="Venue (Location or URL)" name="venue" value={eventData.venue} onChange={handleInputChange} placeholder={eventData.isOnline ? "e.g., Zoom Link | Discord Server" : "e.g., KIIT Auditorium | Rose Garden, Campus-18"} required />
@@ -1082,7 +1082,7 @@ paymentMethod: eventData.paymentMethod,
           value={eventData.fixedPrice || ""}
           onChange={e => setEventData(p => ({ ...p, fixedPrice: e.target.value }))}
           placeholder="e.g. 500"
-          className="w-full px-4 py-2 bg-bg-3 border border-gray-700 rounded-lg"
+          className="w-full px-4 py-2 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded-lg"
         />
       </div>
     )}
@@ -1092,7 +1092,7 @@ paymentMethod: eventData.paymentMethod,
       <div className="space-y-4">
 
         {eventData.ticketTypes.length === 0 && (
-          <p className="text-sm text-text-3">
+          <p className="text-sm text-gray-500 dark:text-text-3">
             No ticket types added yet. Click below to add.
           </p>
         )}
@@ -1107,7 +1107,7 @@ paymentMethod: eventData.paymentMethod,
                 list[i].name = e.target.value;
                 setEventData(p => ({ ...p, ticketTypes: list }));
               }}
-              className="flex-1 bg-bg-3 p-2 rounded"
+              className="flex-1 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 p-2 rounded"
             />
 
             <input
@@ -1119,7 +1119,7 @@ paymentMethod: eventData.paymentMethod,
                 list[i].price = Number(e.target.value);
                 setEventData(p => ({ ...p, ticketTypes: list }));
               }}
-              className="w-28 bg-bg-3 p-2 rounded"
+              className="w-28 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 p-2 rounded"
             />
 
             <button
@@ -1141,7 +1141,7 @@ paymentMethod: eventData.paymentMethod,
             ...p,
             ticketTypes: [...p.ticketTypes, { name: "", price: 0 }]
           }))}
-          className="bg-purple-600 px-3 py-1 rounded"
+          className="bg-purple-500 px-3 py-1 rounded"
         >
           + Add Ticket Type
         </button>
@@ -1151,26 +1151,24 @@ paymentMethod: eventData.paymentMethod,
 )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-              <ImageUploader label="1. Card Poster (16:9)" ratioTip="Used for listing cards." name="posterFile" file={eventData.posterFile} previewUrl={eventData.posterPreviewUrl} onFileChange={(e) => handleFileChange(e, "posterFile", "posterPreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "posterFile", "posterPreviewUrl")} />
+              <ImageUploader label="1. Event Poster (16:9 Fixed Ratio)" ratioTip="This single image will be used everywhere across the platform without being cropped." name="posterFile" file={eventData.posterFile} previewUrl={eventData.posterPreviewUrl} onFileChange={(e) => handleFileChange(e, "posterFile", "posterPreviewUrl")} onRemove={() => handleFileChange({ target: { files: [] } }, "posterFile", "posterPreviewUrl")} />
               <ImageUploader
-  label="2. Header Banner (4:1 or 1920*480) (Optional)"
-  ratioTip="If not uploaded, a default banner will be used."
-  name="bannerFile"
-  file={eventData.bannerFile}
-  previewUrl={eventData.bannerPreviewUrl}
-  onFileChange={(e) => handleFileChange(e, "bannerFile", "bannerPreviewUrl")}
-  onRemove={() =>
-    handleFileChange({ target: { files: [] } }, "bannerFile", "bannerPreviewUrl")
-  }
-  required={false}
-/>
+                label="2. Header Banner (Optional)"
+                ratioTip="Used as the background for the event details page. (1920x480 recommended)"
+                name="bannerFile"
+                file={eventData.bannerFile}
+                previewUrl={eventData.bannerPreviewUrl}
+                onFileChange={(e) => handleFileChange(e, "bannerFile", "bannerPreviewUrl")}
+                onRemove={() => handleFileChange({ target: { files: [] } }, "bannerFile", "bannerPreviewUrl")}
+                required={false}
+              />
             </div>
           </div>
 
-          <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-border-2">
+          <div className="bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-200 dark:border-border-1">
             <SectionTitle icon={User}>Organizer & Registration</SectionTitle>
             {/* TEAM SETTINGS */}
-<div className="bg-bg-3 p-4 rounded-lg border border-purple-500/40 space-y-4">
+<div className="bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 p-4 rounded-lg border border-purple-500/40 space-y-4">
 
 <h3 className="text-purple-400 font-bold">
 Team Formation
@@ -1196,7 +1194,7 @@ Enable Team Registration
 {eventData.teamConfig.enabled && (
 
 <div>
-<label className="text-sm text-text-2">
+<label className="text-sm text-gray-600 dark:text-text-2">
 Max Members Per Team
 </label>
 
@@ -1214,10 +1212,10 @@ Max Members Per Team
      }
    }))
  }
- className="w-full bg-gray-900 border border-gray-700 rounded p-2"
+ className="w-full bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded p-2"
 />
 
-<p className="text-xs text-text-3 mt-1">
+<p className="text-xs text-gray-500 dark:text-text-3 mt-1">
 Example: Enter 4 → each team can have max 4 members
 </p>
 </div>
@@ -1242,24 +1240,24 @@ Example: Enter 4 → each team can have max 4 members
 />
           </div>
 
-          <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-border-2">
+          <div className="bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-200 dark:border-border-1">
             <SectionTitle icon={Clock}>Event Stages & Timeline</SectionTitle>
             {eventData.rounds.map((round, index) => (
-              <div key={index} className="bg-bg-3 p-4 rounded-lg border border-gray-700 space-y-4 relative">
+              <div key={index} className="bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 p-4 rounded-lg border border-gray-200 dark:border-border-1 space-y-4 relative">
                 <h3 className="text-lg font-bold text-purple-400">Round {index + 1}</h3>
-                {eventData.rounds.length > 1 && <button type="button" onClick={() => removeRound(index)} className="absolute top-4 right-4 p-1 rounded-full bg-red-600 text-text-1"><X className="w-4 h-4" /></button>}
+                {eventData.rounds.length > 1 && <button type="button" onClick={() => removeRound(index)} className="absolute top-4 right-4 p-1 rounded-full bg-red-600 text-gray-900 dark:text-text-1"><X className="w-4 h-4" /></button>}
                 <InputField label="Title" value={round.title} onChange={(e) => handleRoundChange(index, "title", e.target.value)} required />
                 <InputField label="Date" type="date" value={round.date} onChange={(e) => handleRoundChange(index, "date", e.target.value)} required />
                 <InputField label="Description" value={round.description} onChange={(e) => handleRoundChange(index, "description", e.target.value)} />
               </div>
             ))}
-            <button type="button" onClick={addRound} className="w-full bg-gray-700 text-text-1 py-2 rounded-lg"><Plus className="w-5 h-5 mr-2 inline" /> Add Round</button>
+            <button type="button" onClick={addRound} className="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-text-2 hover:bg-gray-300 dark:hover:bg-gray-600 py-2 rounded-lg font-medium"><Plus className="w-5 h-5 mr-2 inline" /> Add Round</button>
           </div>
 
-          <div className="bg-gray-900 p-8 rounded-xl shadow-2xl space-y-6 border border-border-2">
+          <div className="bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 p-8 rounded-xl shadow-2xl space-y-6 border border-gray-200 dark:border-border-1">
             <SectionTitle icon={Menu}>Registration Customization</SectionTitle>
             <div className="space-y-4">
-              <div className="flex items-center space-x-3 p-3 bg-bg-3 rounded-lg border border-purple-500/50">
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 rounded-lg border border-purple-500/50">
                 <input type="checkbox" name="isExternalRegistration" id="isExternalRegistration" checked={eventData.isExternalRegistration} onChange={handleIsExternalRegistrationToggle} className="w-5 h-5" />
                 <label htmlFor="isExternalRegistration" className="text-purple-400 font-bold"><ExternalLink className="w-5 h-5 mr-2 inline" /> External Registration</label>
               </div>
@@ -1289,8 +1287,8 @@ Example: Enter 4 → each team can have max 4 members
                     </div>
                   )}
                   {eventData.customFields.map((field, index) => (
-                    <div key={index} className="p-4 rounded-lg border bg-bg-3 border-gray-700 space-y-3 relative">
-                      {field.name !== PAYMENT_REF_FIELD_NAME && <button type="button" onClick={() => removeCustomField(index)} className="absolute top-4 right-4 p-1 rounded-full bg-red-600 text-text-1"><X className="w-4 h-4" /></button>}
+                    <div key={index} className="p-4 rounded-lg border bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border-gray-200 dark:border-border-1 space-y-3 relative">
+                      {field.name !== PAYMENT_REF_FIELD_NAME && <button type="button" onClick={() => removeCustomField(index)} className="absolute top-4 right-4 p-1 rounded-full bg-red-600 text-gray-900 dark:text-text-1"><X className="w-4 h-4" /></button>}
                      <InputField
   label="Field Label"
   value={field.name}
@@ -1369,7 +1367,7 @@ Example: Enter 4 → each team can have max 4 members
 
     {/* Checkbox Options */}
     <div className="space-y-2 mt-4">
-      <label className="text-sm text-text-3">
+      <label className="text-sm text-gray-500 dark:text-text-3">
         Checkbox Options
       </label>
 
@@ -1383,7 +1381,7 @@ Example: Enter 4 → each team can have max 4 members
               updated[index].options[optIndex] = e.target.value;
               setEventData(p => ({ ...p, customFields: updated }));
             }}
-            className="flex-1 bg-gray-900 border border-gray-700 rounded p-2"
+            className="flex-1 bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded p-2"
             placeholder="Option label"
           />
 <button
@@ -1396,7 +1394,7 @@ Example: Enter 4 → each team can have max 4 members
   }}
   className="w-8 h-8 flex items-center justify-center rounded-full transition"
 >
-  <X className="w-4 h-4 text-text-1" />
+  <X className="w-4 h-4 text-gray-900 dark:text-text-1" />
 </button>
         </div>
       ))}
@@ -1408,7 +1406,7 @@ Example: Enter 4 → each team can have max 4 members
           updated[index].options = [...(updated[index].options || []), ""];
           setEventData(p => ({ ...p, customFields: updated }));
         }}
-        className="bg-purple-600 px-3 py-1 rounded text-sm"
+        className="bg-purple-500 px-3 py-1 rounded text-sm"
       >
         + Add Option
       </button>
@@ -1418,13 +1416,13 @@ Example: Enter 4 → each team can have max 4 members
        
                       </div>
                   ))}
-                  <button type="button" onClick={addCustomField} className="w-full bg-gray-700 text-text-1 py-2 rounded-lg"><Plus className="w-5 h-5 mr-2 inline" /> Add Field</button>
+                  <button type="button" onClick={addCustomField} className="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-text-2 hover:bg-gray-300 dark:hover:bg-gray-600 py-2 rounded-lg font-medium"><Plus className="w-5 h-5 mr-2 inline" /> Add Field</button>
                 </>
               )}
             </div>
           </div>
 
-          <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-purple-600 text-text-1 font-extrabold text-lg rounded-xl disabled:bg-gray-600 shadow-xl shadow-purple-500/20 transition-all hover:bg-purple-500">
+          <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-purple-500 text-white font-extrabold text-lg rounded-xl disabled:bg-gray-300 disabled:dark:bg-gray-700 shadow-xl shadow-purple-500/20 transition-all hover:bg-purple-500">
             {isSubmitting ? "Finalizing Event..." : (isEditMode ? "Save Changes" : "Host Event")}
           </button>
           

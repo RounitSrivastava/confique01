@@ -1,14 +1,16 @@
 import "./globals.css";
 import ClientLayout from "./ClientLayout";
-import { ThemeProvider } from "../components/ThemeProvider";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import CustomThemeProvider from "@/components/CustomThemeProvider";
+
 import Script from "next/script";
 
 export const metadata = {
+  title: "Confique",
+  description: "A platform for communities, events, and quizzes",
   icons: {
     icon: "/confiquelogo.png",
   },
-};
+}; // Force HMR update 2
 
 export default function RootLayout({ children }) {
   return (
@@ -34,11 +36,9 @@ export default function RootLayout({ children }) {
       </head>
 
       <body className="bg-bg-1 text-text-1">
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-            <ClientLayout>{children}</ClientLayout>
-          </ThemeProvider>
-        </GoogleOAuthProvider>
+        <CustomThemeProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </CustomThemeProvider>
       </body>
     </html> 
   );

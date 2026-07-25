@@ -897,7 +897,7 @@ const mobileInviteMenuRef = React.useRef(null);
                         <img
                             src={community.bannerUrl}
                             alt={`${community.name} banner`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                             onError={(e) => {
                                 e.currentTarget.onerror = null;
                                 e.currentTarget.src =
@@ -1671,7 +1671,7 @@ const EventListItem = ({ event, onOpenDetails }) => {
                 <img
                     src={event.poster}
                     alt={event.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain bg-gray-100 dark:bg-bg-3"
                     onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = "https://placehold.co/400x300/111827/ffffff?text=No+Image";
@@ -2071,7 +2071,20 @@ if (authorImage) {
 
     async function loadPosts(isInitial = false) {
         try {
-            if (isInitial) setPostsLoading(true);
+            if (isInitial) {
+                try {
+                    const cached = localStorage.getItem(`cached_posts_${communityInfo.id}`);
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            setPosts(parsed);
+                            setPostsLoading(false);
+                        }
+                    } else {
+                        setPostsLoading(true);
+                    }
+                } catch(e) {}
+            }
 
             const res = await apiFetch(
                 `/api/groups/${encodeURIComponent(communityInfo.id)}/posts`,
@@ -2080,7 +2093,7 @@ if (authorImage) {
 
             if (!res.ok) {
                 console.error("Failed to load posts", res.status);
-                if (isInitial) setPosts([]);
+                if (isInitial && posts.length === 0) setPosts([]);
                 return;
             }
 
@@ -2092,6 +2105,10 @@ if (authorImage) {
 
             setPosts(mapped);
             enrichAuthors(mapped);
+            
+            try {
+                localStorage.setItem(`cached_posts_${communityInfo.id}`, JSON.stringify(mapped));
+            } catch(e) {}
         } catch (e) {
             console.error("Error loading posts", e);
         } finally {
@@ -2694,7 +2711,7 @@ React.useEffect(() => {
                 }
             `}} />
             <div
-                className="fixed inset-0 z-[100] bg-bg-4 md:relative md:inset-auto md:z-auto md:h-[calc(100vh-64px)] md:bg-transparent text-text-2 flex flex-col overflow-hidden"
+                className="fixed inset-0 z-[100] bg-bg-4 md:relative md:inset-auto md:z-auto md:h-full md:bg-transparent text-text-2 flex flex-col overflow-hidden"
                 onClick={() => { if (menuOpenId) setMenuOpenId(null); }}
             >
             <div className="flex-1 overflow-y-auto" ref={scrollRef}>
@@ -2824,8 +2841,7 @@ React.useEffect(() => {
 
                                         {/* Hover Chevron */}
                                         <div 
-                                            className={`absolute top-1 right-2 ${isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} cursor-pointer text-text-3 hover:text-text-1 transition-opacity z-10 bg-gradient-to-l from-[#2a2a2a] to-transparent pl-2`}
-                                            style={!isSelf ? { backgroundImage: 'linear-gradient(to left, #111111 50%, transparent)' } : {}}
+                                            className={`absolute top-1 right-2 ${isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} cursor-pointer text-text-3 hover:text-text-1 transition-opacity z-10`}
                                             onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === p.id ? null : p.id); }}
                                         >
                                             <svg viewBox="0 0 19 20" width="19" height="20" className="fill-current"><path d="M3.8 6.7l5.7 5.7 5.7-5.7 1.6 1.6-7.3 7.2-7.3-7.2 1.6-1.6z"></path></svg>
@@ -2833,8 +2849,8 @@ React.useEffect(() => {
                                         
                                         {/* Dropdown Menu */}
                                         {menuOpenId === p.id && (
-                                            <div className={`absolute ${dropdownPositionClass} ${isSelf ? 'right-2' : 'left-[calc(100%-28px)]'} z-50 bg-bg-2 rounded-xl shadow-2xl py-2 w-52 border border-[#222] overflow-hidden flex flex-col`}>
-                                                <div className="flex items-center justify-around px-3 py-2 mb-1 border-b border-[#222]">
+                                            <div className={`absolute ${dropdownPositionClass} right-2 z-50 bg-bg-2 rounded-xl shadow-2xl py-2 w-52 border border-border-2 overflow-hidden flex flex-col`}>
+                                                <div className="flex items-center justify-around px-3 py-2 mb-1 border-b border-border-2">
                                                     {["👍", "❤️", "😂", "😮", "😢", "🙏"].map(emoji => (
                                                         <span 
                                                             key={emoji} 
@@ -2944,7 +2960,7 @@ React.useEffect(() => {
                                                         <div 
                                                             key={idx} 
                                                             onClick={(e) => { e.stopPropagation(); handleReact(p.id, r.emoji); }}
-                                                            className={`bg-bg-1/30 rounded-full px-1.5 py-0.5 flex items-center gap-1 cursor-pointer hover:bg-bg-1/50 text-[11px] ${hasReacted ? 'border border-[#a855f7]' : 'border border-transparent'}`}
+                                                            className={`bg-bg-1/30 rounded-full px-1.5 py-0.5 flex items-center gap-1 cursor-pointer hover:bg-bg-1/50 text-[11px] ${hasReacted ? 'text-[#a855f7] font-bold' : 'text-text-3 font-medium'}`}
                                                         >
                                                             <span>{r.emoji}</span>
                                                             <span className="text-text-3 font-medium">{r.users.length}</span>

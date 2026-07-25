@@ -114,9 +114,9 @@ const getRegistrationStatus = (start, end) => {
 
 const SectionTitle = ({ children, icon: Icon, className = "" }) => (
   <h2
-    className={`text-2xl font-bold text-text-1 mb-6 border-b border-border-2 pb-3 flex items-center ${className}`}
+    className={`text-2xl font-bold text-gray-900 dark:text-text-1 mb-6 border-b border-gray-200 dark:border-border-1 pb-3 flex items-center ${className}`}
   >
-    {Icon && <Icon className="w-6 h-6 mr-3 text-purple-400" />}
+    {Icon && <Icon className="w-6 h-6 mr-3 text-[#A855F7]" />}
     {children}
   </h2>
 );
@@ -127,8 +127,8 @@ const TabButton = ({ name, icon: Icon, isActive, onClick }) => (
     className={`
       flex items-center space-x-2 px-6 py-3 text-base font-semibold border-b-2 transition-all duration-300
       ${isActive
-        ? "border-purple-600 text-text-1"
-        : "border-transparent text-text-3 hover:text-text-1 hover:border-gray-700"
+        ? "border-purple-500 text-gray-900 dark:text-text-1"
+        : "border-transparent text-gray-500 dark:text-text-3 hover:text-gray-900 dark:text-text-1 hover:border-gray-200 dark:border-border-1"
       }
       whitespace-nowrap
     `}
@@ -140,7 +140,7 @@ const TabButton = ({ name, icon: Icon, isActive, onClick }) => (
 
 const RelatedEventCard = ({ event, onDetailsClick }) => (
   <div
-    className="bg-gray-900 border border-border-2 rounded-xl p-4 transition-transform duration-300 hover:scale-[1.02] cursor-pointer shadow-lg hover:shadow-purple-500/20"
+    className="bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded-xl p-4 transition-transform duration-300 hover:scale-[1.02] cursor-pointer shadow-lg hover:shadow-purple-500/20"
     onClick={() => onDetailsClick(event.id)}
   >
     <div className="flex items-start justify-between mb-4">
@@ -148,28 +148,28 @@ const RelatedEventCard = ({ event, onDetailsClick }) => (
       <div className="flex items-center space-x-3">
         <TrendingUp className="w-5 h-5 text-green-400 flex-shrink-0" />
 
-        <h4 className="text-lg font-extrabold text-text-1 truncate max-w-[180px]">
+        <h4 className="text-lg font-extrabold text-gray-900 dark:text-text-1 truncate max-w-[180px]">
           {event.title}
         </h4>
       </div>
 
       {/* RIGHT: Event Poster */}
-      <div className="w-14 h-14 rounded-xl overflow-hidden bg-bg-3 border border-gray-700 flex-shrink-0">
+      <div className="w-20 h-14 rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-border-1 flex-shrink-0 flex items-center justify-center">
         <img
           src={event.poster || event.banner}
           alt={event.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
       </div>
     </div>
 
     {/* Info */}
-    <div className="text-text-3 text-sm space-y-3">
+    <div className="text-gray-500 dark:text-text-3 text-sm space-y-3">
       <div className="flex items-center">
         <Calendar className="w-4 h-4 mr-3 flex-shrink-0" />
         <span className="flex justify-between w-full">
           <span>Date:</span>
-          <span className="font-medium text-text-1">
+          <span className="font-medium text-gray-900 dark:text-text-1">
             {event.date?.split(",")[0]?.trim() || "TBD"}
           </span>
         </span>
@@ -179,7 +179,7 @@ const RelatedEventCard = ({ event, onDetailsClick }) => (
         <Compass className="w-4 h-4 mr-3 flex-shrink-0" />
         <span className="flex justify-between w-full">
           <span>Category:</span>
-          <span className="font-medium text-purple-400">
+          <span className="font-medium text-[#A855F7]">
             {event.category}
           </span>
         </span>
@@ -189,7 +189,7 @@ const RelatedEventCard = ({ event, onDetailsClick }) => (
         <Eye className="w-4 h-4 mr-3 flex-shrink-0" />
         <span className="flex justify-between w-full">
           <span>Impressions:</span>
-          <span className="font-medium text-text-1">
+          <span className="font-medium text-gray-900 dark:text-text-1">
             {event.impressions?.toLocaleString() || "N/A"}
           </span>
         </span>
@@ -743,7 +743,7 @@ const EventDetailsPage = ({
       return {
         text: "Registered",
         className:
-          "w-full py-3 bg-green-600 text-text-1 font-bold rounded-lg shadow-lg flex items-center justify-center",
+          "w-full py-3 bg-green-600 text-gray-900 dark:text-text-1 font-bold rounded-lg shadow-lg flex items-center justify-center",
         disabled: true,
         Icon: CheckCircle,
       };
@@ -763,7 +763,7 @@ const EventDetailsPage = ({
       return {
         text: label,
         className:
-          "w-full py-3 bg-gray-700 text-text-2 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
+          "w-full py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
         disabled: true,
         Icon: Clock,
       };
@@ -773,7 +773,7 @@ const EventDetailsPage = ({
       return {
         text: "Registration Closed",
         className:
-          "w-full py-3 bg-gray-700 text-text-3 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
+          "w-full py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 font-bold rounded-lg cursor-not-allowed flex items-center justify-center",
         disabled: true,
         Icon: Clock,
       };
@@ -783,7 +783,7 @@ const EventDetailsPage = ({
       return {
         text: "Go to External Registration",
         className:
-          "w-full py-3 bg-purple-600 text-text-1 font-bold rounded-lg hover:bg-purple-700 flex items-center justify-center",
+          "w-full py-3 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-500 flex items-center justify-center",
         disabled: false,
         Icon: ExternalLink,
       };
@@ -792,7 +792,7 @@ const EventDetailsPage = ({
     return {
       text: "Register Now",
       className:
-        "w-full py-3 bg-purple-600 text-text-1 font-bold rounded-lg hover:bg-purple-700 flex items-center justify-center",
+        "w-full py-3 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-500 flex items-center justify-center",
       disabled: false,
       Icon: ClipboardList,
     };
@@ -810,25 +810,25 @@ const EventDetailsPage = ({
         onClick={handleCloseForm}
       >
         <div
-          className="relative w-full max-w-lg bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-6"
+          className="relative w-full max-w-lg bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded-2xl shadow-2xl p-6"
           onClick={(e) => e.stopPropagation()}
         >
           <button
             type="button"
             onClick={handleCloseForm}
-            className="absolute top-3 right-3 p-1 rounded-full bg-bg-3 hover:bg-gray-700 text-text-2 hover:text-text-1 transition-colors"
+            className="absolute top-3 right-3 p-1 rounded-full bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 hover:bg-gray-700 text-gray-600 dark:text-text-2 hover:text-gray-900 dark:text-text-1 transition-colors"
           >
             <CloseIcon className="w-4 h-4" />
           </button>
 
           <div className="mb-4">
-            <p className="text-xs uppercase tracking-wide text-purple-400 font-semibold mb-1">
+            <p className="text-xs uppercase tracking-wide text-[#A855F7] font-semibold mb-1">
               Registration • {category}
             </p>
-            <h3 className="text-xl font-bold text-text-1 mb-1">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-text-1 mb-1">
               {title}
             </h3>
-            <p className="text-xs text-text-3">
+            <p className="text-xs text-gray-500 dark:text-text-3">
               Please fill the details below to complete your registration.
             </p>
           </div>
@@ -839,9 +839,9 @@ const EventDetailsPage = ({
           >
             {/* TEAM SECTION */}
             {teamConfig?.enabled && !showBilling && (
-              <div className="space-y-4 p-4 bg-bg-3 rounded-xl border border-purple-600">
+              <div className="space-y-4 p-4 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 rounded-xl border border-purple-500">
 
-                <p className="text-purple-400 font-semibold text-sm">
+                <p className="text-[#A855F7] font-semibold text-sm">
                   Team Registration (Max {teamConfig.maxMembers} Members)
                 </p>
 
@@ -850,8 +850,8 @@ const EventDetailsPage = ({
                     type="button"
                     onClick={() => setTeamMode("create")}
                     className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${teamMode === "create"
-                      ? "bg-purple-600 text-text-1"
-                      : "bg-gray-700 text-text-2"
+                      ? "bg-purple-500 text-white"
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-text-2 hover:bg-gray-300 dark:hover:bg-gray-600"
                       }`}
                   >
                     Create Team
@@ -861,8 +861,8 @@ const EventDetailsPage = ({
                     type="button"
                     onClick={() => setTeamMode("join")}
                     className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${teamMode === "join"
-                      ? "bg-purple-600 text-text-1"
-                      : "bg-gray-700 text-text-2"
+                      ? "bg-purple-500 text-white"
+                      : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-text-2 hover:bg-gray-300 dark:hover:bg-gray-600"
                       }`}
                   >
                     Join Team
@@ -875,7 +875,7 @@ const EventDetailsPage = ({
                     placeholder="Enter Team Name"
                     value={teamName}
                     onChange={(e) => setTeamName(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-text-1"
+                    className="w-full px-3 py-2 bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded-lg text-gray-900 dark:text-text-1"
                   />
                 )}
                 {createdTeamCode && (
@@ -886,13 +886,13 @@ const EventDetailsPage = ({
                     </p>
 
                     <div
-                      className="mt-2 font-bold text-text-1 text-center tracking-widest text-lg cursor-pointer"
+                      className="mt-2 font-bold text-gray-900 dark:text-text-1 text-center tracking-widest text-lg cursor-pointer"
                       onClick={() => navigator.clipboard.writeText(createdTeamCode)}
                     >
                       {createdTeamCode}
                     </div>
 
-                    <p className="text-xs text-text-3 mt-1 text-center">
+                    <p className="text-xs text-gray-500 dark:text-text-3 mt-1 text-center">
                       Tap to copy & share with teammates
                     </p>
 
@@ -905,7 +905,7 @@ const EventDetailsPage = ({
                     placeholder="Enter Team Code"
                     value={teamCode}
                     onChange={(e) => setTeamCode(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-text-1"
+                    className="w-full px-3 py-2 bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 rounded-lg text-gray-900 dark:text-text-1"
                   />
                 )}
               </div>
@@ -926,7 +926,7 @@ const EventDetailsPage = ({
                   <div key={index} className="space-y-1">
                     {field.type === "checkbox" && Array.isArray(field.options) && field.options.length > 0 ? (
                       <div className="space-y-2">
-                        <label className="text-xs font-medium text-text-2 block mb-1">
+                        <label className="text-xs font-medium text-gray-600 dark:text-text-2 block mb-1">
                           {field.name} {field.required && <span className="text-red-500">*</span>}
                         </label>
 
@@ -957,7 +957,7 @@ const EventDetailsPage = ({
                                     e.target.checked
                                   )
                                 }
-                                className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                                className="w-4 h-4 text-purple-500 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
                               />
                               <label
                                 htmlFor={`${field.name}-${optIndex}`}
@@ -971,7 +971,7 @@ const EventDetailsPage = ({
                       </div>
                     ) : (
                       <>
-                        <label className="text-xs font-medium text-text-2 block mb-1">
+                        <label className="text-xs font-medium text-gray-600 dark:text-text-2 block mb-1">
                           {field.name} {field.required && <span className="text-red-500">*</span>}
                         </label>
                         {field.type === "file" ? (
@@ -986,7 +986,7 @@ const EventDetailsPage = ({
                                 false
                               )
                             }
-                            className={`w-full px-3 py-2 rounded-lg bg-bg-3 border text-sm text-text-1 ${error ? "border-red-500" : "border-gray-700"
+                            className={`w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border text-sm text-gray-900 dark:text-text-1 ${error ? "border-red-500" : "border-gray-200 dark:border-border-1"
                               }`}
                           />
                         ) : (
@@ -1001,7 +1001,7 @@ const EventDetailsPage = ({
                                 false
                               )
                             }
-                            className={`w-full px-3 py-2 rounded-lg bg-bg-3 border text-sm text-text-1 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${error ? "border-red-500" : "border-gray-700"
+                            className={`w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border text-sm text-gray-900 dark:text-text-1 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 ${error ? "border-red-500" : "border-gray-200 dark:border-border-1"
                               }`}
                             placeholder={field.name}
                           />
@@ -1016,12 +1016,12 @@ const EventDetailsPage = ({
             {/* Step 2: Show Billing Details & Transaction ID Input */}
 
             {showBilling && !isFree && (
-              <div className="mt-6 p-4 rounded-xl bg-bg-3 border border-purple-600 space-y-4">
+              <div className="mt-6 p-4 rounded-xl bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border border-purple-500 space-y-4">
                 <SectionTitle icon={List} className="text-lg">Bill Details</SectionTitle>
 
                 {pricingMode === "flexible" && ticketTypes.map((t) => (
                   <div key={t.name} className="flex justify-between items-center text-sm">
-                    <span className="text-text-1">{t.name} – ₹{t.price}</span>
+                    <span className="text-gray-900 dark:text-text-1">{t.name} – ₹{t.price}</span>
                     <input
                       type="number"
                       min="0"
@@ -1029,16 +1029,16 @@ const EventDetailsPage = ({
                       onChange={(e) =>
                         setTicketQty((p) => ({ ...p, [t.name]: Number(e.target.value) }))
                       }
-                      className="w-16 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-center"
+                      className="w-16 bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border border-gray-600 rounded px-2 py-1 text-center"
                     />
                   </div>
                 ))}
 
                 {pricingMode === "fixed" && (
-                  <p className="text-text-1 font-semibold">Price: ₹{fixedPrice}</p>
+                  <p className="text-gray-900 dark:text-text-1 font-semibold">Price: ₹{fixedPrice}</p>
                 )}
 
-                <div className="flex justify-between font-bold text-lg border-t border-gray-700 pt-3">
+                <div className="flex justify-between font-bold text-lg border-t border-gray-200 dark:border-border-1 pt-3">
                   <span>Total Bill</span>
                   <span className="text-green-400">₹{totalAmount}</span>
                 </div>
@@ -1047,27 +1047,27 @@ const EventDetailsPage = ({
 
                 {/* Step 3: Show QR Code and Transaction Summary after Ref Number */}
                 {paymentMethod === "qr" && qrCode && (
-                  <div className="mt-4 p-4 bg-gray-950 border border-purple-600 rounded-xl space-y-4">
+                  <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-950 border border-purple-500 rounded-xl space-y-4">
 
                     {/* QR Code */}
                     <div className="flex items-center space-x-4">
                       <img
                         src={qrCode}
                         alt="QR Code"
-                        className="w-28 h-28 rounded-md border border-purple-500 bg-white p-2"
+                        className="w-28 h-28 rounded-md border border-purple-500 bg-white dark:bg-bg-1 p-2"
                       />
-                      <div className="text-sm text-text-2">
-                        <p className="font-bold text-text-1">Scan & Pay</p>
+                      <div className="text-sm text-gray-600 dark:text-text-2">
+                        <p className="font-bold text-gray-900 dark:text-text-1">Scan & Pay</p>
                         <p>Pay <span className="text-green-400 font-semibold">₹{totalAmount}</span></p>
-                        <p className="text-xs text-text-3 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-text-3 mt-1">
                           Use any UPI app
                         </p>
                       </div>
                     </div>
 
                     {/* Transaction Input BELOW QR */}
-                    <div className="pt-4 border-t border-gray-700">
-                      <label className="text-xs text-text-3">
+                    <div className="pt-4 border-t border-gray-200 dark:border-border-1">
+                      <label className="text-xs text-gray-500 dark:text-text-3">
                         Enter Last 4 digits of Transaction ID
                       </label>
                       <input
@@ -1081,13 +1081,13 @@ const EventDetailsPage = ({
                             "Payment Ref (Last 4 digits)": val,
                           }));
                         }}
-                        className="w-full mt-2 px-3 py-2 rounded-lg bg-gray-900 border border-gray-600 text-text-1 text-sm tracking-widest text-center"
+                        className="w-full mt-2 px-3 py-2 rounded-lg bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border border-gray-600 text-gray-900 dark:text-text-1 text-sm tracking-widest text-center"
                         placeholder="1234"
                       />
                       {/* Screenshot Upload */}
                       {/* Screenshot Upload */}
                       <div className="mt-4">
-                        <label className="text-xs text-text-3">
+                        <label className="text-xs text-gray-500 dark:text-text-3">
                           Upload Payment Screenshot <span className="text-red-500">*</span>
                         </label>
 
@@ -1110,7 +1110,7 @@ const EventDetailsPage = ({
                               }));
                             }
                           }}
-                          className={`w-full mt-2 px-3 py-2 rounded-lg bg-gray-900 border text-text-1 text-sm ${formErrors.paymentScreenshot
+                          className={`w-full mt-2 px-3 py-2 rounded-lg bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border text-gray-900 dark:text-text-1 text-sm ${formErrors.paymentScreenshot
                             ? "border-red-500"
                             : "border-gray-600"
                             }`}
@@ -1193,8 +1193,8 @@ const EventDetailsPage = ({
                     setShowBilling(true);
                   }}
                   className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${isSubmitting
-                    ? "bg-gray-700 cursor-not-allowed"
-                    : "bg-purple-600 hover:bg-purple-700 text-text-1"
+                    ? "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
+                    : "bg-purple-500 hover:bg-purple-500 text-white"
                     }`}
                 >
                   {isSubmitting
@@ -1223,7 +1223,7 @@ const EventDetailsPage = ({
                       )
                     )
                   }
-                  className={`px-6 py-2 rounded-lg text-sm font-semibold text-text-1 flex items-center transition-all ${isSubmitting ||
+                  className={`px-6 py-2 rounded-lg text-sm font-semibold text-gray-900 dark:text-text-1 flex items-center transition-all ${isSubmitting ||
                     (pricingMode === "flexible" && totalAmount === 0) ||
                     (
                       paymentMethod === "qr" &&
@@ -1257,8 +1257,8 @@ const EventDetailsPage = ({
       case "Stages & Timeline":
         if (eventRounds.length === 0) {
           return (
-            <div className="text-center py-10 text-text-3">
-              <ZapOff className="w-8 h-8 mx-auto mb-4 text-purple-400" />
+            <div className="text-center py-10 text-gray-500 dark:text-text-3">
+              <ZapOff className="w-8 h-8 mx-auto mb-4 text-[#A855F7]" />
               <p>Stage and timeline details are not yet available.</p>
             </div>
           );
@@ -1271,8 +1271,7 @@ const EventDetailsPage = ({
               <div key={index} className="flex space-x-6">
                 <div className="flex flex-col items-center">
                   <div
-                    className={`w-10 h-10 flex items-center justify-center rounded-full text-text-1 font-bold ${index === 0 ? "bg-purple-600" : "bg-gray-700"
-                      }`}
+                    className="w-10 h-10 flex items-center justify-center rounded-full font-bold bg-[#A855F7] text-white shadow-md shadow-purple-500/20"
                   >
                     {index + 1}
                   </div>
@@ -1281,14 +1280,14 @@ const EventDetailsPage = ({
                   )}
                 </div>
                 <div className="pb-8 flex-grow">
-                  <p className="text-sm text-purple-400 font-medium flex items-center mb-1">
+                  <p className="text-sm text-[#A855F7] font-medium flex items-center mb-1">
                     <Calendar className="w-4 h-4 mr-2" />
                     {round.date || "TBD"}
                   </p>
-                  <h3 className="text-xl font-bold text-text-1 mb-2">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-text-1 mb-2">
                     {round.title || `Round ${index + 1}`}
                   </h3>
-                  <p className="text-text-2">
+                  <p className="text-gray-600 dark:text-text-2">
                     {round.description || "Details coming soon."}
                   </p>
                 </div>
@@ -1301,33 +1300,33 @@ const EventDetailsPage = ({
         return (
           <div className="space-y-8">
             <SectionTitle icon={ClipboardList}>{title} Overview</SectionTitle>
-            <p className="text-text-2 text-lg leading-relaxed whitespace-pre-wrap">
+            <p className="text-gray-600 dark:text-text-2 text-lg leading-relaxed whitespace-pre-wrap">
               {description || "No detailed description provided."}
             </p>
-            <p className="text-text-2 text-lg leading-relaxed">
+            <p className="text-gray-600 dark:text-text-2 text-lg leading-relaxed">
               The event is scheduled for{" "}
-              <span className="font-semibold text-purple-300">
+              <span className="font-semibold text-[#A855F7]">
                 {date ? new Date(date).toLocaleDateString() : "TBD"}
               </span>
               . Get ready to participate in the{" "}
-              <span className="font-semibold text-purple-300">
+              <span className="font-semibold text-[#A855F7]">
                 {category}
               </span>{" "}
               category!
             </p>
 
             <SectionTitle icon={User}>Organizer & Contact</SectionTitle>
-            <p className="text-text-2">
-              Hosted by: <span className="font-semibold text-purple-400">{hostedBy || "Host"}</span>
+            <p className="text-gray-600 dark:text-text-2">
+              Hosted by: <span className="font-semibold text-[#A855F7]">{hostedBy || "Host"}</span>
             </p>
-            <p className="text-text-2">
-              Location: <span className="font-semibold text-purple-400">{venue || (isOnline ? "Online" : "TBD")}</span>
+            <p className="text-gray-600 dark:text-text-2">
+              Location: <span className="font-semibold text-[#A855F7]">{venue || (isOnline ? "Online" : "TBD")}</span>
             </p>
 
             {!isExternalRegistration && (
-              <div className="bg-bg-3 p-4 rounded-lg border-l-4 border-yellow-500">
+              <div className="bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 p-4 rounded-lg border-l-4 border-yellow-500">
                 <p className="font-semibold text-yellow-300 mb-2">Registration Notes:</p>
-                <p className="text-sm text-text-2 mb-3">
+                <p className="text-sm text-gray-600 dark:text-text-2 mb-3">
                   This event uses our internal registration system.
                 </p>
               </div>
@@ -1341,54 +1340,65 @@ const EventDetailsPage = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-text-1 font-sans antialiased">
+    <div className="min-h-screen bg-gray-50 dark:bg-bg-1 text-gray-900 dark:text-text-1 font-sans antialiased">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <button
           onClick={onBackClick}
-          className="flex items-center text-text-3 hover:text-purple-400 transition-colors font-semibold"
+          className="flex items-center text-gray-500 dark:text-text-3 hover:text-[#A855F7] transition-colors font-semibold"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           Back to All Events
         </button>
       </div>
 
+      {/* Dynamic Background: Poster on Mobile, Banner on Desktop */}
       <div className="relative h-[280px] overflow-hidden">
+        
+        {/* MOBILE IMAGE: Always use poster, fully cover area */}
+        <img
+          src={poster}
+          alt={title}
+          className="lg:hidden w-full h-full object-cover object-center transition-all opacity-90 dark:opacity-70"
+          loading="lazy"
+        />
+
+        {/* DESKTOP IMAGE: Use banner if available */}
         <img
           src={banner || poster}
           alt={title}
-          className="w-full h-full object-cover object-center opacity-70"
+          className={`hidden lg:block w-full h-full object-cover object-center transition-all ${
+            banner && banner !== poster
+              ? "opacity-90 dark:opacity-70"
+              : "opacity-30 blur-2xl scale-110"
+          }`}
           loading="lazy"
         />
 
         <div className="absolute inset-0 bg-black/70 flex items-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-center justify-between">
-
             {/* LEFT TEXT */}
             <div>
-              <p className="text-purple-400 font-semibold text-sm uppercase mb-2">
+              <p className="text-[#A855F7] font-semibold text-sm uppercase mb-2">
                 {category} by {hostedBy || "Host"}
               </p>
-
-              <h1 className="text-4xl sm:text-5xl font-extrabold text-text-1 tracking-tight">
+              <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
                 {title}
               </h1>
-
-              <p className="text-xl text-text-2 mt-2">
+              <p className="text-xl text-gray-200 mt-2">
                 {tagline || title}
               </p>
             </div>
 
             {/* RIGHT POSTER */}
             {poster && (
-              <div className="hidden lg:block w-32 h-32 rounded-xl overflow-hidden border border-gray-700 shadow-xl bg-gray-900 ml-10">
+              <div className="hidden lg:flex w-64 aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-border-1 shadow-xl bg-gray-900 items-center justify-center ml-10">
                 <img
                   src={poster}
                   alt={title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
             )}
-
           </div>
         </div>
       </div>
@@ -1396,7 +1406,7 @@ const EventDetailsPage = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="lg:grid lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-8">
-            <div className="flex overflow-x-auto border-b border-border-2 mb-8">
+            <div className="flex overflow-x-auto border-b border-gray-200 dark:border-border-1 mb-8">
               {[
                 { name: "Details", icon: ClipboardList },
                 { name: "Stages & Timeline", icon: Clock },
@@ -1413,18 +1423,20 @@ const EventDetailsPage = ({
             {renderContent()}
           </div>
 
-          <div className="lg:col-span-4 mt-10 lg:mt-0 space-y-6">
-            <div className="space-y-6 lg:sticky lg:top-20">
-              <div className="bg-gray-900 border border-border-2 rounded-xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between text-text-1 font-bold text-xl">
+          <div className="lg:col-span-4 mt-10 lg:mt-0">
+            <div className="sticky top-6 space-y-6 z-10 pb-6 max-h-[calc(100vh-3rem)] overflow-y-auto scrollbar-hide">
+              <div className="bg-white/80 dark:bg-bg-1/80 backdrop-blur-xl border border-gray-200/80 dark:border-border-1/50 rounded-2xl p-6 shadow-xl shadow-gray-200/40 dark:shadow-black/40 space-y-5">
+                <div className="flex items-center justify-between text-gray-900 dark:text-text-1 font-bold text-xl">
                   <p>Registration</p>
-                  <Zap className="w-6 h-6 text-purple-400" />
+                  <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-[#A855F7]">
+                    <Zap className="w-5 h-5" />
+                  </div>
                 </div>
 
-                <div className="space-y-2 text-text-2 text-sm">
-                  <p className="flex justify-between">Main Date: <span className="text-text-1">{date ? new Date(date).toLocaleDateString() : "TBD"}</span></p>
-                  <p className="flex justify-between">Start Date: <span className="text-text-1">{regStart}</span></p>
-                  <p className="flex justify-between">End Date: <span className="text-text-1">{regEnd}</span></p>
+                <div className="space-y-2 text-gray-600 dark:text-text-2 text-sm">
+                  <p className="flex justify-between">Main Date: <span className="text-gray-900 dark:text-text-1">{date ? new Date(date).toLocaleDateString() : "TBD"}</span></p>
+                  <p className="flex justify-between">Start Date: <span className="text-gray-900 dark:text-text-1">{regStart}</span></p>
+                  <p className="flex justify-between">End Date: <span className="text-gray-900 dark:text-text-1">{regEnd}</span></p>
                   <p className="flex justify-between">
                     Fees:
                     <span className={isFree ? "text-green-400" : "text-yellow-400"}>
@@ -1443,11 +1455,11 @@ const EventDetailsPage = ({
                         Team Code
                       </p>
 
-                      <p className="text-text-1 text-lg font-bold text-center tracking-widest">
+                      <p className="text-gray-900 dark:text-text-1 text-lg font-bold text-center tracking-widest">
                         {createdTeamCode}
                       </p>
 
-                      <p className="text-text-2 text-center">
+                      <p className="text-gray-600 dark:text-text-2 text-center">
                         Members: {teamMembersCount} / {teamConfig?.maxMembers}
                       </p>
 
@@ -1456,13 +1468,13 @@ const EventDetailsPage = ({
                         {teamParticipants.map((member, idx) => (
                           <div
                             key={idx}
-                            className="flex justify-between items-center bg-bg-3 px-3 py-2 rounded-md"
+                            className="flex justify-between items-center bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 px-3 py-2 rounded-md"
                           >
                             <div>
-                              <p className="text-sm text-text-1 font-medium">
+                              <p className="text-sm text-gray-900 dark:text-text-1 font-medium">
                                 {member.name}
                               </p>
-                              <p className="text-xs text-text-3">
+                              <p className="text-xs text-gray-500 dark:text-text-3">
                                 {member.email}
                               </p>
                             </div>
@@ -1500,20 +1512,28 @@ const EventDetailsPage = ({
                 </button>
               </div>
 
-              <div className="bg-gray-900 border border-border-2 rounded-xl p-6 shadow-xl space-y-3">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                <p className="text-lg font-semibold text-text-1">Eligibility</p>
-                <p className="text-text-2 text-sm">{eligibility || "Check official details."}</p>
+              <div className="bg-white/80 dark:bg-bg-1/80 backdrop-blur-xl border border-gray-200/80 dark:border-border-1/50 rounded-2xl p-6 shadow-xl shadow-gray-200/40 dark:shadow-black/40 space-y-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="p-2 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-500">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 dark:text-text-1">Eligibility</p>
+                </div>
+                <p className="text-gray-600 dark:text-text-2 text-sm">{eligibility || "Check official details."}</p>
               </div>
 
-              <div className="bg-gray-900 border border-border-2 rounded-xl p-6 shadow-xl space-y-3">
-                <Gift className="w-5 h-5 text-yellow-400" />
-                <p className="text-lg font-semibold text-text-1">Prizes for Winners</p>
+              <div className="bg-white/80 dark:bg-bg-1/80 backdrop-blur-xl border border-gray-200/80 dark:border-border-1/50 rounded-2xl p-6 shadow-xl shadow-gray-200/40 dark:shadow-black/40 space-y-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-500">
+                    <Gift className="w-5 h-5" />
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 dark:text-text-1">Prizes for Winners</p>
+                </div>
                 {prizes ? (
                   <div className="space-y-2">
                     {prizes.split("\n").map((line, i) =>
                       line.trim() ? (
-                        <p key={i} className="text-text-2 text-sm flex items-start gap-2">
+                        <p key={i} className="text-gray-600 dark:text-text-2 text-sm flex items-start gap-2">
                           <span className="text-yellow-400 mt-0.5"></span>
                           <span>{line.trim()}</span>
                         </p>
@@ -1521,14 +1541,14 @@ const EventDetailsPage = ({
                     )}
                   </div>
                 ) : (
-                  <p className="text-text-2 text-sm">Goodies and Certificates.</p>
+                  <p className="text-gray-600 dark:text-text-2 text-sm">Goodies and Certificates.</p>
                 )}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-border-2">
+        <div className="mt-16 pt-8 border-t border-gray-200 dark:border-border-1">
           <SectionTitle icon={List}>Related Events</SectionTitle>
           {relatedEvents.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1537,19 +1557,19 @@ const EventDetailsPage = ({
               ))}
             </div>
           ) : (
-            <div className="text-center py-10 text-text-3"><p>No related events found.</p></div>
+            <div className="text-center py-10 text-gray-500 dark:text-text-3"><p>No related events found.</p></div>
           )}
         </div>
       </div>
       {showSuccessPopup && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 overflow-hidden">
 
-          <div className="relative z-10 w-full max-w-md bg-gradient-to-br from-gray-900 to-gray-950 border border-green-500/30 rounded-3xl p-8 text-center shadow-2xl">
+          <div className="relative z-10 w-full max-w-md bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-950 border border-green-500/30 rounded-3xl p-8 text-center shadow-2xl">
 
             {/* Close Button */}
             <button
               onClick={() => setShowSuccessPopup(false)}
-              className="absolute top-4 right-4 text-text-3 hover:text-text-1 transition"
+              className="absolute top-4 right-4 text-gray-500 dark:text-text-3 hover:text-gray-900 dark:text-text-1 transition"
             >
               <CloseIcon className="w-5 h-5" />
             </button>
@@ -1562,14 +1582,14 @@ const EventDetailsPage = ({
             </div>
 
             {/* Heading */}
-            <h2 className="text-3xl font-bold text-text-1 mb-3">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-text-1 mb-3">
               Registration Successful 🎉
             </h2>
 
             {/* Description */}
-            <p className="text-text-2 mb-6 leading-relaxed">
+            <p className="text-gray-600 dark:text-text-2 mb-6 leading-relaxed">
               You are successfully registered for <br />
-              <span className="text-purple-400 font-semibold">
+              <span className="text-[#A855F7] font-semibold">
                 {title}
               </span>
             </p>

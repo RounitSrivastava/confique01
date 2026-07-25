@@ -111,7 +111,7 @@ let list = [...storedAll];
               Email us at:
             </p>
             <div className="mt-5 flex justify-center">
-              <a href="mailto:confique01@gmail.com" className="text-purple-100 hover:text-purple-300 transition underline">
+              <a href="mailto:confique01@gmail.com" className="text-purple-500 hover:text-purple-400 transition underline">
                 confique01@gmail.com
               </a>
             </div>
@@ -127,7 +127,7 @@ let list = [...storedAll];
                   <li key={c.id} onClick={() => handleCommunityClick(c)} className="px-3 py-2 rounded-lg hover:bg-bg-3 transition flex items-start gap-2 cursor-pointer group">
                     <span className="text-xs text-text-4 mt-0.5">#{index + 1}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-200 truncate group-hover:text-purple-400 transition-colors">{c.name}</p>
+                      <p className="text-sm font-medium text-text-1 truncate group-hover:text-purple-400 transition-colors">{c.name}</p>
                       <p className="text-xs text-text-3 truncate">{c.members || `${c.membersCount} members`}</p>
                     </div>
                   </li>
@@ -147,7 +147,7 @@ let list = [...storedAll];
                     className="px-3 py-2 rounded-lg hover:bg-bg-3 cursor-pointer transition group"
                   >
                     {/* ✅ Title: Single line with ellipsis */}
-                    <p className="text-sm font-medium text-slate-200 truncate group-hover:text-purple-400 transition-colors">
+                    <p className="text-sm font-medium text-text-1 truncate group-hover:text-purple-400 transition-colors">
                       {e.title}
                     </p>
                     {/* ✅ Tagline/Description: Single line with ellipsis */}

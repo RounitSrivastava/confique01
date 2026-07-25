@@ -18,8 +18,8 @@ const CategoryButton = ({ name, Icon, isActive, onClick }) => (
       text-sm font-medium rounded-full transition-all
       ${
         isActive
-          ? "bg-purple-600 text-text-1 shadow-lg shadow-purple-500/50"
-          : "text-text-2 bg-bg-3 hover:bg-gray-700 hover:text-text-1"
+          ? "bg-purple-600 text-gray-900 dark:text-text-1 shadow-lg shadow-purple-500/50"
+          : "text-gray-600 dark:text-text-2 bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 hover:bg-gray-700 hover:text-gray-900 dark:text-text-1"
       }
       whitespace-nowrap
     `}
@@ -44,7 +44,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
   return (
     <div
       onClick={() => onDetailsClick(event.id)}
-      className="group flex flex-col bg-gray-900 rounded-xl overflow-hidden shadow-2xl hover:scale-[1.02] cursor-pointer transition-all"
+      className="group flex flex-col bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 rounded-xl overflow-hidden shadow-2xl hover:scale-[1.02] cursor-pointer transition-all"
     >
       {/* IMAGE */}
       <div className="relative w-full h-52 sm:h-48 md:h-40 lg:h-36">
@@ -64,7 +64,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
                 tag.includes("Free")
                   ? "bg-green-500/90"
                   : "bg-gray-700/90"
-              } text-text-1`}
+              } text-gray-900 dark:text-text-1`}
             >
               {tag}
             </span>
@@ -72,7 +72,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
         </div>
 
         {/* Date */}
-        <div className="absolute bottom-2 left-2 bg-white text-gray-900 px-2 py-0.5 rounded-md text-[10px] font-semibold shadow">
+        <div className="absolute bottom-2 left-2 bg-white dark:bg-bg-1 text-gray-900 dark:text-text-1 px-2 py-0.5 rounded-md text-[10px] font-semibold shadow">
           {event.date.split(",")[0]}
         </div>
       </div>
@@ -80,7 +80,7 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
       {/* CONTENT */}
       <div className="p-4 flex flex-col">
         {/* META */}
-        <div className="flex justify-between text-xs text-text-3 mb-1">
+        <div className="flex justify-between text-xs text-gray-500 dark:text-text-3 mb-1">
           <span className="flex items-center space-x-2">
             <span>
               {event.venue.includes("Online") ? "Online" : "On-site"}
@@ -96,25 +96,27 @@ const EventCard = ({ event, onDetailsClick, onShareClick }) => {
           </span>
         </div>
 
-        {/* SHARE (below impressions like your image) */}
-        <div className="flex justify-end mb-3">
+        {/* SHARE & ACTION */}
+        <div className="flex justify-between items-end mt-2">
           <button
             onClick={handleShare}
-            className="flex items-center text-xs text-text-3 hover:text-purple-400 transition-colors"
-            title="Share event"
+            className="flex items-center space-x-1 text-gray-500 hover:text-purple-500 transition-colors p-1"
+            title="Share Event"
           >
-            <Share2 className="w-4 h-4 mr-1" />
-            Share
+            <Share2 className="w-4 h-4" />
+          </button>
+          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow shadow-purple-500/20">
+            View Details
           </button>
         </div>
 
         {/* TITLE */}
-        <h3 className="text-xl font-bold text-text-1 mb-2 line-clamp-2 group-hover:text-purple-300">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-text-1 mb-2 line-clamp-2 group-hover:text-purple-300">
           {event.title}
         </h3>
 
         {/* VENUE */}
-        <p className="text-sm text-text-3 flex items-center mb-4">
+        <p className="text-sm text-gray-500 dark:text-text-3 flex items-center mb-4">
           <MapPin className="w-4 h-4 mr-2 text-purple-400" />
           {event.venue.split("|").pop().trim()}
         </p>
@@ -186,13 +188,13 @@ const AllEventsPage = ({
         {/* SEARCH */}
         <div className="flex justify-center mb-8">
           <div className="relative w-64 sm:w-80 md:w-[28rem] lg:w-[32rem]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-3" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-text-3" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search..."
-              className="w-full py-2.5 pl-9 pr-3 rounded-md bg-bg-3 border border-gray-700 text-text-1 text-sm"
+              className="w-full py-2.5 pl-9 pr-3 rounded-md bg-gray-50 dark:bg-bg-3 border border-gray-200 dark:border-border-1 border border-gray-200 dark:border-border-1 text-gray-900 dark:text-text-1 text-sm"
             />
           </div>
         </div>
@@ -223,12 +225,12 @@ const AllEventsPage = ({
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 bg-gray-900 rounded-xl">
+          <div className="text-center py-20 bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 rounded-xl">
             <ZapOff className="w-12 h-12 mx-auto text-red-500 mb-4" />
-            <p className="text-xl text-text-1 font-semibold">
+            <p className="text-xl text-gray-900 dark:text-text-1 font-semibold">
               No events found
             </p>
-            <p className="text-text-3">
+            <p className="text-gray-500 dark:text-text-3">
               Try another category or search term.
             </p>
           </div>

@@ -266,32 +266,32 @@ const rowData = [
     <>
       <div className="min-h-screen bg-bg-4 text-text-1">
         <div className="max-w-5xl mx-auto px-4 py-8">
-          <div className="relative bg-bg-1 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 md:p-8 mb-6 shadow-xl">
+          <div className="relative bg-bg-1 backdrop-blur-sm rounded-2xl border border-border-2 p-6 md:p-8 mb-6 shadow-xl">
             <div className="flex flex-col md:flex-row gap-6 items-start">
               <div className="relative">
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden">
-                  <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover border-4 border-slate-800" />
+                  <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover border-4 border-bg-2" />
                 </div>
-                <button onClick={() => setIsEditModalOpen(true)} className="absolute bottom-0 right-0 bg-purple-600 p-2 rounded-full hover:bg-purple-700 transition-colors z-20">
-                  <Edit2 className="w-4 h-4 text-text-1" />
+                <button onClick={() => setIsEditModalOpen(true)} className="absolute bottom-0 right-0 bg-[#A855F7] p-2 rounded-full hover:brightness-110 transition-colors z-20" style={{ color: '#ffffff' }}>
+                  <Edit2 className="w-4 h-4" color="#ffffff" />
                 </button>
               </div>
               <div className="flex-1">
                 <h2 className="text-2xl md:text-3xl font-bold mb-1">{profile.name || "User"}</h2>
-                <p className="text-slate-400 text-sm mb-3">{profile.email}</p>
-                <p className="text-slate-300 mb-3">{profile.bio || "Event host on Confique."}</p>
-                <div className="flex items-center gap-1 text-slate-400 text-sm"><MapPin className="w-4 h-4" /><span>{profile.location || "Location"}</span></div>
+                <p className="text-text-3 text-sm mb-3">{profile.email}</p>
+                <p className="text-text-2 mb-3">{profile.bio || "Event host on Confique."}</p>
+                <div className="flex items-center gap-1 text-text-3 text-sm"><MapPin className="w-4 h-4" /><span>{profile.location || "Location"}</span></div>
                 <div className="grid grid-cols-2 gap-4 mt-6 text-center">
-                  <div className="bg-slate-700/30 rounded-xl p-4"><div className="text-2xl font-bold">{totalHostedEvents}</div><div className="text-slate-400 text-sm">Hosted</div></div>
-                  <div className="bg-slate-700/30 rounded-xl p-4"><div className="text-2xl font-bold">{totalRegisteredEvents}</div><div className="text-slate-400 text-sm">Registered</div></div>
+                  <div className="bg-bg-3 rounded-xl p-4"><div className="text-2xl font-bold">{totalHostedEvents}</div><div className="text-text-3 text-sm">Hosted</div></div>
+                  <div className="bg-bg-3 rounded-xl p-4"><div className="text-2xl font-bold">{totalRegisteredEvents}</div><div className="text-text-3 text-sm">Registered</div></div>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="flex justify-center mb-6 relative">
-            <button onClick={handleShareProfile} className="bg-purple-600 hover:bg-purple-700 text-text-1 px-5 py-2 rounded-xl font-semibold flex items-center gap-2">
-              {copied ? <CheckCircle className="w-4 h-4" /> : <Share2 className="w-4 h-4" />} {copied ? "Copied!" : "Share profile"}
+            <button onClick={handleShareProfile} className="bg-[#A855F7] hover:brightness-110 px-5 py-2 rounded-xl font-semibold flex items-center gap-2" style={{ color: '#ffffff' }}>
+              {copied ? <CheckCircle className="w-4 h-4" color="#ffffff" /> : <Share2 className="w-4 h-4" color="#ffffff" />} {copied ? "Copied!" : "Share profile"}
             </button>
             {showShareTooltip && (
               <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-green-500 text-text-1 text-sm py-2 px-3 rounded-lg shadow-lg z-50">
@@ -301,42 +301,42 @@ const rowData = [
             )}
           </div>
 
-          <div className="bg-bg-1 rounded-2xl border border-slate-700/50 overflow-hidden shadow-2xl mb-8">
-            <div className="flex border-b border-slate-700/50">
-              <button onClick={() => setActiveTab("posts")} className={`flex-1 py-4 font-semibold relative ${activeTab === "posts" ? "text-purple-400" : "text-slate-400"}`}>
+          <div className="bg-bg-1 rounded-2xl border border-border-2 overflow-hidden shadow-2xl mb-8">
+            <div className="flex border-b border-border-2">
+              <button onClick={() => setActiveTab("posts")} className={`flex-1 py-4 font-semibold relative ${activeTab === "posts" ? "text-purple-500" : "text-text-3"}`}>
                 Hosted ({totalHostedEvents}) {activeTab === "posts" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />}
               </button>
-              <button onClick={() => setActiveTab("registered")} className={`flex-1 py-4 font-semibold relative ${activeTab === "registered" ? "text-purple-400" : "text-slate-400"}`}>
+              <button onClick={() => setActiveTab("registered")} className={`flex-1 py-4 font-semibold relative ${activeTab === "registered" ? "text-purple-500" : "text-text-3"}`}>
                 Registered ({totalRegisteredEvents}) {activeTab === "registered" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />}
               </button>
             </div>
             <div className="p-4 md:p-6 space-y-4">
               {displayedPosts.length > 0 ? displayedPosts.map((post) => (
-                <div key={post.id} onClick={() => handleViewDetails(post.id)} className="relative bg-slate-700/30 rounded-xl overflow-hidden border border-slate-600/30 flex flex-col md:flex-row cursor-pointer hover:bg-slate-700/50 transition-all">
+                <div key={post.id} onClick={() => handleViewDetails(post.id)} className="relative bg-bg-2 rounded-xl overflow-hidden border border-border-2 flex flex-col md:flex-row cursor-pointer hover:bg-bg-3 transition-all">
                   {activeTab === "posts" && (
                     <div className="absolute top-3 right-3 flex gap-2 z-30" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => router.push(`/events?view=host&edit=${post.id}`)} className="p-1.5 rounded-full bg-slate-900/80 border border-slate-600"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => router.push(`/events?view=host&edit=${post.id}`)} className="p-1.5 rounded-full bg-bg-1 border border-border-2 hover:bg-bg-3"><Edit2 className="w-4 h-4 text-text-2" /></button>
                       <button onClick={async (e) => { 
                         e.stopPropagation(); 
                         if(confirm("Delete?")) {
                           const res = await fetch(`/api/events/${post.id}`, { method: "DELETE" });
                           if(res.ok) setPosts(p => p.filter(x => x.id !== post.id));
                         }
-                      }} className="p-1.5 rounded-full bg-red-500/80 border border-red-400 hover:bg-red-600"><Trash2 className="w-4 h-4" /></button>
+                      }} className="p-1.5 rounded-full bg-red-500/10 text-red-500 border border-red-200 hover:bg-red-500 hover:text-white"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   )}
-                  <div className="w-full md:w-48 h-48 flex-shrink-0"><img src={post.image} alt={post.title} className="w-full h-full object-cover" /></div>
+                  <div className="w-full md:w-48 h-48 flex-shrink-0 bg-gray-100 dark:bg-bg-3"><img src={post.image} alt={post.title} className="w-full h-full object-contain" /></div>
                   <div className="flex-1 p-4 md:p-5">
                     <h3 className="text-lg md:text-xl font-bold mb-3">{post.title}</h3>
                     <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-slate-300 text-sm"><Calendar className="w-4 h-4 text-blue-400" /><span>{post.displayDate}</span></div>
-                      <div className="flex items-center gap-2 text-slate-300 text-sm"><MapPin className="w-4 h-4 text-blue-400" /><span>{post.location}</span></div>
-                      {activeTab === "posts" && <div className="flex items-center gap-2 text-purple-400 text-sm font-bold"><Users className="w-4 h-4" /><span>{post.registrationsCount} Registration(s)</span></div>}
+                      <div className="flex items-center gap-2 text-text-3 text-sm"><Calendar className="w-4 h-4 text-purple-500" /><span>{post.displayDate}</span></div>
+                      <div className="flex items-center gap-2 text-text-3 text-sm"><MapPin className="w-4 h-4 text-purple-500" /><span>{post.location}</span></div>
+                      {activeTab === "posts" && <div className="flex items-center gap-2 text-purple-600 text-sm font-bold"><Users className="w-4 h-4" /><span>{post.registrationsCount} Registration(s)</span></div>}
                     </div>
-                    {activeTab === "posts" && <button onClick={(e) => { e.stopPropagation(); downloadRegistrations(post); }} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-text-1 flex items-center gap-2 shadow-lg"><Download className="w-3.5 h-3.5" /> Participants</button>}
+                    {activeTab === "posts" && <button onClick={(e) => { e.stopPropagation(); downloadRegistrations(post); }} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white flex items-center gap-2 shadow-lg"><Download className="w-3.5 h-3.5" /> Participants</button>}
                   </div>
                 </div>
-              )) : <div className="text-center py-12 text-slate-400 italic text-lg">{activeTab === "registered" ? "No joined events yet." : "No hosted events found."}</div>}
+              )) : <div className="text-center py-12 text-text-3 italic text-lg">{activeTab === "registered" ? "No joined events yet." : "No hosted events found."}</div>}
             </div>
           </div>
         </div>

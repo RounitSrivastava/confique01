@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ⚡ Drastically speed up page load compilation by optimizing huge icon libraries
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
+
   // ⚡ Compress responses with gzip
   compress: true,
 
@@ -26,13 +31,7 @@ const nextConfig = {
           },
         ],
       },
-      // ⚡ Cache static assets aggressively
-      {
-        source: "/_next/static/(.*)",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
-        ],
-      },
+
       // ⚡ Cache public images
       {
         source: "/:path*.png",

@@ -365,9 +365,9 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
             className="flex flex-col justify-center items-center w-9 h-9 rounded-lg hover:bg-bg-3 lg:hidden"
             aria-label="Open menu"
           >
-            <span className="w-4 h-[2px] bg-gray-100 rounded-full mb-1"></span>
-              <span className="w-4 h-[2px] bg-gray-100 rounded-full mb-1"></span>
-            <span className="w-4 h-[2px] bg-gray-100 rounded-full"></span>
+            <span className="w-4 h-[2px] bg-gray-800 dark:bg-gray-100 rounded-full mb-1"></span>
+              <span className="w-4 h-[2px] bg-gray-800 dark:bg-gray-100 rounded-full mb-1"></span>
+            <span className="w-4 h-[2px] bg-gray-800 dark:bg-gray-100 rounded-full"></span>
           </button>
 
           <img src="/Group 51(3).png" width={32} height={32} alt="Confique Logo" className="object-contain" />
@@ -450,7 +450,14 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
               className="flex items-center gap-2 px-1 sm:px-2 py-1.5 rounded-full hover:bg-bg-3"
             >
               <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-600">
-                <img src={safeAvatar} alt="User" width={36} height={36} className="object-cover w-full h-full" />
+                <img 
+                  src={safeAvatar} 
+                  alt="User" 
+                  width={36} 
+                  height={36} 
+                  className="object-cover w-full h-full" 
+                  onError={(e) => { e.currentTarget.src = "/employee.jpg"; e.currentTarget.onerror = null; }}
+                />
               </div>
               <span className="hidden sm:block text-sm font-medium text-text-1">{displayName}</span>
             </button>
@@ -459,7 +466,14 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
               <div className="absolute right-0 mt-2 w-64 rounded-xl bg-bg-2 shadow-xl border border-border-2 overflow-hidden">
                 <div className="px-4 py-4 flex flex-col items-center border-b border-border-2">
                   <div className="h-16 w-16 rounded-full overflow-hidden border border-border-2 mb-2">
-                    <img src={safeAvatar} alt="User" width={64} height={64} className="object-cover w-full h-full" />
+                    <img 
+                      src={safeAvatar} 
+                      alt="User" 
+                      width={64} 
+                      height={64} 
+                      className="object-cover w-full h-full" 
+                      onError={(e) => { e.currentTarget.src = "/employee.jpg"; e.currentTarget.onerror = null; }}
+                    />
                   </div>
                   <p className="text-sm font-semibold text-text-1">{displayName}</p>
                   <p className="text-xs text-text-3 mt-1">{displayEmail}</p>

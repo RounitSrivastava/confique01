@@ -15,12 +15,13 @@ import {
 import { CalendarPlus } from "lucide-react";
 import EventDetailsPage from "./EventDetailsPage";
 import HostEventPage from "./HostEventPage";
-import AllEventsPage from "./AllEventsPage";
+
+import { ThemeToggle } from "../../components/ThemeToggle";
 
 import {
   Search, User, Zap, Code, Shirt, Medal, Compass, BookOpen,
   Clock, MapPin, Calendar, X, Heart, Share2, ChevronRight,
-  ChevronLeft, Eye, Home, Users, CalendarDays, Plus, Clipboard, Settings, LogOut,Rocket,Briefcase 
+  ChevronLeft, Eye, Home, Users, CalendarDays, Plus, Clipboard, Settings, LogOut,Rocket,Briefcase, ArrowLeft 
 } from "lucide-react";
 // --- AUTH HELPER ---
 const fetchMeData = async () => {
@@ -67,7 +68,7 @@ const MOCK_EVENTS = [
     id: 1,
     title: "L'Oréal Brandstorm",
     venue: "Online | Rose Garden, Campus-18",
-    date: "Wed, 29 Apr 2025",
+    date: "Wed, 29 Apr 2027",
     poster: "https://placehold.co/400x550/4A148C/ffffff?text=L'OREAL+BRANDSTORM",
     tags: ["Team (4)", "Free"],
     isFeatured: true,
@@ -82,7 +83,7 @@ const MOCK_EVENTS = [
     id: 2,
     title: "Raiders Reckoning",
     venue: "KIIT Auditorium",
-    date: "Sun, 7 Nov 2025",
+    date: "Sun, 7 Nov 2026",
     poster: "https://placehold.co/400x550/212121/ffffff?text=RAIDERS+RECKONING",
     tags: ["Solo", "Free"],
     category: "Competition",
@@ -96,7 +97,7 @@ const MOCK_EVENTS = [
     id: 3,
     title: "RaagRang – Inter-College Cultural Fest",
     venue: "Multiple Venues",
-    date: "Sat, 6 Jun 2026",
+    date: "Sat, 6 Jun 2027",
     poster: "https://placehold.co/400x550/FF5722/ffffff?text=STAND+UP+COMEDY+SHOW",
     tags: ["Team (3)"],
     category: "Cultural",
@@ -105,47 +106,15 @@ const MOCK_EVENTS = [
     id: 4,
     title: "KIIT International Model United Nations",
     venue: "KIIT Campus",
-    date: "Jan 29 2026",
+    date: "Jan 29 2027",
     poster: "https://placehold.co/400x550/3F51B5/ffffff?text=KIIT+MUN+2025",
     tags: ["Team (4)", "Free"],
     category: "Competition",
   },
-  {
-    id: 5,
-    title: "Hackify Battle on TryHackMe",
-    venue: "Online",
-    date: "Thu, 1 Dec 2025",
-    poster: "https://placehold.co/400x550/0D47A1/ffffff?text=CYBER+SECURITY+CONFERENCE",
-    tags: ["Solo", "Free"],
-    category: "Tech",
-  },
-  {
-    id: 6,
-    title: "AI & ML Workshop",
-    venue: "Online",
-    date: "Sat, 20 Nov 2025",
-    poster: "https://placehold.co/400x550/4CAF50/ffffff?text=AI+WORKSHOP",
-    tags: ["Solo", "Paid"],
-    category: "Tech",
-  },
-  {
-    id: 7,
-    title: "Web Dev Hackathon",
-    venue: "Campus Hall 3",
-    date: "Fri, 14 Nov 2025",
-    poster: "https://placehold.co/400x550/FFC107/ffffff?text=HACKATHON",
-    tags: ["Team (2)", "Free"],
-    category: "Tech",
-  },
-  {
-    id: 8,
-    title: "Data Science Summit",
-    venue: "Online",
-    date: "Wed, 10 Dec 2025",
-    poster: "https://placehold.co/400x550/FF9800/ffffff?text=DATA+SCIENCE",
-    tags: ["Solo", "Paid"],
-    category: "Tech",
-  },
+
+
+
+
   {
     id: 9,
     title: "Photography Exhibition",
@@ -182,15 +151,7 @@ const MOCK_EVENTS = [
     tags: ["Solo", "Free"],
     category: "Seminar",
   },
-  {
-    id: 13,
-    title: "Blockchain Basics",
-    venue: "Online",
-    date: "Mon, 13 Mar 2026",
-    poster: "https://placehold.co/400x550/4FC3F7/ffffff?text=BLOCKCHAIN",
-    tags: ["Solo", "Free"],
-    category: "Tech",
-  },
+
   {
     id: 14,
     title: "Annual Sports Meet",
@@ -242,13 +203,26 @@ const fetchEventsFromAPI = async () => {
     const res = await fetch("/api/events", { method: "GET", cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch events");
     const data = await res.json();
-    return data.map((ev) => ({
+    const now = new Date();
+    const sortedData = data.map((ev) => ({
       ...ev,
       id: ev._id,
       tags: ev.tags || [],
       category: ev.category || "Others",
       impressions: ev.impressions ?? 0,
-    }));
+    })).sort((a, b) => {
+      const dateA = a.eventStart || a.date ? new Date(a.eventStart || a.date) : new Date(0);
+      const dateB = b.eventStart || b.date ? new Date(b.eventStart || b.date) : new Date(0);
+      const isClosedA = dateA < now;
+      const isClosedB = dateB < now;
+      if (isClosedA !== isClosedB) {
+        return isClosedA ? 1 : -1;
+      }
+      // If both are open, sort by soonest first (ascending).
+      // If both are closed, sort by most recent first (descending).
+      return isClosedA ? dateB - dateA : dateA - dateB;
+    });
+    return sortedData;
   } catch (err) {
     console.error("❌ API Fetch Error:", err);
     return [];
@@ -256,117 +230,99 @@ const fetchEventsFromAPI = async () => {
 };
 
 // --- Reusable Components ---
-const CategoryButton = ({ name, Icon, isActive, onClick }) => (
+const CategoryButton = ({ name, isActive, onClick }) => (
   <button
     onClick={onClick}
-    className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 whitespace-nowrap ${
+    className={`flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-full transition-all duration-300 whitespace-nowrap ${
       isActive
-        ? "bg-purple-600 text-text-1 shadow-lg shadow-purple-500/20"
-        : "text-text-2 bg-bg-3 hover:bg-gray-700 hover:text-text-1"
+        ? "bg-[#A855F7] text-white shadow-md shadow-purple-500/20"
+        : "bg-white dark:bg-bg-3 border border-gray-200 dark:border-border-1 text-gray-700 dark:text-text-2 hover:bg-gray-50 dark:hover:bg-bg-4"
     }`}
   >
-    {Icon && <Icon className="w-4 h-4" />}
-    <span>{name}</span>
+    {name}
   </button>
 );
 
 const EventCard = ({ event, onDetailsClick, onShareClick }) => {
-  const [shareFeedback, setShareFeedback] = useState(null);
-  const [isLiked, setIsLiked] = useState(false);
-
-  const localHandleShare = (e) => {
-    e.stopPropagation();
-    onShareClick(event.id);
-    if (navigator.clipboard) {
-      setShareFeedback({ icon: Clipboard, text: "Link Copied!" });
-      setTimeout(() => setShareFeedback(null), 1500);
+  const now = new Date();
+  const eventDateStr = event.eventStart || event.date;
+  const eventDate = eventDateStr ? new Date(eventDateStr) : null;
+  
+  let status = "OPEN";
+  let statusColor = "bg-green-500/90";
+  
+  if (eventDate) {
+    if (eventDate < now) {
+      status = "CLOSED";
+      statusColor = "bg-gray-800/90 dark:bg-gray-700/90";
+    } else {
+      const diffTime = eventDate - now;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays <= 7) {
+        status = "CLOSING";
+        statusColor = "bg-blue-500/90";
+      }
     }
-  };
+  }
 
-  const handleLikeClick = (e) => {
-    e.stopPropagation();
-    setIsLiked((prev) => !prev);
+  const formatImpressions = (num) => {
+    if (!num) return "2.5k";
+    return num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num;
   };
-
-  const tagsToDisplay = event.tags?.filter((tag) => !tag.includes("Team") && !tag.includes("Solo")) || [];
 
   return (
     <div
       onClick={() => onDetailsClick(event.id)}
-      className="group flex flex-shrink-0 flex-col bg-gray-900 rounded-xl overflow-hidden shadow-2xl transition-transform duration-300 hover:scale-[1.02] w-[72vw] max-w-[260px] sm:w-[300px] h-[320px] cursor-pointer"
+      className="group flex flex-col flex-shrink-0 w-[85vw] sm:w-[320px] cursor-pointer"
     >
-      <div className="relative w-full overflow-hidden rounded-t-xl">
-        <div className="relative w-full h-[160px] bg-bg-1">
-          <img
-            src={event.poster}
-            alt={event.title}
-            className="w-full h-full object-cover object-center opacity-80"
-            loading="lazy"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = "https://placehold.co/400x300/111827/ffffff?text=Image+Not+Found";
-            }}
-          />
-          <div className="absolute top-3 right-3 flex space-x-2">
-            {tagsToDisplay.map((tag, index) => (
-              <span
-                key={index}
-                className={`px-3 py-1 text-xs font-semibold rounded-full backdrop-blur-sm ${
-                  tag.includes("Free") ? "bg-green-500/90 text-text-1" : "bg-gray-700/90 text-text-1"
-                }`}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <div className="absolute bottom-3 left-3 bg-white text-gray-900 px-3 py-1 rounded-lg font-bold text-center shadow-lg">
-            <p className="text-sm leading-tight">{String(event.date).split(",")[0]?.trim() || "TBD"}</p>
-          </div>
+      <div className="w-full aspect-video overflow-hidden bg-gray-100 dark:bg-bg-3 border-b border-gray-200 dark:border-border-1 relative flex items-center justify-center rounded-[24px] sm:rounded-[32px] mb-4">
+        <img
+          src={event.poster || event.banner}
+          alt={event.title}
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "https://placehold.co/400x300/111827/ffffff?text=Image+Not+Found";
+          }}
+        />
+        
+        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-gray-800 text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">
+          {eventDateStr ? new Date(eventDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : "TBD"}
+        </div>
+        
+        <div className={`absolute top-4 right-4 text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-lg text-white shadow-sm uppercase ${statusColor}`}>
+          {status}
         </div>
       </div>
-      <div className="p-3 flex flex-col justify-between flex-grow ">
-        <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-text-1 mb-0 line-clamp-2">{event.title}</h3>
-        <p className="text-sm text-text-3 flex items-center mb-1">
-          <MapPin className="w-4 h-4 mr-2 text-purple-400" />
-          {event.venue?.includes("|") ? event.venue.split("|").slice(-1).pop().trim() : event.venue}
-        </p>
-        <div className="flex items-center justify-between text-xs font-medium text-text-3 mb-2 pt-2">
-          <span className="flex items-center space-x-2">
-            <span className="text-text-3">{event.venue?.includes("Online") ? "Online" : "On-site"}</span>
-            <span className="font-semibold text-green-400">{event.tags?.includes("Free") ? "Free" : "Paid"}</span>
-          </span>
-          <span className="flex items-center space-x-3">
-            {event.impressions !== undefined && (
-              <div className="flex items-center text-purple-400 text-xs font-semibold">
-                <Eye className="w-3 h-3 mr-1" />
-                {event.impressions.toLocaleString()}
-              </div>
-            )}
-          </span>
-        </div>
-        <div className="flex items-center justify-between text-xs font-medium text-text-3 mt-2">
-          <button className="mt-auto w-fit text-base font-semibold text-purple-400 hover:text-purple-300 transition-colors text-left">
-            View Details &rarr;
-          </button>
-          <span className="flex items-center space-x-3">
-            {shareFeedback ? (
-              <span className="flex items-center text-purple-400 text-xs font-semibold transition-all">
-                <shareFeedback.icon className="w-3 h-3 mr-1" />
-                {shareFeedback.text}
-              </span>
-            ) : (
-              <Share2
-                className="w-4 h-4 text-text-4 cursor-pointer hover:text-purple-400 transition-colors"
-                onClick={localHandleShare}
-              />
-            )}
-            <Heart
-              className={`w-4 h-4 cursor-pointer transition-colors ml-3 ${
-                isLiked ? "text-red-500 fill-red-500" : "text-text-4 hover:text-red-500 hover:fill-gray-900"
-              }`}
-              onClick={handleLikeClick}
-            />
-          </span>
+
+      <div className="flex flex-col px-1">
+        <span className="text-[#A855F7] text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1.5 truncate">
+          {event.venue?.includes("|") ? event.venue.split("|").slice(-1).pop().trim() : (event.venue || "TBD")}
+        </span>
+        
+        <h3 className="text-lg sm:text-xl font-bold text-text-1 mb-4 line-clamp-1 transition-colors">
+          {event.title}
+        </h3>
+        
+        <div className="flex items-center justify-between mt-auto">
+          <div className="flex items-center text-xs font-medium text-text-3">
+            <span className={`w-1.5 h-1.5 rounded-full mr-2 ${event.venue?.includes("Online") ? "bg-blue-500" : "bg-green-500"}`}></span>
+            {event.venue?.includes("Online") ? "Online" : "On-site"}
+          </div>
+          
+          <div className="flex flex-col items-end gap-1">
+            <button 
+              onClick={(e) => { e.stopPropagation(); if(onShareClick) onShareClick(event.id || event._id); }}
+              className="text-text-3 hover:text-purple-500 p-1 rounded-full hover:bg-bg-3 transition-colors"
+              title="Share Event"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+            <div className="text-xs font-medium text-text-3">
+              {eventDate && eventDate < now ? "Past Event" : `${formatImpressions(event.impressions)} Participants`}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -403,60 +359,48 @@ const PopularEventCard = ({ event, onDetailsClick }) => {
   );
 };
 
-const HorizontalScrollSection = ({ events, onDetailsClick, onShareClick, title, onViewAllClick, isPopular = false }) => {
+const HorizontalScrollSection = ({ events, title, subtitle, isPopular, onDetailsClick, onShareClick, onViewAllClick }) => {
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   const checkScroll = useCallback(() => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      setCanScrollLeft(scrollLeft > 5);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
     }
   }, []);
 
   useEffect(() => {
     checkScroll();
-    const ref = scrollContainerRef.current;
-    if (ref) {
-      ref.addEventListener("scroll", checkScroll);
-      window.addEventListener("resize", checkScroll);
-    }
-    return () => {
-      if (ref) {
-        ref.removeEventListener("scroll", checkScroll);
-        window.removeEventListener("resize", checkScroll);
-      }
-    };
-  }, [checkScroll, events.length]);
+    window.addEventListener("resize", checkScroll);
+    return () => window.removeEventListener("resize", checkScroll);
+  }, [checkScroll]);
 
   const scroll = (direction) => {
     if (scrollContainerRef.current) {
-      const isMobilePopular = isPopular && window.innerWidth < 640;
-      const cardWidth = isMobilePopular ? 320 : 300;
-      const gap = 24;
-      const scrollDistance = isMobilePopular ? cardWidth + gap : cardWidth * 2 + gap;
-      const scrollAmount = direction === "left" ? -scrollDistance : scrollDistance;
-      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      const scrollAmount = window.innerWidth < 640 ? window.innerWidth * 0.8 : 400;
+      scrollContainerRef.current.scrollBy({ left: direction === "left" ? -scrollAmount : scrollAmount, behavior: "smooth" });
+      setTimeout(checkScroll, 350);
     }
   };
 
-  if (events.length === 0) return null;
+  if (!events || events.length === 0) return null;
 
   return (
-    <section className="py-10 relative">
-      <div className="flex flex-col items-center mb-10">
-        <h2 className="text-4xl font-extrabold text-text-1 text-center mb-6">{title}</h2>
-        <div className="w-full flex justify-end">
-          <button
-            onClick={onViewAllClick}
-            className="inline-flex items-center text-base font-semibold text-purple-400 hover:text-purple-300 transition-colors px-0 py-0 group"
-          >
-            View All
-            <ChevronRight className="w-5 h-5 ml-2 transition-transform duration-300" />
-          </button>
+    <section className="relative py-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 gap-4 px-2 sm:px-0">
+        <div>
+          <h2 className="text-[28px] sm:text-[32px] font-bold text-text-1 leading-tight mb-2">{title}</h2>
+          {subtitle && <p className="text-text-3 text-sm sm:text-base font-medium">{subtitle}</p>}
         </div>
+        <button
+          onClick={onViewAllClick}
+          className="inline-flex items-center text-sm sm:text-base font-bold text-[#A855F7] hover:text-purple-500 transition-colors group whitespace-nowrap"
+        >
+          View All <span className="ml-2 font-normal">&rarr;</span>
+        </button>
       </div>
       <div className="relative">
         {events.length > 3 && canScrollLeft && (
@@ -492,6 +436,206 @@ const HorizontalScrollSection = ({ events, onDetailsClick, onShareClick, title, 
   );
 };
 
+const TechFrontierSection = ({ events, onViewAllClick, onDetailsClick, onHostClick }) => {
+  if (!events || events.length === 0) return null;
+
+  // We need at least 1 event for the featured spot on the left.
+  const featuredEvent = events[0];
+  // And up to 2 events for the right column stack.
+  const secondaryEvents = events.slice(1, 3);
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "TBD";
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  return (
+    <section className="relative py-8 sm:py-12 w-full max-w-7xl mx-auto">
+      <div className="bg-[#0f172a] rounded-[32px] p-6 sm:p-10 text-white shadow-2xl">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 sm:mb-12 gap-6">
+          <div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold mb-2 text-white">Tech Frontier</h2>
+            <p className="text-slate-400 font-medium text-sm sm:text-base">The latest in AI, Dev, and Web3.</p>
+          </div>
+          <button
+            onClick={onViewAllClick}
+            className="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-full text-sm font-bold transition-colors"
+          >
+            Explore Tech Hub
+          </button>
+        </div>
+
+        {/* Grid Container */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6 sm:gap-8">
+          
+          {/* Left: Featured Event */}
+          <div 
+            onClick={() => onDetailsClick && onDetailsClick(featuredEvent.id)}
+            className="relative group rounded-3xl overflow-hidden aspect-[4/3] sm:aspect-[16/10] bg-slate-800 cursor-pointer"
+          >
+            <div className="w-full aspect-video md:h-full lg:absolute lg:inset-0 bg-gray-900 flex items-center justify-center">
+              <img
+                src={featuredEvent.poster || featuredEvent.banner}
+                alt={featuredEvent.title}
+                className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+              />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/50 to-transparent pointer-events-none" />
+            
+            <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end">
+              <span className="bg-[#A855F7] text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg w-fit mb-4">
+                AI Spotlight
+              </span>
+              <h3 className="text-2xl sm:text-4xl font-extrabold text-white mb-4 leading-tight group-hover:text-purple-300 transition-colors">
+                {featuredEvent.title}
+              </h3>
+              <div className="flex items-center space-x-6 text-sm text-slate-300 font-medium">
+                <span className="flex items-center">
+                  <Calendar className="w-4 h-4 mr-2 opacity-80" />
+                  {formatDate(featuredEvent.eventStart || featuredEvent.date)}
+                </span>
+                <span className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-2 opacity-80" />
+                  {featuredEvent.venue?.includes("Online") ? "Global Online" : featuredEvent.venue}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Stacked Cards */}
+          <div className="flex flex-col gap-6">
+            {secondaryEvents.map((ev, index) => (
+              <div 
+                key={ev.id} 
+                onClick={() => onDetailsClick && onDetailsClick(ev.id)}
+                className="bg-slate-800/50 hover:bg-slate-800 rounded-3xl p-6 sm:p-8 transition-colors cursor-pointer group"
+              >
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-2 block">
+                  {index === 0 ? "Upcoming" : "Workshop"}
+                </span>
+                <h4 className="text-xl sm:text-2xl font-bold text-white mb-3 transition-colors">
+                  {ev.title}
+                </h4>
+                <p className="text-sm text-slate-400 leading-relaxed line-clamp-2">
+                  {ev.description || "Join industry leaders to explore cutting edge technologies and hands-on technical deep dives."}
+                </p>
+              </div>
+            ))}
+
+            {/* CTA Card */}
+            <div className="bg-gradient-to-br from-[#A855F7] to-[#7C3AED] rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center text-center mt-auto h-full min-h-[200px] shadow-lg shadow-purple-900/50">
+              <h4 className="text-xl sm:text-2xl font-bold text-white mb-2">Want to showcase?</h4>
+              <p className="text-purple-200 text-sm font-medium mb-6">List your tech event today.</p>
+              <button 
+                onClick={onHostClick}
+                className="bg-white text-purple-700 hover:bg-gray-50 px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+              >
+                Apply Now
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const EliteCollectiveSection = ({ onJoinCommunityClick }) => {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null); // 'success' or 'error'
+  const [message, setMessage] = useState("");
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setLoading(true);
+    setStatus(null);
+    setMessage("");
+
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setStatus("success");
+        setMessage(data.message || "Subscribed successfully!");
+        setEmail("");
+      } else {
+        setStatus("error");
+        setMessage(data.error || "Something went wrong.");
+      }
+    } catch (error) {
+      console.error(error);
+      setStatus("error");
+      setMessage("Failed to connect to server.");
+    } finally {
+      setLoading(false);
+      setTimeout(() => {
+        setStatus(null);
+      }, 5000);
+    }
+  };
+
+  return (
+    <section className="relative py-12 sm:py-16 w-full max-w-7xl mx-auto px-4 sm:px-0">
+      <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-purple-600 rounded-[32px] p-8 sm:p-16 text-center text-white shadow-2xl overflow-hidden relative">
+        
+        {/* Background decorative elements */}
+        <div className="absolute top-0 left-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-black opacity-10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none" />
+
+        <div className="relative z-10 max-w-2xl mx-auto">
+          <h2 className="text-3xl sm:text-5xl font-extrabold mb-4">Join the Elite Collective</h2>
+          <p className="text-purple-100 font-medium text-sm sm:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+            Get invitations to exclusive invite-only experiences and premium networking events.
+          </p>
+
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0 bg-white/10 p-2 rounded-2xl sm:rounded-full border border-white/20 backdrop-blur-md max-w-xl mx-auto mb-4 shadow-inner">
+            <input 
+              type="email" 
+              placeholder="your@email.com" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-transparent text-white placeholder-purple-200 px-6 py-3 sm:py-0 outline-none font-medium"
+              required
+              disabled={loading}
+            />
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto bg-white text-purple-700 hover:bg-gray-50 px-8 py-3 rounded-xl sm:rounded-full font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? "Subscribing..." : "Subscribe"}
+            </button>
+          </form>
+
+          <div className="h-6 mb-4">
+            {status === "success" && <p className="text-green-300 font-semibold text-sm">{message}</p>}
+            {status === "error" && <p className="text-red-300 font-semibold text-sm">{message}</p>}
+          </div>
+
+          <button 
+            onClick={onJoinCommunityClick}
+            className="text-white hover:text-purple-200 font-semibold text-sm transition-colors inline-flex items-center group"
+          >
+            Or join our Community platform
+            <span className="ml-2 group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 5000 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const nextEvent = useCallback(() => {
@@ -515,98 +659,95 @@ const FeaturedCarousel = ({ events, onDetailsClick, onShareClick, interval = 500
     onShareClick(event.id);
   };
 
-  const MobileDots = () =>
+  const CarouselDots = () =>
     events.length > 1 ? (
-      <div className="mt-4 flex justify-center space-x-2 z-20 sm:hidden">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
         {events.map((_, index) => (
           <button
             key={index}
             onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${index === currentIndex ? "bg-white scale-110" : "bg-white/40 hover:bg-white/70"}`}
-          />
-        ))}
-      </div>
-    ) : null;
-
-  const DesktopDots = () =>
-    events.length > 1 ? (
-      <div className="mt-6 hidden sm:flex justify-center z-20 relative space-x-3">
-        {events.map((_, index) => (
-          <button
-            key={index}
-            onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
-            className={`transition-all duration-300 ${index === currentIndex ? "w-6 h-3 rounded-full bg-white" : "w-3 h-3 rounded-full bg-white/60 hover:bg-white/80"}`}
+            className={`transition-all duration-300 ${index === currentIndex ? "w-6 h-2 rounded-full bg-white" : "w-2 h-2 rounded-full bg-white/50 hover:bg-white/80"}`}
           />
         ))}
       </div>
     ) : null;
 
   return (
-    <>
-      <div className="relative mt-8 mb-10 sm:hidden">
-        <div className="relative max-w-sm mx-auto rounded-[1.8rem] overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.8)] bg-bg-1 cursor-pointer" onClick={() => onDetailsClick(event.id)}>
-          <div className="relative w-full h-[260px]">
-          <div className={`absolute inset-0 bg-gradient-to-br ${getFeaturedGradient(event)}`} />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
-            <div className="absolute top-3 left-4 flex items-center">
-              <span className="px-3 py-1 rounded-full bg-[#5B3FFF] text-[11px] font-semibold text-text-1">Featured Event</span>
-            </div>
-            <div className="absolute left-4 right-4 bottom-5">
-              <div className="backdrop-blur-2xl bg-black/40 border border-white/10 rounded-2xl px-4 py-4">
-                <h2 className="text-lg font-bold text-text-1 mb-2">{event.title}</h2>
-                <div className="flex items-center text-sm text-gray-200 mb-2">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  <span>{event.date}</span>
+    <div className="relative w-full max-w-7xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8 mt-4 mb-10 cursor-pointer" onClick={() => onDetailsClick(event.id)}>
+      <div className="flex flex-col-reverse lg:flex-row items-center justify-between gap-10 lg:gap-16">
+        
+        {/* Left Content */}
+        <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start text-center lg:text-left z-10">
+          <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 mb-6 sm:mb-8">
+            <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse" />
+            <span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">Featured Experience</span>
+          </div>
+          
+          <h1 className="text-4xl sm:text-6xl lg:text-[5.5rem] font-black text-text-1 leading-[1.05] mb-8 sm:mb-12 tracking-tight">
+            {event.title}
+          </h1>
+
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 sm:gap-10 w-full mb-10">
+            <div className="flex flex-col items-center lg:items-start">
+              <span className="text-[10px] sm:text-xs font-bold text-text-3 uppercase tracking-wider mb-1.5 sm:mb-2">Curated By</span>
+              <div className="flex items-center text-sm sm:text-base font-bold text-text-1">
+                {event.hostedBy || "Confique Global"}
+                <div className="ml-1.5 sm:ml-2 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                  <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                 </div>
-                <button className="mt-1 text-[13px] font-semibold text-white/90 underline-offset-2 hover:underline flex items-center">
-                  Click to view event details <span className="ml-1">&rarr;</span>
-                </button>
+              </div>
+            </div>
+
+            <div className="w-px h-10 bg-border-1 hidden sm:block" />
+
+            <div className="flex flex-col items-center lg:items-start">
+              <span className="text-[10px] sm:text-xs font-bold text-text-3 uppercase tracking-wider mb-1.5 sm:mb-2">Registration Ends</span>
+              <div className="text-sm sm:text-base font-bold text-text-1">
+                {String(event.date).split(",")[0]?.trim() || "TBD"}
+              </div>
+            </div>
+
+            <div className="w-px h-10 bg-border-1 hidden sm:block" />
+
+            <div className="flex flex-col items-center lg:items-start">
+              <span className="text-[10px] sm:text-xs font-bold text-text-3 uppercase tracking-wider mb-1.5 sm:mb-2">Status</span>
+              <div className="px-3 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] sm:text-xs font-bold uppercase">
+                Live Now
               </div>
             </div>
           </div>
-        </div>
-        {events.length > 1 && (
-          <>
-            <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute -left-[28px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-text-1 hover:text-purple-400 z-20"><ChevronLeft className="w-6 h-6" /></button>
-            <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute -right-[28px] top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-text-1 hover:text-purple-400 z-20"><ChevronRight className="w-6 h-6" /></button>
-          </>
-        )}
-        <MobileDots />
-      </div>
 
-      <div className="relative w-full max-w-5xl mx-auto py-10 px-6 sm:px-12 rounded-[2rem] shadow-2xl mt-12 mb-16 overflow-hidden transform transition-all duration-500 hover:scale-[1.01] cursor-pointer hidden sm:block" onClick={() => onDetailsClick(event.id)}>
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-xl z-0 rounded-[2rem]" />
-        {events.length > 1 && (
-          <>
-            <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/20 text-text-1 z-20 hover:bg-white/40 transition-colors"><ChevronLeft className="w-6 h-6" /></button>
-            <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/20 text-text-1 z-20 hover:bg-white/40 transition-colors"><ChevronRight className="w-6 h-6" /></button>
-          </>
-        )}
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between">
-          <div className="md:w-1/2 p-4 md:pr-8 text-center md:text-left">
-            <h1 className="text-5xl sm:text-7xl font-extrabold text-text-1 leading-tight mb-4 tracking-tighter">{event.title}</h1>
-            <p className="text-xl text-gray-200 font-medium mb-6 flex items-center justify-center md:justify-start"><Calendar className="w-5 h-5 mr-3 text-yellow-300" />{event.date}</p>
-            {event.impressions !== undefined && <p className="text-md text-text-2 font-medium mb-6 flex items-center justify-center md:justify-start"><Eye className="w-5 h-5 mr-3 text-purple-300" />{event.impressions.toLocaleString()} Impressions</p>}
-            <div className="flex items-center justify-center md:justify-start space-x-4">
-              <button className="inline-flex items-center bg-white text-gray-900 font-semibold py-3 px-8 rounded-full hover:bg-gray-200 transition-colors group">View details <span className="ml-3 transition-transform group-hover:translate-x-1">&rarr;</span></button>
-              <button onClick={localHandleShare} className="p-3 rounded-full bg-white/10 text-text-1 hover:bg-white/20 transition-colors"><Share2 className="w-5 h-5" /></button>
-            </div>
-          </div>
-          <div className="md:w-1/2 p-4 mt-8 md:mt-0 flex justify-center">
-            <div className="w-full max-w-xs aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl ring-4 ring-white/20 bg-bg-1">
-             <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${getFeaturedGradient(event)}`}>
-  <h3 className="text-text-1 text-xl font-extrabold text-center px-6">
-    {event.title}
-  </h3>
-</div>
-
-
-            </div>
+          <div className="flex items-center space-x-4">
+            <button className="inline-flex items-center justify-center bg-[#A855F7] hover:bg-[#A855F7] text-white font-bold py-3.5 sm:py-4 px-8 sm:px-10 rounded-xl shadow-[0_8px_20px_rgba(168,85,247,0.3)] hover:-translate-y-0.5 transition-all duration-200">
+              Register Now <span className="ml-2 font-normal">&rarr;</span>
+            </button>
+            <button onClick={localHandleShare} className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 text-text-2 hover:text-text-1 transition-colors">
+              <Share2 className="w-6 h-6 sm:w-7 sm:h-7" />
+            </button>
           </div>
         </div>
-        <DesktopDots />
+
+        {/* Right Content (Image) */}
+        <div className="w-full lg:w-1/2 relative z-10 flex justify-center">
+          <div className="relative w-full aspect-video overflow-hidden bg-gray-800 flex items-center justify-center rounded-[2rem] shadow-2xl group">
+            <img 
+              src={event.poster || event.banner}
+              alt={event.title}
+              className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+            
+            {events.length > 1 && (
+              <>
+                <button onClick={(e) => { e.stopPropagation(); prevEvent(); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/30 backdrop-blur-md text-white hover:bg-black/50 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"><ChevronLeft className="w-6 h-6" /></button>
+                <button onClick={(e) => { e.stopPropagation(); nextEvent(); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/30 backdrop-blur-md text-white hover:bg-black/50 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"><ChevronRight className="w-6 h-6" /></button>
+              </>
+            )}
+            <CarouselDots />
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 
@@ -703,14 +844,15 @@ useEffect(() => {
       const map = new Map();
       merged.forEach(ev => map.set(ev.id, ev));
       
-      const finalEvents = Array.from(map.values()).map(ev => ({
-  ...ev,
-  createdAt: ev.createdAt || new Date(),
-  impressions:
-    typeof ev.impressions === "number"
-      ? ev.impressions
-      : Math.floor(Math.random() * 2000) + 800
-})).sort((a, b) => b.impressions - a.impressions);
+      const finalEvents = Array.from(map.values())
+        .map(ev => ({
+          ...ev,
+          createdAt: ev.createdAt || new Date(),
+          impressions:
+            typeof ev.impressions === "number"
+              ? ev.impressions
+              : Math.floor(Math.random() * 2000) + 800
+        })).sort((a, b) => b.impressions - a.impressions);
 
       if (isMounted) {
         setDynamicEvents(finalEvents);
@@ -772,7 +914,19 @@ useEffect(() => {
 const carouselEvents = useMemo(() => {
   if (ALL_EVENTS.length === 0) return [];
 
-  const nonCultural = ALL_EVENTS.filter(ev => !isCultural(ev));
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const upcomingOnly = ALL_EVENTS.filter((ev) => {
+    // Exclude mock events
+    if (typeof ev.id === 'number') return false;
+    
+    // For now, only show these specific 3 events in the carousel
+    const title = (ev.title || "").toLowerCase();
+    return title.includes("genovate") || title.includes("shark tank") || title.includes("codex");
+  });
+
+  const nonCultural = upcomingOnly.filter(ev => !isCultural(ev));
 
   const featured = nonCultural.filter(ev => ev.isFeatured === true);
 
@@ -782,7 +936,7 @@ const carouselEvents = useMemo(() => {
 
   const fallback = nonCultural
     .filter(ev => !featuredEventIds.includes(String(ev.id)))
-    .sort((a, b) => b.impressions - a.impressions)
+    .sort((a, b) => new Date(b.createdAt || Date.now()) - new Date(a.createdAt || Date.now()))
     .slice(0, 5 - featured.length);
 
   return [...featured, ...fallback];
@@ -835,7 +989,7 @@ const carouselEvents = useMemo(() => {
       localStorage.removeItem("userName");
       localStorage.removeItem("userEmail");
       localStorage.removeItem("userAvatar");
-      router.push("/auth/login");
+      window.location.href = "/auth/login";
     } catch (err) {
       console.error("Logout failed:", err);
     }
@@ -905,12 +1059,12 @@ const upcomingEvents = useMemo(() => {
   return result;
 }, [ALL_EVENTS, featuredEventIds, selectedCategory, searchQuery]);
   return (
-    <div className="min-h-screen text-text-1 font-sans antialiased relative bg-gradient-to-br from-[#000000] via-[#2d163a] to-[#000000]">
+    <div className="min-h-screen text-text-1 font-sans antialiased relative bg-bg-1 dark:bg-gradient-to-br dark:from-[#000000] dark:via-[#2d163a] dark:to-[#000000]">
       <div onClick={() => setSidebarOpen(false)} className={`fixed inset-0 bg-black/50 z-[100] transition-opacity ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"} lg:hidden`} />
       
-      <aside className={`fixed top-0 left-0 z-[110] h-full w-64 bg-[#050509] border-r border-border-2 transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden`}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border-2">
-          <span className="text-lg font-extrabold bg-gradient-to-r from-purple-400 to-purple-400 bg-clip-text text-transparent">Confique</span>
+      <aside className={`fixed top-0 left-0 z-[110] h-full w-64 bg-[#050509] border-r border-gray-200 transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden`}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+          <span className="text-lg font-extrabold text-[#A855F7]">Confique</span>
           <button onClick={() => setSidebarOpen(false)}><X className="w-7 h-7" /></button>
         </div>
         <nav className="px-3 py-4 space-y-1">
@@ -919,7 +1073,7 @@ const upcomingEvents = useMemo(() => {
             <Link
   key={item.href}
   href={item.href}
-  className="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-bg-3 transition"
+  className="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-gray-50 transition"
 >
   <item.icon className="w-5 h-5" />
   {item.label}
@@ -927,7 +1081,7 @@ const upcomingEvents = useMemo(() => {
           ))}
           <button
   onClick={handleHostClick}
-  className="flex items-center gap-4 w-full text-left px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-bg-3 transition"
+  className="flex items-center gap-4 w-full text-left px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-gray-50 transition"
 >
   <CalendarPlus className="w-5 h-5" />
   Create Event
@@ -935,39 +1089,40 @@ const upcomingEvents = useMemo(() => {
         </nav>
       </aside>
 
-      <header className={`relative z-[90] bg-[#0d0d0d]/80 backdrop-blur-sm ${renderDetailsView || renderHostView || renderAllEventsView ? "hidden lg:block" : ""}`}>
+      <header className={`relative z-[90] bg-bg-1/80 backdrop-blur-sm border-b border-border-1 ${renderDetailsView || renderHostView || renderAllEventsView ? "hidden lg:block" : ""}`}>
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
           <div className="flex items-center space-x-4 w-full">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden"><div className="space-y-1"><span className="block w-6 h-[2px] bg-white"></span><span className="block w-6 h-[2px] bg-white"></span><span className="block w-6 h-[2px] bg-white"></span></div></button>
-            <h1 className="text-2xl font-extrabold text-purple-400 hidden lg:block">Confique</h1>
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden"><div className="space-y-1"><span className="block w-6 h-[2px] bg-text-1"></span><span className="block w-6 h-[2px] bg-text-1"></span><span className="block w-6 h-[2px] bg-text-1"></span></div></button>
+            <h1 className="text-2xl font-extrabold text-[#A855F7] hidden lg:block">Confique</h1>
             {isSearching ? (
               <div className="relative flex-grow max-w-lg" ref={searchRef}>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-3" />
-                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search..." className="w-full py-2 pl-10 bg-bg-3 rounded-lg text-text-1" autoFocus />
+                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search..." className="w-full py-2 pl-10 bg-bg-3 border border-border-1 rounded-lg text-text-1" autoFocus />
               </div>
             ) : (
               <nav className="hidden md:flex gap-2">
-                {TOP_NAV.map(item => <Link key={item.href} href={item.href} className="px-3 py-2 text-sm text-text-2 hover:text-text-1">{item.label}</Link>)}
+                {TOP_NAV.map(item => <a key={item.href} href={item.href} onClick={(e) => { e.preventDefault(); window.location.href = item.href; }} className="px-3 py-2 text-sm text-text-2 hover:text-text-1 cursor-pointer">{item.label}</a>)}
               </nav>
             )}
           </div>
           <div className="flex items-center space-x-4">
-            <button onClick={handleHostClick} className="hidden lg:flex items-center bg-purple-600 px-4 py-2 rounded-full text-sm font-medium"><Plus className="w-4 h-4 mr-1" />Host</button>
+            <button onClick={handleHostClick} className="hidden lg:flex items-center bg-[#A855F7] hover:bg-[#A855F7] text-white transition-colors px-4 py-2 rounded-full text-sm font-bold shadow-md shadow-purple-500/20"><Plus className="w-4 h-4 mr-1" />Host</button>
+            <ThemeToggle />
             <button onClick={() => setIsSearching(!isSearching)}><Search className="w-5 h-5 text-text-3" /></button>
             
             <div className="relative" ref={profileRef}>
               <button 
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2 p-1 rounded-full bg-slate-800/40 hover:bg-slate-700/60 transition-colors border border-slate-700/50"
+                className="flex items-center gap-2 p-1 rounded-full bg-bg-3 hover:bg-bg-4 transition-colors border border-border-1"
               >
                 <div className="w-8 h-8 rounded-full overflow-hidden border border-purple-500">
                   <img src={user.avatar} alt="User" className="w-full h-full object-cover" />
                 </div>
-                <span className="text-sm font-medium text-slate-200 pr-2 hidden sm:block">{user.name}</span>
+                <span className="text-sm font-medium text-text-1 pr-2 hidden sm:block">{user.name}</span>
               </button>
 
               {isProfileOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-bg-2 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in zoom-in duration-200">
+                <div className="absolute right-0 mt-3 w-64 bg-white border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100]">
                   <div className="p-6 flex flex-col items-center border-b border-white/5 bg-gradient-to-b from-slate-900/50 to-transparent">
                     <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-purple-500 to-pink-500 mb-3">
                       <img src={user.avatar} alt="Large User Avatar" className="w-full h-full rounded-full object-cover border-2 border-[#111]" />
@@ -1019,15 +1174,19 @@ const upcomingEvents = useMemo(() => {
             onDetailsClick={handleDetailsClick} 
           />
         ) : renderAllEventsView ? (
-          <AllEventsPage 
-  ALL_EVENTS={ALL_EVENTS.filter(ev => {
-    if (searchParams?.category === "Cultural") return true;
-    return !isCultural(ev);
-  })}
-  categories={categories}
-  onDetailsClick={handleDetailsClick}
-  onShareClick={handleShareClick}
-/>
+          <div className="max-w-7xl mx-auto px-4 pt-6 pb-20">
+             <div className="flex justify-between items-center mb-8">
+               <h1 className="text-3xl sm:text-4xl font-bold">{searchParams?.category || "All Events"}</h1>
+               <button onClick={() => router.push("/events")} className="text-purple-500 hover:text-purple-400 font-semibold transition-colors flex items-center">
+                 <ArrowLeft className="w-5 h-5 mr-2" /> Back
+               </button>
+             </div>
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {ALL_EVENTS.filter(e => searchParams?.category ? e.category === searchParams.category : true).map(event => (
+                   <EventCard key={event.id} event={event} onDetailsClick={handleDetailsClick} onShareClick={handleShareClick} />
+                ))}
+             </div>
+          </div>
         ) : (
           <div className="max-w-7xl mx-auto px-4 pt-6">
             {!loading && carouselEvents.length > 0 && (
@@ -1037,35 +1196,31 @@ const upcomingEvents = useMemo(() => {
                   onShareClick={handleShareClick} 
                 />
             )}
-            <section className="py-10">
-              <h2 className="text-4xl font-extrabold text-text-1 text-center mb-10">Upcoming Events</h2>
-              <div className="flex space-x-3 overflow-x-auto pb-4 md:justify-center">
-                {categories.map(cat => <CategoryButton key={cat.name} name={cat.name} Icon={cat.icon} isActive={selectedCategory === cat.name} onClick={() => setSelectedCategory(cat.name)} />)}
+            <section className="pt-16 pb-12">
+              <div className="text-center mb-10">
+                <h2 className="text-[32px] sm:text-4xl font-bold text-text-1 mb-3">Explore Categories</h2>
+                <p className="text-text-3 font-medium text-base sm:text-lg">Discover events that match your creative passion.</p>
+              </div>
+              <div className="flex space-x-3 overflow-x-auto pb-4 md:justify-center scrollbar-hide px-4">
+                {categories.map(cat => <CategoryButton key={cat.name} name={cat.name} isActive={selectedCategory === cat.name} onClick={() => setSelectedCategory(cat.name)} />)}
               </div>
             </section>
-            <HorizontalScrollSection events={upcomingEvents} title={selectedCategory} onDetailsClick={handleDetailsClick} onShareClick={handleShareClick} onViewAllClick={() => router.push("?view=all")} />
-            <HorizontalScrollSection
-  events={ALL_EVENTS.filter(
-    e => e.category === "Tech" && !isCultural(e)
-  )}
-  title="Tech Events"
-  onDetailsClick={handleDetailsClick}
-  onShareClick={handleShareClick}
-  onViewAllClick={() => router.push("?view=all&category=Tech")}
-/>
-            <HorizontalScrollSection
-  events={ALL_EVENTS.filter(ev => !isCultural(ev)).slice(0, 5)}
-  title="Popular Events"
-  isPopular={true}
-  onDetailsClick={handleDetailsClick}
-  onShareClick={handleShareClick}
-  onViewAllClick={() => router.push("?view=all")}
-/>
+            <HorizontalScrollSection events={upcomingEvents} title={selectedCategory === "All Events" ? "Upcoming Highlights" : selectedCategory} subtitle="Hand-picked events for your growth." onDetailsClick={handleDetailsClick} onShareClick={handleShareClick} onViewAllClick={() => router.push("?view=all")} />
+            <TechFrontierSection 
+              events={ALL_EVENTS
+                .filter(e => e.category === "Tech" && !isCultural(e))
+                .sort((a, b) => new Date(b.createdAt || Date.now()) - new Date(a.createdAt || Date.now()))
+              }
+              onDetailsClick={handleDetailsClick}
+              onHostClick={handleHostClick}
+              onViewAllClick={() => router.push("?view=all&category=Tech")}
+            />
+            <EliteCollectiveSection onJoinCommunityClick={() => router.push("/groups")} />
           </div>
         )}
       </main>
 
-      <footer className="py-6 text-center text-text-4 text-sm border-t border-border-2">
+      <footer className="py-6 text-center text-text-4 text-sm border-t border-gray-200">
         &copy; {new Date().getFullYear()} All rights reserved.
       </footer>
     </div>
@@ -1102,7 +1257,7 @@ export default function EventsPageWrapper({ searchParams }) {
     // 🔥 FLICKER-FREE UI: This fixed overlay covers EVERYTHING (Headers, Sidebars, Gradients)
     if (authLoading || !isAuthenticated) {
         return (
-            <div className="fixed inset-0 z-[9999] bg-bg-4 flex flex-col items-center justify-center">
+            <div className="fixed inset-0 z-[9999] bg-gray-100 flex flex-col items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-text-3 font-medium tracking-wide animate-pulse">
@@ -1114,5 +1269,9 @@ export default function EventsPageWrapper({ searchParams }) {
     }
 
     // ✅ Only render the actual content if user is authenticated
-    return <EventsContent searchParams={searchParams} />;
+    return (
+        <div className="w-full">
+            <EventsContent searchParams={searchParams} />
+        </div>
+    );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { GoogleLogin } from "@react-oauth/google";
 import { useSearchParams } from "next/navigation";
@@ -12,6 +12,10 @@ export default function LoginClient() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // === FORCE NATIVE DARK MODE ===
+  // We use the CSS class .force-dark to perfectly override all CSS variables
+  // instead of a race-condition-prone useEffect.
 
   const broadcastAuthChange = (user) => {
     if (typeof window !== "undefined") {
@@ -85,14 +89,13 @@ window.location.href = redirect || "/";
   };
 
   return (
-    <main className="fixed inset-0 bg-bg-1 text-text-1 overflow-hidden">
+    <main className="force-dark fixed inset-0 bg-bg-1 text-text-1 overflow-hidden">
       {/* BACKGROUND */}
       <img
-  src="/website bg.png"
+  src="/Black and Purple Modern Programming Presentation (1).png"
   alt="Background"
   className="absolute inset-0 w-full h-full object-cover"
  />
-      <div className="fixed inset-0 bg-bg-1/40" />
 
       {/* LOADING */}
       {loading && (
@@ -108,18 +111,18 @@ window.location.href = redirect || "/";
           <div
             className="
               rounded-3xl
-              bg-white/[0.06]
-              backdrop-blur-[44px]
-              border border-border-2
+              bg-white/80
+              backdrop-blur-2xl
+              border border-gray-200
               px-6 py-8
-              shadow-[0_30px_80px_rgba(0,0,0,0.6)]
+              shadow-[0_8px_30px_rgb(0,0,0,0.12)]
             "
           >
             {/* HEADER */}
-            <h1 className="text-4xl font-semibold">
+            <h1 className="text-4xl font-semibold text-gray-900">
               Welcome Back
             </h1>
-            <p className="mt-2 text-text-3 text-sm">
+            <p className="mt-2 text-gray-600 text-sm">
               Sign in to continue
             </p>
 
@@ -128,13 +131,13 @@ window.location.href = redirect || "/";
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => setError("Google login failed")}
-                theme="filled_black"
+                theme="outline"
                 shape="pill"
                 width="100%"
               />
             </div>
 
-            <div className="my-5 text-center text-xs text-text-3">OR</div>
+            <div className="my-5 text-center text-xs text-gray-500">OR</div>
 
             {/* FORM */}
             <form onSubmit={handleLogin} className="space-y-4">
@@ -143,9 +146,9 @@ window.location.href = redirect || "/";
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-full bg-bg-3
-                           px-5 py-3 text-sm text-text-1
-                           placeholder-gray-400 outline-none"
+                className="w-full rounded-full bg-white border border-gray-300
+                           px-5 py-3 text-sm text-gray-900 transparent-autofill
+                           placeholder-gray-500 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all shadow-sm"
               />
 
               <input
@@ -153,9 +156,9 @@ window.location.href = redirect || "/";
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-full bg-bg-3
-                           px-5 py-3 text-sm text-text-1
-                           placeholder-gray-400 outline-none"
+                className="w-full rounded-full bg-white border border-gray-300
+                           px-5 py-3 text-sm text-gray-900 transparent-autofill
+                           placeholder-gray-500 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all shadow-sm"
               />
 
               {error && (
@@ -173,9 +176,9 @@ window.location.href = redirect || "/";
               </button>
             </form>
 
-            <p className="mt-5 text-center text-xs text-text-3">
+            <p className="mt-5 text-center text-xs text-gray-600">
               Don’t have an account?{" "}
-              <Link href="/auth/register" className="text-blue-400">
+              <Link href="/auth/register" className="text-purple-600 font-semibold hover:text-purple-500 transition-colors">
                 Sign Up
               </Link>
             </p>

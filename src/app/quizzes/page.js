@@ -2,31 +2,56 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Bell, Database, Cloud, Terminal, Palette, MonitorPlay, Code, HelpCircle } from "lucide-react";
 
 export default function QuizzesPage() {
   const router = useRouter();
   const [quizzes, setQuizzes] = useState([]);
-  const [openMenu, setOpenMenu] = useState(null);
   const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [openMenu, setOpenMenu] = useState(null);
   const menuRef = useRef(null);
 
-  /* ================= AUTH CHECK ================= */
+  /* ================= OUTSIDE CLICK ================= */
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenu(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
+  /* ================= DELETE ================= */
+  const deleteQuiz = async (id) => {
+    if (!confirm("Are you sure you want to delete this quiz?")) return;
+    try {
+      const res = await fetch(`/api/quizzes/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Delete failed");
+        return;
+      }
+      setQuizzes((prev) => prev.filter((q) => q._id !== id));
+      setOpenMenu(null);
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  };
+
+  /* ================= AUTH CHECK ================= */
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const res = await fetch("/api/me");
         const data = await res.json();
-
         if (!res.ok || !data.user?.id) {
           router.replace(`/auth/login?redirect=${encodeURIComponent("/quizzes")}`);
           return;
         }
-
         setCurrentUserId(data.user.id);
       } catch (err) {
         router.replace("/login");
@@ -34,15 +59,12 @@ export default function QuizzesPage() {
         setAuthLoading(false);
       }
     };
-
     checkAuth();
   }, [router]);
 
   /* ================= LOAD QUIZZES ================= */
-
   useEffect(() => {
     if (!currentUserId) return;
-
     const loadQuizzes = async () => {
       try {
         const res = await fetch("/api/quizzes", { cache: "no-store" });
@@ -55,12 +77,10 @@ export default function QuizzesPage() {
         setLoading(false);
       }
     };
-
     loadQuizzes();
   }, [currentUserId]);
 
   /* ================= LIVE CLOCK ================= */
-
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(new Date());
@@ -68,194 +88,54 @@ export default function QuizzesPage() {
     return () => clearInterval(interval);
   }, []);
 
-  /* ================= OUTSIDE CLICK ================= */
+  /* ================= CATEGORIZE QUIZZES ================= */
+  const scheduled = quizzes.filter((q) => q.startAt && new Date(q.startAt) > now).sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
+  const ongoing = quizzes.filter((q) => (!q.startAt || new Date(q.startAt) <= now) && (!q.closeAt || new Date(q.closeAt) > now)).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  const completed = quizzes.filter((q) => q.closeAt && new Date(q.closeAt) <= now).sort((a, b) => new Date(b.closeAt) - new Date(a.closeAt));
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setOpenMenu(null);
-      }
-    };
+  // The featured quiz is the most recently completed one, or the most recent ongoing if no completed.
+  const featuredQuiz = completed.length > 0 ? completed[0] : (ongoing.length > 0 ? ongoing[0] : null);
+  const otherCompleted = completed.filter(q => featuredQuiz && q._id !== featuredQuiz._id);
+  const displayOngoing = ongoing.filter(q => featuredQuiz && q._id !== featuredQuiz._id);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  /* ================= FILTERING ================= */
-
-  const scheduled = quizzes.filter(
-  (q) => q.startAt && new Date(q.startAt) > now
-);
-
-  const ongoing = quizzes.filter(
-  (q) =>
-    (!q.startAt || new Date(q.startAt) <= now) &&
-    (!q.closeAt || new Date(q.closeAt) > now)
-);
-
-  const previous = quizzes.filter(
-  (q) => q.closeAt && new Date(q.closeAt) <= now
-);
-
-  /* ================= DELETE ================= */
-
-  const deleteQuiz = async (id) => {
-    if (!confirm("Are you sure you want to delete this quiz?")) return;
-
-    try {
-      const res = await fetch(`/api/quizzes/${id}`, { method: "DELETE" });
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Delete failed");
-        return;
-      }
-
-      setQuizzes((prev) => prev.filter((q) => q._id !== id));
-      setOpenMenu(null);
-    } catch (err) {
-      console.error("Delete failed:", err);
-    }
+  /* ===== Helpers ===== */
+  const getTimeLeft = (targetTime) => {
+    if (!targetTime) return null;
+    const diff = new Date(targetTime).getTime() - now.getTime();
+    if (diff <= 0) return null;
+    const totalSeconds = Math.floor(diff / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    if (hours > 24) return `Starts in ${Math.floor(hours/24)} days`;
+    if (hours > 0) return `Starts in ${hours} hours`;
+    return `Starts in ${minutes} minutes`;
   };
 
-  /* ================= QUIZ CARD ================= */
+  const getIcon = (title) => {
+    const t = title.toLowerCase();
+    if (t.includes("python") || t.includes("code") || t.includes("dev")) return <Terminal size={20} className="text-purple-600 dark:text-purple-400" />;
+    if (t.includes("sql") || t.includes("data")) return <Database size={20} className="text-gray-700 dark:text-gray-300" />;
+    if (t.includes("cloud") || t.includes("aws") || t.includes("azure")) return <Cloud size={20} className="text-blue-600 dark:text-blue-400" />;
+    if (t.includes("design") || t.includes("ui") || t.includes("ux")) return <Palette size={20} className="text-pink-600 dark:text-pink-400" />;
+    return <HelpCircle size={20} className="text-purple-600 dark:text-purple-400" />;
+  };
 
-  const QuizCard = ({ quiz, isPrevious }) => {
-    const isScheduled =
-  quiz.startAt && new Date(quiz.startAt) > now;
-
-const isOngoing =
-  (!quiz.startAt || new Date(quiz.startAt) <= now) &&
-  (!quiz.closeAt || new Date(quiz.closeAt) > now);
-    const alreadyAttempted = quiz.hasAttempted;
-
-    const isOwner =
-      currentUserId &&
-      quiz.createdBy &&
-      currentUserId.toString() === quiz.createdBy.toString();
-
-    const handlePlayClick = () => {
-      if (alreadyAttempted) return;
-      router.push(`/quizzes/${quiz._id}`);
-    };
-
-    /* ===== Countdown Function ===== */
-
-    const getTimeLeft = (targetTime) => {
-      if (!targetTime) return null;
-
-      const diff = new Date(targetTime).getTime() - now.getTime();
-      if (diff <= 0) return null;
-
-      const totalSeconds = Math.floor(diff / 1000);
-      const days = Math.floor(totalSeconds / (3600 * 24));
-      const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-
-      return `${days > 0 ? days + "d " : ""}${hours}h ${minutes}m ${seconds}s`;
-    };
-
+  const OwnerMenu = ({ quiz }) => {
+    const isOwner = currentUserId && quiz.createdBy && currentUserId.toString() === quiz.createdBy.toString();
+    if (!isOwner) return null;
     return (
-     <div className="relative p-6 rounded-2xl border border-border-2 bg-gradient-to-br from-[#1e1e2f] via-[#1a1a2e] to-[#12121c] backdrop-blur-xl shadow-md transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20">
-        {/* ===== Scheduled Timer ===== */}
-        {isScheduled && (
-          <div className="absolute top-4 right-4 text-xs font-semibold bg-purple-600/20 text-purple-400 px-3 py-1 rounded-full">
-            ⏳{getTimeLeft(quiz.startAt)}
+      <div className="absolute top-4 right-4 z-20" ref={openMenu === quiz._id ? menuRef : null}>
+        <button
+          onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === quiz._id ? null : quiz._id); }}
+          className="p-2 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+        >
+          <MoreVertical size={18} />
+        </button>
+        {openMenu === quiz._id && (
+          <div className="absolute right-0 mt-3 w-40 bg-white dark:bg-[#151520] border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xl overflow-hidden z-50 p-1">
+            <button onClick={(e) => { e.stopPropagation(); router.push(`/quizzes/create?edit=${quiz._id}`); }} className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Edit Quiz</button>
+            <button onClick={(e) => { e.stopPropagation(); deleteQuiz(quiz._id); }} className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors mt-1">Delete</button>
           </div>
-        )}
-
-        {/* ===== Ongoing Close Timer ===== */}
-        {isOngoing && !isScheduled && quiz.closeAt && (
-          <div className="absolute top-4 right-4 text-xs font-semibold bg-purple-600/20 text-purple-400 px-3 py-1 rounded-full">
-             {getTimeLeft(quiz.closeAt)}
-          </div>
-        )}
-
-        {/* ===== Owner Menu ===== */}
-        {isOwner && (
-          <div
-            className="absolute top-12 right-4"
-            ref={openMenu === quiz._id ? menuRef : null}
-          >
-            <button
-              onClick={() =>
-                setOpenMenu(openMenu === quiz._id ? null : quiz._id)
-              }
-              className="p-2 rounded-lg hover:bg-white/10 transition"
-            >
-              <MoreVertical size={18} />
-            </button>
-
-            {openMenu === quiz._id && (
-              <div className="absolute right-0 mt-2 w-36 bg-bg-3 border border-border-2 rounded-xl shadow-xl overflow-hidden z-50">
-                <button
-                  onClick={() =>
-                    router.push(`/quizzes/create?edit=${quiz._id}`)
-                  }
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-purple-600/20 transition"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteQuiz(quiz._id)}
-                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 transition"
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        <h3 className="text-lg font-semibold mb-2">
-          {quiz.title}
-        </h3>
-
-        <p className="text-sm text-text-3 mb-6">
-          {quiz.questions?.length || 0} Questions
-        </p>
-
-        {!isPrevious && (
-          <div className="flex gap-4 flex-wrap">
-            {isScheduled ? (
-              <button disabled className="bg-bg-4 px-4 py-2 rounded-lg text-sm opacity-60">
-                Starts Soon
-              </button>
-            ) : alreadyAttempted ? (
-              <button disabled className="bg-bg-4 px-4 py-2 rounded-lg text-sm opacity-60">
-                Attempted
-              </button>
-            ) : (
-              <button
-                onClick={handlePlayClick}
-                className="bg-purple-600 px-4 py-2 rounded-lg text-sm hover:bg-purple-700 transition"
-              >
-                Play Quiz
-              </button>
-            )}
-
-            <button
-              onClick={() =>
-                router.push(`/quizzes/${quiz._id}/leaderboard`)
-              }
-              className="border border-purple-500 px-4 py-2 rounded-lg text-sm hover:bg-purple-600/20 transition"
-            >
-              Leaderboard
-            </button>
-          </div>
-        )}
-
-        {isPrevious && (
-          <button
-            onClick={() =>
-              router.push(`/quizzes/${quiz._id}/leaderboard`)
-            }
-            className="bg-purple-600 px-4 py-2 rounded-lg text-sm hover:bg-purple-700 transition"
-          >
-            View Leaderboard
-          </button>
         )}
       </div>
     );
@@ -264,68 +144,163 @@ const isOngoing =
   if (authLoading) return null;
 
   return (
-    <div className="min-h-screen bg-bg-2/80 text-text-1 px-6 py-10">
-
-      <div className="flex justify-between items-center mb-12">
-        <div>
-          <h1 className="text-3xl font-bold">Quizzes</h1>
-          <p className="text-text-3 text-sm mt-1">
-            Manage and track your quizzes easily
-          </p>
+    <div className="min-h-screen bg-[#f8f9fc] dark:bg-[#0a0a0f] text-gray-900 dark:text-white px-4 sm:px-8 py-10 font-sans">
+      <div className="max-w-4xl mx-auto space-y-12">
+        
+        {/* PAGE HEADER */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div>
+            <h1 className="text-[2rem] font-bold tracking-tight text-gray-900 dark:text-white">Quizzes</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+              Manage and track your quizzes seamlessly
+            </p>
+          </div>
+          <button
+            onClick={() => router.push("/quizzes/create")}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-all shadow-sm"
+          >
+            <span className="text-lg leading-none font-medium">+</span> Create Quiz
+          </button>
         </div>
 
-       <button
-  onClick={() => router.push("/quizzes/create")}
-  className="
-  bg-purple-600
-  px-4 py-2
-  text-sm
-  sm:px-6 sm:py-2.5
-  sm:text-base
-  rounded-xl
-  hover:bg-purple-700
-  transition
-  shadow-lg shadow-purple-500/20
-  "
->
-  <span className="sm:hidden">+ Create</span>
-  <span className="hidden sm:inline">+ Create Quiz</span>
-</button>
-      </div>
-
-      {loading ? (
-        <div className="text-center text-text-3">
-          Loading quizzes...
-        </div>
-      ) : (
-        <>
-          <Section title="⏳ Scheduled Quizzes" data={scheduled} />
-          <Section title="🔥 Ongoing Quizzes" data={ongoing} />
-          <Section title="🕒 Previous Quizzes" data={previous} isPrevious />
-        </>
-      )}
-    </div>
-  );
-
-  function Section({ title, data, isPrevious = false }) {
-    return (
-      <section className="mb-16">
-        <h2 className="text-xl font-semibold mb-6">{title}</h2>
-
-        {data.length === 0 ? (
-          <p className="text-text-4">No quizzes available.</p>
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : quizzes.length === 0 ? (
+           <div className="p-16 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 text-center flex flex-col items-center justify-center bg-white dark:bg-[#11111a]">
+            <p className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">No Quizzes Found</p>
+            <p className="text-gray-500 dark:text-gray-400">There are no quizzes available right now. Why not create one?</p>
+          </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-6">
-            {data.map((quiz) => (
-              <QuizCard
-                key={quiz._id}
-                quiz={quiz}
-                isPrevious={isPrevious}
-              />
-            ))}
+          <div className="space-y-12">
+            
+            {/* FEATURED / COMPLETED CARD */}
+            {featuredQuiz && (
+              <div className="relative bg-white dark:bg-[#151520] rounded-[2rem] p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center transition-all hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)]">
+                
+                <OwnerMenu quiz={featuredQuiz} />
+                
+                {/* Badge */}
+                <div className="flex items-center gap-2 px-4 py-1.5 bg-[#e2e8f0] dark:bg-gray-800 text-[#475569] dark:text-gray-300 rounded-full text-[11px] font-bold tracking-wider uppercase mb-6">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#475569] dark:bg-gray-400"></div>
+                  {featuredQuiz.closeAt && new Date(featuredQuiz.closeAt) <= now ? "COMPLETED" : "FEATURED"}
+                </div>
+
+                {/* Title */}
+                <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 tracking-tight">
+                  {featuredQuiz.title}
+                </h2>
+
+                {/* Info Pill */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f1f5f9] dark:bg-gray-800/50 text-[#64748b] dark:text-gray-400 rounded-lg text-xs font-semibold mb-8">
+                  <MoreVertical size={14} className="opacity-50" />
+                  {featuredQuiz.questions?.length || 0} Questions
+                </div>
+
+                {/* Big Button */}
+                <button
+                  onClick={() => router.push(`/quizzes/${featuredQuiz._id}/leaderboard`)}
+                  className="w-full max-w-xl py-4 rounded-xl text-sm font-bold text-white bg-[#272c35] hover:bg-[#1f232a] dark:bg-white dark:text-[#0a0a0f] dark:hover:bg-gray-200 transition-all shadow-md"
+                >
+                  {featuredQuiz.closeAt && new Date(featuredQuiz.closeAt) <= now ? "View Leaderboard" : "Play Quiz"}
+                </button>
+              </div>
+            )}
+
+            {/* ONGOING QUIZZES (Grid) */}
+            {(displayOngoing.length > 0 || (featuredQuiz && featuredQuiz.closeAt && new Date(featuredQuiz.closeAt) > now && ongoing.length > 0)) && (
+              <div className="space-y-6">
+                <h3 className="text-[1.35rem] font-semibold text-gray-900 dark:text-white tracking-tight">Ongoing Quizzes</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {ongoing.map(quiz => (
+                    <div key={quiz._id} className="relative bg-white dark:bg-[#151520] rounded-[2rem] p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-none border border-gray-100 dark:border-gray-800 flex flex-col justify-between">
+                      <OwnerMenu quiz={quiz} />
+                      <div className="flex items-center gap-4 mb-8">
+                        <div className="w-12 h-12 rounded-2xl bg-[#f5f3ff] dark:bg-purple-900/20 flex items-center justify-center">
+                          {getIcon(quiz.title)}
+                        </div>
+                        <h4 className="font-bold text-gray-900 dark:text-white text-base leading-tight">
+                          {quiz.title}
+                        </h4>
+                      </div>
+                      <button 
+                        onClick={() => router.push(`/quizzes/${quiz._id}`)}
+                        className="w-full py-3 rounded-2xl text-sm font-bold text-white bg-[#8b5cf6] hover:bg-[#7c3aed] transition-all shadow-sm hover:shadow-md"
+                      >
+                        Start
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* UPCOMING QUIZZES (List Rows) */}
+            {scheduled.length > 0 && (
+              <div className="space-y-6">
+                <h3 className="text-[1.35rem] font-semibold text-gray-900 dark:text-white tracking-tight">Upcoming Quizzes</h3>
+                <div className="space-y-4">
+                  {scheduled.map(quiz => (
+                    <div key={quiz._id} className="relative bg-white dark:bg-[#151520] rounded-3xl p-4 sm:p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-none border border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pr-16">
+                      <OwnerMenu quiz={quiz} />
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 shrink-0 rounded-2xl bg-[#f1f5f9] dark:bg-gray-800 flex items-center justify-center">
+                          {getIcon(quiz.title)}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white text-[15px]">
+                            {quiz.title}
+                          </h4>
+                          <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
+                            {getTimeLeft(quiz.startAt) || "Starting soon"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-[#8b5cf6] bg-transparent border border-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white transition-all whitespace-nowrap">
+                        <Bell size={14} />
+                        Set Reminder
+                      </button>
+
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* OTHER COMPLETED QUIZZES */}
+            {otherCompleted.length > 0 && (
+              <div className="space-y-6">
+                <h3 className="text-[1.35rem] font-semibold text-gray-900 dark:text-white tracking-tight">Previous Quizzes</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {otherCompleted.map(quiz => (
+                    <div key={quiz._id} className="relative bg-white dark:bg-[#151520] rounded-[2rem] p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-none border border-gray-100 dark:border-gray-800 flex flex-col justify-between">
+                      <OwnerMenu quiz={quiz} />
+                      <div className="flex items-center gap-4 mb-8">
+                        <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <MonitorPlay size={20} className="text-gray-500" />
+                        </div>
+                        <h4 className="font-bold text-gray-900 dark:text-white text-base leading-tight">
+                          {quiz.title}
+                        </h4>
+                      </div>
+                      <button 
+                        onClick={() => router.push(`/quizzes/${quiz._id}/leaderboard`)}
+                        className="w-full py-3 rounded-2xl text-sm font-bold text-[#475569] dark:text-gray-300 bg-[#f1f5f9] dark:bg-gray-800 hover:bg-[#e2e8f0] dark:hover:bg-gray-700 transition-all"
+                      >
+                        Leaderboard
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
         )}
-      </section>
-    );
-  }
+      </div>
+    </div>
+  );
 }

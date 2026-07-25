@@ -17,7 +17,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 const nav = [
   { icon: Home, label: "Home", href: "/" },
-  { icon: Users, label: "Commmunity", href: "/groups" },
+  { icon: Users, label: "Community", href: "/groups" },
   { icon: CalendarDays, label: "Events", href: "/events" },
   { icon: Brain, label: "Quizzes", href: "/quizzes" },
   { icon: Gift, label: "Rewards", href: "/rewards" },
@@ -117,17 +117,17 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
             {openQuick && (
               <div className="mt-2 space-y-2">
               
-                <button
-  onClick={() => router.push("/groups?view=create")}
+                <Link
+  href="/groups?view=create"
   className="block w-full text-left rounded-xl px-3 py-2 text-sm text-text-2 hover:bg-bg-3 border border-border-2">
   Create Community
-</button>
-                <button
-  onClick={() => router.push("/events?view=host")}
+</Link>
+                <Link
+  href="/events?view=host"
   className="block w-full text-left rounded-xl px-3 py-2 text-sm text-text-2 hover:bg-bg-3 border border-border-2"
 >
   Create Event
-</button>
+</Link>
                 
               </div>
             )}
@@ -189,31 +189,25 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
         </nav>
 
         <div className="p-4 border-t border-border-2 space-y-2">
-          <button
-  onClick={() => {
-    router.push("/quizzes/create");
-    handleMobileClose();
-  }}
+          <Link
+  href="/quizzes/create"
+  onClick={handleMobileClose}
   className="block w-full text-left px-3 py-2 rounded-lg hover:bg-bg-3 text-text-2"
 >
   Create Quiz
-</button>
-          <button
-  onClick={() => {
-    router.push("/groups?view=create");
-    handleMobileClose();
-  }}
+</Link>
+          <Link
+  href="/groups?view=create"
+  onClick={handleMobileClose}
   className="block w-full text-left px-3 py-2 rounded-lg hover:bg-bg-3 text-text-2">
   Create Community
-</button>
-          <button
-  onClick={() => {
-    router.push("/events?view=host");
-    handleMobileClose();
-  }}
+</Link>
+          <Link
+  href="/events?view=host"
+  onClick={handleMobileClose}
   className="block w-full text-left px-3 py-2 rounded-lg hover:bg-bg-3 text-text-2">
   Create Event
-</button>          
+</Link>          
         </div>
       </aside>
 

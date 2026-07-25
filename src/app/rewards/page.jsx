@@ -71,7 +71,7 @@ export default function RewardsPage() {
       case "Scout":
         return (
           <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border-[3px] border-gray-500 shadow-[0_0_15px_rgba(156,163,175,0.2)] mb-3">
-            <Medal className="w-10 h-10 text-text-2 drop-shadow-md" />
+            <Medal className="w-10 h-10 text-gray-200 drop-shadow-md" />
           </div>
         );
       case "Pioneer":

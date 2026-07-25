@@ -572,21 +572,27 @@ return (
         </div>
         {/* Single-row layout with exactly 3 cards on large screens */}
         <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visibleCommunities.map((c, index) => (
-   <CommunityCard
-  key={c.id || c.slug || c.name}
-  c={{
-    ...c,
-    slug: c.slug || slugify(c.name),
-    members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
-    description: c.description || "",
-  }}
-  index={index}
-  onOpen={goToCommunity}
-  onJoin={handleJoin}
-  isJoined={!!joinedMap[c.id]}
-/>
-))}
+          {visibleCommunities.length > 0 ? visibleCommunities.map((c, index) => (
+            <CommunityCard
+              key={c.id || c.slug || c.name}
+              c={{
+                ...c,
+                slug: c.slug || slugify(c.name),
+                members: c.members || (c.membersCount ? `${c.membersCount} members` : "0 members"),
+                description: c.description || "",
+              }}
+              index={index}
+              onOpen={goToCommunity}
+              onJoin={handleJoin}
+              isJoined={!!joinedMap[c.id]}
+            />
+          )) : (
+            <>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-[200px] rounded-2xl bg-gray-200 dark:bg-bg-3 animate-pulse"></div>
+              ))}
+            </>
+          )}
         </div>
 
         {/* On small screens keep the horizontal scroll version */}
@@ -639,11 +645,17 @@ return (
 
   {/* 3 FEATURED EVENT CARDS */}
  {/* 3 NON-FEATURED EVENT CARDS */}
-<div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-  {threeCardEvents.map((ev) => (
-    <EventCard key={ev.id} event={ev} onOpen={viewEventDetails} />
-  ))}
-</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {threeCardEvents.length > 0 ? threeCardEvents.map((event) => (
+              <EventCard key={event.id} event={event} onOpen={viewEventDetails} />
+            )) : (
+              <>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-64 rounded-2xl bg-gray-200 dark:bg-bg-3 animate-pulse"></div>
+                ))}
+              </>
+            )}
+          </div>
 
   {/* REMAINING EVENTS (VERTICAL) */}
   {remainingEvents.length > 0 && (

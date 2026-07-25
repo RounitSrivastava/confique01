@@ -1064,7 +1064,10 @@ const upcomingEvents = useMemo(() => {
       
       <aside className={`fixed top-0 left-0 z-[110] h-full w-64 bg-[#050509] border-r border-gray-200 transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden`}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="text-lg font-extrabold text-[#A855F7]">Confique</span>
+          <div className="flex items-center gap-2">
+            <img src="/Group 51(3).png" width={24} height={24} alt="Confique Logo" className="object-contain" />
+            <span className="text-lg font-extrabold text-[#A855F7]">Confique</span>
+          </div>
           <button onClick={() => setSidebarOpen(false)}><X className="w-7 h-7" /></button>
         </div>
         <nav className="px-3 py-4 space-y-1">
@@ -1093,7 +1096,10 @@ const upcomingEvents = useMemo(() => {
         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
           <div className="flex items-center space-x-4 w-full">
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden"><div className="space-y-1"><span className="block w-6 h-[2px] bg-text-1"></span><span className="block w-6 h-[2px] bg-text-1"></span><span className="block w-6 h-[2px] bg-text-1"></span></div></button>
-            <h1 className="text-2xl font-extrabold text-[#A855F7] hidden lg:block">Confique</h1>
+            <div className="hidden lg:flex items-center gap-2 cursor-pointer" onClick={() => window.location.href = '/'}>
+              <img src="/Group 51(3).png" width={32} height={32} alt="Confique Logo" className="object-contain" />
+              <h1 className="text-2xl font-extrabold text-[#A855F7]">Confique</h1>
+            </div>
             {isSearching ? (
               <div className="relative flex-grow max-w-lg" ref={searchRef}>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-3" />

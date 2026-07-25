@@ -130,7 +130,7 @@ const CategoryPill = ({ name, isSelected, onClick }) => (
         px-4 py-2 text-sm rounded-full whitespace-nowrap transition-all duration-200
         ${
           isSelected
-              ? "bg-purple-600 shadow-[0_0_0_1px_rgba(168,85,247,0.6)] text-white"
+              ? "bg-purple-600 shadow-[0_0_0_1px_rgba(168,85,247,0.6)] !text-white"
             : "bg-bg-2 text-text-2 border border-border-2 hover:bg-bg-3 hover:text-text-1"
         }
     `}
@@ -1427,7 +1427,7 @@ React.useEffect(() => {
 
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="flex items-center bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold py-2 px-4 rounded-full transition-colors shadow-lg"
+                        className="flex items-center bg-purple-500 hover:bg-purple-600 !text-white text-sm font-semibold py-2 px-4 rounded-full transition-colors shadow-lg"
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Create Community

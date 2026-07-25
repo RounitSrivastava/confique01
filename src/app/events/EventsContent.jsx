@@ -1122,10 +1122,10 @@ const upcomingEvents = useMemo(() => {
               </button>
 
               {isProfileOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-white border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100]">
-                  <div className="p-6 flex flex-col items-center border-b border-white/5 bg-gradient-to-b from-slate-900/50 to-transparent">
+                <div className="absolute right-0 mt-3 w-64 bg-white dark:bg-bg-2 border border-gray-200 dark:border-border-2 rounded-2xl shadow-xl overflow-hidden z-[100]">
+                  <div className="p-6 flex flex-col items-center border-b border-gray-200 dark:border-border-2 bg-gray-50/50 dark:bg-transparent">
                     <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-purple-500 to-pink-500 mb-3">
-                      <img src={user.avatar} alt="Large User Avatar" className="w-full h-full rounded-full object-cover border-2 border-[#111]" />
+                      <img src={user.avatar} alt="Large User Avatar" className="w-full h-full rounded-full object-cover border-2 border-white dark:border-[#111]" />
                     </div>
                     <h3 className="text-lg font-bold text-text-1 text-center line-clamp-1">{user.name}</h3>
                   </div>
@@ -1136,9 +1136,9 @@ const upcomingEvents = useMemo(() => {
                         setIsProfileOpen(false);
                         router.push("/profile/details");
                       }} 
-                      className="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-white/5 rounded-xl transition-colors group text-left"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-text-2 hover:bg-gray-100 dark:hover:bg-bg-3 rounded-xl transition-colors group text-left"
                     >
-                      <User className="w-5 h-5 text-slate-400 group-hover:text-purple-400" />
+                      <User className="w-5 h-5 text-text-3 group-hover:text-purple-500" />
                       <span className="font-medium">Profile</span>
                     </button>
                     
@@ -1147,9 +1147,9 @@ const upcomingEvents = useMemo(() => {
                         setIsProfileOpen(false);
                         handleLogout();
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors text-left group"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors text-left group"
                     >
-                      <LogOut className="w-5 h-5 text-red-500/70 group-hover:text-red-500" />
+                      <LogOut className="w-5 h-5 text-red-400 group-hover:text-red-500" />
                       <span className="font-medium">Logout</span>
                     </button>
                   </div>

@@ -463,9 +463,9 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
             </button>
 
             {openUser && (
-              <div className="absolute right-0 mt-2 w-64 rounded-xl bg-bg-2 shadow-xl border border-border-2 overflow-hidden">
-                <div className="px-4 py-4 flex flex-col items-center border-b border-border-2">
-                  <div className="h-16 w-16 rounded-full overflow-hidden border border-border-2 mb-2">
+              <div className="absolute right-0 mt-2 w-64 rounded-xl bg-white dark:bg-bg-2 shadow-xl border border-gray-200 dark:border-border-2 overflow-hidden z-50">
+                <div className="px-4 py-4 flex flex-col items-center border-b border-gray-200 dark:border-border-2">
+                  <div className="h-16 w-16 rounded-full overflow-hidden border border-gray-200 dark:border-border-2 mb-2">
                     <img 
                       src={safeAvatar} 
                       alt="User" 
@@ -479,13 +479,13 @@ export default function Topbar({ onToggleSidebar = () => {} }) {
                   <p className="text-xs text-text-3 mt-1">{displayEmail}</p>
                 </div>
 
-                <button onClick={() => { setOpenUser(false); router.push("/profile/details"); }} className="w-full px-4 py-3 text-sm flex items-center gap-2 hover:bg-bg-3">
+                <button onClick={() => { setOpenUser(false); router.push("/profile/details"); }} className="w-full px-4 py-3 text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-bg-3">
                   <User className="h-4 w-4 text-text-2" /> Profile
                 </button>
 
-                <div className="border-t border-border-2" />
+                <div className="border-t border-gray-200 dark:border-border-2" />
 
-                <button onClick={handleLogout} className="w-full px-4 py-3 text-sm flex items-center gap-2 text-red-400 hover:bg-bg-3">
+                <button onClick={handleLogout} className="w-full px-4 py-3 text-sm flex items-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-bg-3">
                   <LogOut className="h-4 w-4" /> Logout
                 </button>
               </div>

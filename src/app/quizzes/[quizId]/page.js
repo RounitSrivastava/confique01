@@ -22,7 +22,7 @@ export default async function QuizPlayPage(props) {
     const rawUserId = actor?.id || actor?.userId;
     
     if (!rawUserId) {
-      redirect("/login");
+      redirect("/auth/login");
     }
 
     let userDoc = null;
@@ -41,7 +41,7 @@ export default async function QuizPlayPage(props) {
         username: userDoc.username || userDoc.name || userDoc.fullName || (userDoc.email ? userDoc.email.split("@")[0] : ""),
       };
     } else {
-      redirect("/login");
+      redirect("/auth/login");
     }
 
     // 2. Fetch Quiz

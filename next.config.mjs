@@ -20,6 +20,21 @@ const nextConfig = {
     minimumCacheTTL: 3600, // cache optimized images for 1 hour
   },
 
+  async redirects() {
+    return [
+      {
+        source: '/login',
+        destination: '/auth/login',
+        permanent: true,
+      },
+      {
+        source: '/register',
+        destination: '/auth/register',
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {

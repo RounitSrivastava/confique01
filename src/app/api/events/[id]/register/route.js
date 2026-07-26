@@ -269,7 +269,14 @@ if (ticketSelectionRaw) {
 
       // 2. Try to notify the host (by looking up the user whose name matches event.hostedBy)
       if (event.hostedBy) {
-        const hostUser = await User.findOne({ name: event.hostedBy }).lean();
+        const hostUser = await User.findOne({ 
+          $or: [
+            { name: event.hostedBy },
+            { username: event.hostedBy },
+            { email: event.hostedBy }
+          ]
+        }).lean();
+        
         if (hostUser && hostUser.email && hostUser.email.toLowerCase() !== userEmail.toLowerCase()) {
           await Notification.create({
             targetEmail: hostUser.email.toLowerCase(),

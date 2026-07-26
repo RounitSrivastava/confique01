@@ -16,6 +16,7 @@ export default function QuizPlayClient({ initialQuiz, initialUser }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [timeLeft, setTimeLeft] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [attemptTime, setAttemptTime] = useState(0);
   const [attemptLimit, setAttemptLimit] = useState(initialQuiz ? (initialQuiz.attemptTime ? initialQuiz.attemptTime * 60 : null) : undefined);
@@ -35,14 +36,14 @@ export default function QuizPlayClient({ initialQuiz, initialUser }) {
     // 🔒 Quiz not started yet
     if (quiz.startAt && now < new Date(quiz.startAt)){
       alert("Quiz has not started yet.");
-      router.push("/quizzes");
+      router.replace("/quizzes");
       return;
     }
 
     // 🔒 Quiz closed
     if (quiz.closeAt && now > new Date(quiz.closeAt)){
       alert("Quiz already ended.");
-      router.push(`/quizzes/${quizId}/leaderboard`);
+      router.replace(`/quizzes/${quizId}/leaderboard`);
       return;
     }
 
@@ -53,7 +54,7 @@ export default function QuizPlayClient({ initialQuiz, initialUser }) {
 
     if (alreadyAttempted) {
       alert("You have already attempted this quiz.");
-      router.push(`/quizzes/${quizId}/leaderboard`);
+      router.replace(`/quizzes/${quizId}/leaderboard`);
       return;
     }
 
@@ -165,7 +166,8 @@ useEffect(() => {
   /* ---------------- SUBMIT ---------------- */
 
   const handleSubmit = async () => {
-    if (submitted) return;
+    if (submitted || isSubmitting) return;
+    setIsSubmitting(true);
     setSubmitted(true);
     setTimeLeft(null);
     
@@ -189,10 +191,10 @@ quiz.questions.forEach((q, qIndex) => {
   const timeSpent = finalQuestionTimes[qIndex] ?? 999;
 
   if (userAnswer === correctIndex) {
-    totalScore += q.points;
+    totalScore += Number(q.points);
     if (timeSpent <= 5) totalScore += 2;
   } else if (userAnswer !== undefined) {
-    totalScore -= q.points * 0.25;
+    totalScore -= Number(q.points) * 0.25;
   }
 });
 
@@ -216,6 +218,7 @@ quiz.questions.forEach((q, qIndex) => {
       router.push(`/quizzes/${quizId}/leaderboard`);
     } catch (err) {
       console.error("Submit failed");
+      setIsSubmitting(false);
     }
   };
 
@@ -298,14 +301,20 @@ quiz.questions.forEach((q, qIndex) => {
               Previous
             </button>
 
-            {currentQuestion === totalQuestions - 1 ? (
-              <button
-                onClick={handleSubmit}
-                className="px-8 py-3 bg-[#a22df6] hover:bg-[#8c22d8] text-white rounded-xl font-bold transition-all transform hover:scale-105"
-              >
-                Submit Quiz
-              </button>
-            ) : (
+              {currentQuestion === totalQuestions - 1 ? (
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-8 py-3 flex items-center justify-center gap-2 bg-[#a22df6] hover:bg-[#8c22d8] text-white rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95 disabled:opacity-70 disabled:hover:scale-100"
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Submitting...
+                    </div>
+                  ) : "Submit Quiz"}
+                </button>
+              ) : (
               <button
                 onClick={handleNext}
                 className="px-8 py-3 bg-purple-600 hover:bg-purple-700 dark:bg-[#a22df6] dark:hover:bg-[#8c22d8] text-white rounded-xl font-bold transition-all transform hover:scale-105"

@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical, Bell, Database, Cloud, Terminal, Palette, MonitorPlay, Code, HelpCircle } from "lucide-react";
+import Link from "next/link";
+import { MoreVertical, Bell, Database, Cloud, Terminal, Palette, MonitorPlay, Code, HelpCircle, Play, Calendar, Trophy, Check } from "lucide-react";
 
 export default function QuizzesPage() {
   const router = useRouter();
@@ -11,8 +12,28 @@ export default function QuizzesPage() {
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState(null);
   const [openMenu, setOpenMenu] = useState(null);
   const menuRef = useRef(null);
+
+  /* ================= NOTIFICATION SOUND ================= */
+  const bellAudioRef = useRef(null);
+  useEffect(() => {
+    if (typeof Audio !== "undefined") {
+      try {
+        const audio = new Audio("/bell-ring-390294.mp3");
+        audio.volume = 1;
+        bellAudioRef.current = audio;
+      } catch {}
+    }
+  }, []);
+
+  const playBellSound = () => {
+    if (bellAudioRef.current) {
+      bellAudioRef.current.currentTime = 0;
+      bellAudioRef.current.play().catch(() => {});
+    }
+  };
 
   /* ================= OUTSIDE CLICK ================= */
   useEffect(() => {
@@ -42,6 +63,35 @@ export default function QuizzesPage() {
     }
   };
 
+  /* ================= SET REMINDER ================= */
+  const handleSetReminder = async (quiz) => {
+    if (!currentUserEmail) {
+      alert("You need to be logged in to set a reminder.");
+      return;
+    }
+
+    try {
+      const reminders = JSON.parse(localStorage.getItem("quiz_reminders") || "[]");
+      if (reminders.some(r => r.id === quiz._id)) {
+        alert("Reminder already set for this quiz!");
+        return;
+      }
+
+      reminders.push({
+        id: quiz._id,
+        title: quiz.title,
+        startAt: new Date(quiz.startAt).getTime(),
+        email: currentUserEmail
+      });
+      localStorage.setItem("quiz_reminders", JSON.stringify(reminders));
+      
+      alert("Reminder set successfully! You will be notified when the quiz starts.");
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred.");
+    }
+  };
+
   /* ================= AUTH CHECK ================= */
   useEffect(() => {
     const checkAuth = async () => {
@@ -53,6 +103,7 @@ export default function QuizzesPage() {
           return;
         }
         setCurrentUserId(data.user.id);
+        setCurrentUserEmail(data.user.email);
       } catch (err) {
         router.replace("/login");
       } finally {
@@ -80,11 +131,59 @@ export default function QuizzesPage() {
     loadQuizzes();
   }, [currentUserId]);
 
-  /* ================= LIVE CLOCK ================= */
+  /* ================= LIVE CLOCK & REMINDERS ================= */
   useEffect(() => {
     const interval = setInterval(() => {
-      setNow(new Date());
+      const currentTime = Date.now();
+      setNow(new Date(currentTime));
+      
+      try {
+        const storedReminders = localStorage.getItem("quiz_reminders");
+        if (storedReminders) {
+          let reminders = JSON.parse(storedReminders);
+          let modified = false;
+          
+          for (let i = reminders.length - 1; i >= 0; i--) {
+            const r = reminders[i];
+            if (currentTime >= r.startAt) {
+              // Time to trigger!
+              playBellSound();
+              // Try creating browser notification if granted
+              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+                new Notification("Quiz Starting Now!", { body: `Your quiz "${r.title}" has started!` });
+              } else {
+                alert(`🔔 REMINDER: Your quiz "${r.title}" is starting NOW!`);
+              }
+              
+              // Persist to backend notification center
+              fetch("/api/notifications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  targetEmail: r.email,
+                  type: "REMINDER",
+                  message: `Your quiz "${r.title}" is starting now!`,
+                  postId: r.id,
+                })
+              }).catch(() => {});
+              
+              // Remove from queue
+              reminders.splice(i, 1);
+              modified = true;
+            }
+          }
+          if (modified) {
+            localStorage.setItem("quiz_reminders", JSON.stringify(reminders));
+          }
+        }
+      } catch (err) {}
     }, 1000);
+    
+    // Request notification permission if needed
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+    
     return () => clearInterval(interval);
   }, []);
 
@@ -106,9 +205,11 @@ export default function QuizzesPage() {
     const totalSeconds = Math.floor(diff / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
     if (hours > 24) return `Starts in ${Math.floor(hours/24)} days`;
-    if (hours > 0) return `Starts in ${hours} hours`;
-    return `Starts in ${minutes} minutes`;
+    if (hours > 0) return `Starts in ${hours}h ${minutes}m`;
+    if (minutes > 0) return `Starts in ${minutes}m ${seconds}s`;
+    return `Starts in ${seconds}s`;
   };
 
   const getIcon = (title) => {
@@ -199,12 +300,32 @@ export default function QuizzesPage() {
                 </div>
 
                 {/* Big Button */}
-                <button
-                  onClick={() => router.push(`/quizzes/${featuredQuiz._id}/leaderboard`)}
-                  className="w-full max-w-xl py-4 rounded-xl text-sm font-bold text-white bg-[#272c35] hover:bg-[#1f232a] dark:bg-white dark:text-[#0a0a0f] dark:hover:bg-gray-200 transition-all shadow-md"
-                >
-                  {featuredQuiz.closeAt && new Date(featuredQuiz.closeAt) <= now ? "View Leaderboard" : "Play Quiz"}
-                </button>
+                {(() => {
+                  const isCompleted = featuredQuiz.closeAt && new Date(featuredQuiz.closeAt) <= now;
+                  const hasAttempted = featuredQuiz.leaderboard?.some(
+                    (entry) => entry.userId && entry.userId.toString() === currentUserId?.toString()
+                  );
+
+                  if (isCompleted || hasAttempted) {
+                    return (
+                      <button
+                        onClick={() => router.push(`/quizzes/${featuredQuiz._id}/leaderboard`)}
+                        className="w-full max-w-xl py-4 rounded-xl text-sm font-bold text-white bg-[#272c35] hover:bg-[#1f232a] dark:bg-white dark:text-[#0a0a0f] dark:hover:bg-gray-200 transition-all shadow-md"
+                      >
+                        {isCompleted ? "View Leaderboard" : "Attempted - View Leaderboard"}
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <button
+                      onClick={() => router.push(`/quizzes/${featuredQuiz._id}`)}
+                      className="w-full max-w-xl py-4 rounded-xl text-sm font-bold text-white bg-[#8b5cf6] hover:bg-[#7c3aed] transition-all shadow-md"
+                    >
+                      Play Quiz
+                    </button>
+                  );
+                })()}
               </div>
             )}
 
@@ -224,12 +345,37 @@ export default function QuizzesPage() {
                           {quiz.title}
                         </h4>
                       </div>
-                      <button 
-                        onClick={() => router.push(`/quizzes/${quiz._id}`)}
-                        className="w-full py-3 rounded-2xl text-sm font-bold text-white bg-[#8b5cf6] hover:bg-[#7c3aed] transition-all shadow-sm hover:shadow-md"
-                      >
-                        Start
-                      </button>
+                      
+                      {(() => {
+                        const hasAttempted = quiz.leaderboard?.some(
+                          (entry) => entry.userId && entry.userId.toString() === currentUserId?.toString()
+                        );
+
+                        if (hasAttempted) {
+                          return (
+                            <div className="flex flex-col gap-2">
+                              <span className="text-[11px] text-center font-extrabold text-[#10b981] dark:text-[#34d399] uppercase tracking-widest flex items-center justify-center gap-1.5 bg-[#10b981]/10 py-1.5 rounded-lg mb-1">
+                                <Check size={14} strokeWidth={3} /> Attempted
+                              </span>
+                              <Link 
+                                href={`/quizzes/${quiz._id}/leaderboard`}
+                                className="w-full py-3 rounded-2xl text-sm font-bold text-gray-900 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 transition-all shadow-sm block text-center"
+                              >
+                                Leaderboard
+                              </Link>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <Link 
+                            href={`/quizzes/${quiz._id}`}
+                            className="w-full py-3 rounded-2xl text-sm font-bold text-white bg-[#8b5cf6] hover:bg-[#7c3aed] transition-all shadow-sm hover:shadow-md block text-center"
+                          >
+                            Start
+                          </Link>
+                        );
+                      })()}
                     </div>
                   ))}
                 </div>
@@ -259,7 +405,10 @@ export default function QuizzesPage() {
                         </div>
                       </div>
 
-                      <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-[#8b5cf6] bg-transparent border border-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white transition-all whitespace-nowrap">
+                      <button 
+                        onClick={() => handleSetReminder(quiz)}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-[#8b5cf6] bg-transparent border border-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white transition-all whitespace-nowrap"
+                      >
                         <Bell size={14} />
                         Set Reminder
                       </button>

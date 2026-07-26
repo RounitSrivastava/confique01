@@ -12,6 +12,11 @@ const QuestionSchema = new mongoose.Schema(
       trim: true,
     },
 
+    imageUrl: {
+      type: String,
+      default: "",
+    },
+
     options: [
       {
         text: {
@@ -186,6 +191,11 @@ QuizSchema.index({ status: 1 });
 /* ================================
    EXPORT MODEL
 ================================ */
+
+// Force reload in development to pick up schema changes
+if (mongoose.connection.models['Quiz']) {
+  delete mongoose.connection.models['Quiz'];
+}
 
 export default mongoose.models.Quiz ||
   mongoose.model("Quiz", QuizSchema);

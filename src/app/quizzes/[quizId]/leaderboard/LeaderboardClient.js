@@ -154,10 +154,20 @@ export default function LeaderboardClient({ initialQuiz, initialSorted }) {
           <div className="space-y-3 sm:space-y-4 max-h-[65vh] overflow-y-auto scrollbar-hide">
 
             <AnimatePresence>
-              {sorted.map((player, index) => {
-                const prevRank = previousRanks.current[player.userName];
-                const rankChange =
-                  prevRank !== undefined ? prevRank - index : 0;
+              {(() => {
+                let displayPlayers = sorted.slice(0, 10);
+                const currentUserIndex = sorted.findIndex(p => p.userName === userName);
+                
+                // If current user is not in top 10 but participated, add them to the end
+                if (currentUserIndex >= 10) {
+                  displayPlayers.push(sorted[currentUserIndex]);
+                }
+
+                return displayPlayers.map((player) => {
+                  const actualIndex = sorted.findIndex(p => p.userName === player.userName);
+                  const prevRank = previousRanks.current[player.userName];
+                  const rankChange =
+                    prevRank !== undefined ? prevRank - actualIndex : 0;
 
                 const isCurrentUser = player.userName === userName;
 
@@ -180,7 +190,7 @@ export default function LeaderboardClient({ initialQuiz, initialSorted }) {
 
                       {/* Rank */}
                       <div className="text-lg sm:text-2xl w-7 sm:w-10 text-center flex items-center gap-1 font-bold text-gray-700 dark:text-gray-300">
-                        {getMedal(index)}
+                        {getMedal(actualIndex)}
 
                         {rankChange > 0 && (
                           <span className="text-green-500 dark:text-green-400 text-xs sm:text-sm animate-pulse">
@@ -212,16 +222,14 @@ export default function LeaderboardClient({ initialQuiz, initialSorted }) {
                       </div>
                     </div>
 
-                    {/* Score */}
-                    <div className="text-lg sm:text-xl font-black text-[#a22df6] dark:text-[#d8b4fe]">
+                    {/* Right */}
+                    <div className="text-xl sm:text-2xl font-black text-[#a22df6] dark:text-[#b45cf9]">
                       {player.score}
                     </div>
-
                   </motion.div>
                 );
-              })}
+              })})()}
             </AnimatePresence>
-
             {sorted.length === 0 && (
               <div className="text-center text-text-3">
                 No submissions yet.

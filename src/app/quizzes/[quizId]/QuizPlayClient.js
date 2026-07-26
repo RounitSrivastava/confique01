@@ -23,6 +23,13 @@ export default function QuizPlayClient({ initialQuiz, initialUser }) {
 
   const startTimeRef = useRef(Date.now()).current;
 
+  // Prefetch leaderboard so submission transition is instant
+  useEffect(() => {
+    if (quizId) {
+      router.prefetch(`/quizzes/${quizId}/leaderboard`);
+    }
+  }, [quizId, router]);
+
   /* ---------------- SETUP QUIZ ---------------- */
 
   useEffect(() => {
@@ -265,9 +272,21 @@ quiz.questions.forEach((q, qIndex) => {
             )}
           </div>
 
-          <h3 className="mb-8 text-[1.35rem] font-bold text-gray-800 dark:text-gray-100 leading-snug">
-            {question.question}
-          </h3>
+          <div className="mb-8">
+            <div className="text-xl md:text-2xl font-semibold leading-relaxed text-gray-800 dark:text-gray-100">
+              {question.question}
+            </div>
+            
+            {question.imageUrl && (
+              <div className="mt-6 flex justify-center">
+                <img 
+                  src={question.imageUrl} 
+                  alt="Question Image" 
+                  className="max-w-full max-h-64 object-contain rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
+                />
+              </div>
+            )}
+          </div>
 
           <div className="space-y-4">
             {question.options.map((o, oIndex) => (

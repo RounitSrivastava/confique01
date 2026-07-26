@@ -2,7 +2,82 @@
 export const dynamic = "force-dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
-import { Plus, Trash2, ArrowLeft, CheckCircle } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, CheckCircle, Image as ImageIcon, Upload, X, Loader2 } from "lucide-react";
+
+/* --- CLOUDINARY HELPER --- */
+const uploadToCloudinary = async (file, folder = "quiz-questions") => {
+  if (!file) return null;
+  if (typeof file === "string") return file; // already uploaded URL
+
+  try {
+    const sigRes = await fetch(`/api/cloudinary/sign?folder=${folder}`);
+    const sigData = await sigRes.json();
+    if (!sigData.ok) throw new Error("Failed to get upload signature");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("api_key", sigData.apiKey);
+    formData.append("timestamp", sigData.timestamp);
+    formData.append("signature", sigData.signature);
+    formData.append("folder", folder);
+
+    const uploadRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
+      { method: "POST", body: formData }
+    );
+    const uploadData = await uploadRes.json();
+    return uploadData.secure_url;
+  } catch (error) {
+    console.error("Cloudinary Upload Error:", error);
+    return null;
+  }
+};
+
+const ImageUploader = ({ file, previewUrl, isUploading, onFileChange, onRemove }) => {
+  return (
+    <div className="relative border-2 border-dashed border-border-2 rounded-xl p-4 flex flex-col items-center justify-center bg-bg-1 hover:bg-bg-2 transition group overflow-hidden h-32">
+      <input
+        type="file"
+        accept="image/*"
+        onChange={onFileChange}
+        disabled={isUploading}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+      />
+      {previewUrl ? (
+        <>
+          <img src={previewUrl} alt="Preview" className={`absolute inset-0 w-full h-full object-cover transition ${isUploading ? 'opacity-30 blur-sm' : 'opacity-60 group-hover:opacity-40'}`} />
+          {!isUploading && (
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
+              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full z-20 shadow-md"
+            >
+              <X size={14} />
+            </button>
+          )}
+          <div className="relative z-10 flex flex-col items-center pointer-events-none">
+            {isUploading ? (
+              <>
+                <Loader2 className="w-6 h-6 text-purple-500 mb-1 animate-spin" />
+                <span className="text-sm font-semibold text-purple-600 drop-shadow-md">Uploading...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-6 h-6 text-green-400 mb-1" />
+                <span className="text-sm font-semibold text-white drop-shadow-md">Image Attached</span>
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-col items-center text-text-3 group-hover:text-purple-500 transition pointer-events-none">
+          <ImageIcon className="w-8 h-8 mb-2" />
+          <span className="text-sm font-medium">Add Image (Optional)</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function Page() {
   const router = useRouter();
@@ -15,6 +90,10 @@ export default function Page() {
   const [questions, setQuestions] = useState([
     {
       question: "",
+      imageUrl: "",
+      imageFile: null,
+      imagePreview: "",
+      showImageInput: false,
       options: ["", ""],
       correctIndex: null,
       points: 10,
@@ -44,6 +123,11 @@ const data = await res.json();
       setQuestions(
         data.questions.map((q) => ({
           question: q.question,
+          imageUrl: q.imageUrl || "",
+          imageFile: null,
+          imagePreview: q.imageUrl || "",
+          showImageInput: !!q.imageUrl,
+          isUploading: false,
           options: q.options.map((o) => o.text),
           correctIndex: q.options.findIndex((o) => o.isCorrect),
           points: q.points,
@@ -109,6 +193,11 @@ const data = await res.json();
       ...questions,
       {
         question: "",
+        imageUrl: "",
+        imageFile: null,
+        imagePreview: "",
+        showImageInput: false,
+        isUploading: false,
         options: ["", ""],
         correctIndex: null,
         points: 10,
@@ -139,7 +228,35 @@ const data = await res.json();
   const saveQuiz = async () => {
     if (!isValid) return;
 
+    // Verify no questions are currently uploading
+    const isUploading = questions.some(q => q.isUploading);
+    if (isUploading) {
+      alert("Please wait for images to finish uploading before saving.");
+      return;
+    }
+
     setLoading(true);
+
+    // Any missing uploads as fallback
+    const processedQuestions = await Promise.all(
+      questions.map(async (q) => {
+        let finalImageUrl = q.imageUrl;
+        if (q.imageFile) {
+          finalImageUrl = await uploadToCloudinary(q.imageFile);
+        }
+        return {
+          question: q.question.trim(),
+          imageUrl: finalImageUrl || "",
+          options: q.options.map((o, i) => ({
+            text: o.trim(),
+            isCorrect: i === q.correctIndex,
+          })),
+          points: Number(q.points),
+          timeLimit: Number(q.timeLimit),
+          explanation: q.explanation.trim(),
+        };
+      })
+    );
 
     const now = new Date();
 
@@ -165,16 +282,7 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
 
     const quizPayload = {
       title: title.trim(),
-      questions: questions.map((q) => ({
-        question: q.question.trim(),
-        options: q.options.map((o, i) => ({
-          text: o.trim(),
-          isCorrect: i === q.correctIndex,
-        })),
-        points: Number(q.points),
-        timeLimit: Number(q.timeLimit),
-        explanation: q.explanation.trim(),
-      })),
+      questions: processedQuestions,
       startAt: startTimestamp,
       closeAt: closeTimestamp,
       attemptTime: hasTimeLimit ? (Number(attemptTime) || 1) : null,
@@ -249,15 +357,74 @@ if (closeTimestamp && now > closeTimestamp) status = "closed";
               )}
             </div>
 
-            <textarea
-              rows={2}
-              value={q.question}
-              onChange={(e) =>
-                updateQuestion(qIndex, "question", e.target.value)
-              }
-              placeholder="Enter question"
-              className="w-full bg-bg-2 border border-border-2 rounded-xl p-4 outline-none focus:ring-2 focus:ring-purple-600"
-            />
+            <div className="space-y-4">
+              <div className="relative">
+                <textarea
+                  rows={2}
+                  value={q.question}
+                  onChange={(e) =>
+                    updateQuestion(qIndex, "question", e.target.value)
+                  }
+                  placeholder="Enter question..."
+                  className="w-full bg-bg-1 border border-border-2 rounded-xl p-4 pr-12 outline-none focus:ring-2 focus:ring-purple-600 font-medium resize-none"
+                />
+                {!q.showImageInput && !q.imagePreview && (
+                  <button
+                    type="button"
+                    onClick={() => updateQuestion(qIndex, "showImageInput", true)}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-purple-600 transition"
+                    title="Add Image"
+                  >
+                    <ImageIcon size={20} />
+                  </button>
+                )}
+              </div>
+
+              {(q.showImageInput || q.imagePreview) && (
+                <div className="relative">
+                  <ImageUploader
+                    file={q.imageFile || q.imageUrl}
+                    previewUrl={q.imagePreview}
+                    isUploading={q.isUploading}
+                    onFileChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        updateQuestion(qIndex, "imagePreview", URL.createObjectURL(file));
+                        updateQuestion(qIndex, "isUploading", true);
+                        
+                        // Immediately upload to Cloudinary in background
+                        const uploadedUrl = await uploadToCloudinary(file);
+                        
+                        if (uploadedUrl) {
+                          updateQuestion(qIndex, "imageUrl", uploadedUrl);
+                          updateQuestion(qIndex, "imageFile", null);
+                        } else {
+                          // Handle upload failure
+                          alert("Failed to upload image. Please try again.");
+                          updateQuestion(qIndex, "imagePreview", "");
+                        }
+                        updateQuestion(qIndex, "isUploading", false);
+                      }
+                    }}
+                    onRemove={() => {
+                      updateQuestion(qIndex, "imageFile", null);
+                      updateQuestion(qIndex, "imageUrl", "");
+                      updateQuestion(qIndex, "imagePreview", "");
+                      updateQuestion(qIndex, "showImageInput", false);
+                    }}
+                  />
+                  {!q.imagePreview && (
+                    <button
+                      type="button"
+                      onClick={() => updateQuestion(qIndex, "showImageInput", false)}
+                      className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition z-20 bg-bg-1 rounded-full p-1 shadow-sm"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="space-y-3">
               {q.options.map((o, oIndex) => (

@@ -134,6 +134,7 @@ const CategoryPill = ({ name, isSelected, onClick }) => (
             : "bg-bg-2 text-text-2 border border-border-2 hover:bg-bg-3 hover:text-text-1"
         }
     `}
+    style={isSelected ? { color: "#ffffff" } : {}}
   >
     {name}
   </button>
@@ -1427,7 +1428,8 @@ React.useEffect(() => {
 
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="flex items-center bg-purple-500 hover:bg-purple-600 !text-white text-sm font-semibold py-2 px-4 rounded-full transition-colors shadow-lg"
+                        className="flex items-center bg-purple-500 hover:bg-purple-600 text-sm font-semibold py-2 px-4 rounded-full transition-colors shadow-lg"
+                        style={{ color: "#ffffff" }}
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Create Community

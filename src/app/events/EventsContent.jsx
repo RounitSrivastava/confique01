@@ -1062,13 +1062,13 @@ const upcomingEvents = useMemo(() => {
     <div className="min-h-screen text-text-1 font-sans antialiased relative bg-bg-1 dark:bg-gradient-to-br dark:from-[#000000] dark:via-[#2d163a] dark:to-[#000000]">
       <div onClick={() => setSidebarOpen(false)} className={`fixed inset-0 bg-black/50 z-[100] transition-opacity ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"} lg:hidden`} />
       
-      <aside className={`fixed top-0 left-0 z-[110] h-full w-64 bg-[#050509] border-r border-gray-200 transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden`}>
+      <aside className={`fixed top-0 left-0 z-[110] h-full w-64 bg-bg-1 border-r border-border-1 transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:hidden`}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <img src="/Group 51(3).png" width={24} height={24} alt="Confique Logo" className="object-contain" />
             <span className="text-lg font-extrabold text-[#A855F7]">Confique</span>
           </div>
-          <button onClick={() => setSidebarOpen(false)}><X className="w-7 h-7" /></button>
+          <button onClick={() => setSidebarOpen(false)}><X className="w-7 h-7 text-text-3" /></button>
         </div>
         <nav className="px-3 py-4 space-y-1">
 
@@ -1076,7 +1076,7 @@ const upcomingEvents = useMemo(() => {
             <Link
   key={item.href}
   href={item.href}
-  className="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-gray-50 transition"
+  className="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-text-2 hover:bg-bg-3 transition"
 >
   <item.icon className="w-5 h-5" />
   {item.label}
@@ -1084,7 +1084,7 @@ const upcomingEvents = useMemo(() => {
           ))}
           <button
   onClick={handleHostClick}
-  className="flex items-center gap-4 w-full text-left px-4 py-3 rounded-xl text-base font-medium text-gray-200 hover:bg-gray-50 transition"
+  className="flex items-center gap-4 w-full text-left px-4 py-3 rounded-xl text-base font-medium text-text-2 hover:bg-bg-3 transition"
 >
   <CalendarPlus className="w-5 h-5" />
   Create Event

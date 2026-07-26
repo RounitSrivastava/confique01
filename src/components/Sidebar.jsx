@@ -78,7 +78,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
   return (
     <>
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:block w-[260px] shrink-0 border-r border-border-2 bg-bg-4 overflow-y-auto custom-scrollbar">
+      <aside className="hidden lg:block w-[260px] shrink-0 border-r border-border-2 bg-bg-1 overflow-y-auto custom-scrollbar">
         <div className="mx-auto max-w-[240px] py-6">
           <nav className="space-y-1">
             {nav.map((n) => {
@@ -148,7 +148,7 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
 
       {/* MOBILE SIDEBAR */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-bg-4 border-r border-border-2 transform transition-transform duration-300 lg:hidden ${
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-bg-1 border-r border-border-2 transform transition-transform duration-300 lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

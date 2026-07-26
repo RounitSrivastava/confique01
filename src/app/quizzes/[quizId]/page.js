@@ -14,6 +14,8 @@ export default async function QuizPlayPage(props) {
   let initialQuiz = null;
   let initialUser = null;
 
+  let shouldRedirectToLogin = false;
+
   try {
     await dbConnect();
     
@@ -22,26 +24,26 @@ export default async function QuizPlayPage(props) {
     const rawUserId = actor?.id || actor?.userId;
     
     if (!rawUserId) {
-      redirect(`/auth/login?redirect=/quizzes/${quizId}`);
-    }
-
-    let userDoc = null;
-    if (rawUserId.match(/^[0-9a-fA-F]{24}$/)) {
-      userDoc = await User.findById(rawUserId).lean();
-    }
-    if (!userDoc) {
-      userDoc = await User.findOne({
-        $or: [{ googleId: rawUserId }, { email: actor?.email }]
-      }).lean();
-    }
-
-    if (userDoc) {
-      initialUser = {
-        id: userDoc._id.toString(),
-        username: userDoc.username || userDoc.name || userDoc.fullName || (userDoc.email ? userDoc.email.split("@")[0] : ""),
-      };
+      shouldRedirectToLogin = true;
     } else {
-      redirect(`/auth/login?redirect=/quizzes/${quizId}`);
+      let userDoc = null;
+      if (rawUserId.match(/^[0-9a-fA-F]{24}$/)) {
+        userDoc = await User.findById(rawUserId).lean();
+      }
+      if (!userDoc) {
+        userDoc = await User.findOne({
+          $or: [{ googleId: rawUserId }, { email: actor?.email }]
+        }).lean();
+      }
+
+      if (userDoc) {
+        initialUser = {
+          id: userDoc._id.toString(),
+          username: userDoc.username || userDoc.name || userDoc.fullName || (userDoc.email ? userDoc.email.split("@")[0] : ""),
+        };
+      } else {
+        shouldRedirectToLogin = true;
+      }
     }
 
     // 2. Fetch Quiz
@@ -70,6 +72,10 @@ export default async function QuizPlayPage(props) {
     }
   } catch (err) {
     console.error("Failed to load initial quiz for play page", err);
+  }
+
+  if (shouldRedirectToLogin) {
+    redirect(`/auth/login?redirect=/quizzes/${quizId}`);
   }
 
   return <QuizPlayClient initialQuiz={initialQuiz} initialUser={initialUser} />;

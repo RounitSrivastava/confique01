@@ -178,7 +178,7 @@ window.location.href = redirect || "/";
 
             <p className="mt-5 text-center text-xs text-gray-600">
               Don’t have an account?{" "}
-              <Link href="/auth/register" className="text-purple-600 font-semibold hover:text-purple-500 transition-colors">
+              <Link href={searchParams.get("redirect") ? `/auth/register?redirect=${searchParams.get("redirect")}` : "/auth/register"} className="text-purple-600 font-semibold hover:text-purple-500 transition-colors">
                 Sign Up
               </Link>
             </p>

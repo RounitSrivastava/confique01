@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MoreVertical, Bell, Database, Cloud, Terminal, Palette, MonitorPlay, Code, HelpCircle, Play, Calendar, Trophy, Check } from "lucide-react";
+import { MoreVertical, Bell, Database, Cloud, Terminal, Palette, MonitorPlay, Code, HelpCircle, Play, Calendar, Trophy, Check, Share2 } from "lucide-react";
 
 export default function QuizzesPage() {
   const router = useRouter();
@@ -60,6 +60,21 @@ export default function QuizzesPage() {
       setOpenMenu(null);
     } catch (err) {
       console.error("Delete failed:", err);
+    }
+  };
+
+  /* ================= SHARE QUIZ ================= */
+  const handleShare = (quizId) => {
+    const url = `${window.location.origin}/quizzes/${quizId}`;
+    if (navigator.share) {
+      navigator.share({
+        title: "Confique Quiz",
+        text: "Check out this upcoming quiz!",
+        url,
+      }).catch(err => console.error("Share failed", err));
+    } else {
+      navigator.clipboard.writeText(url);
+      alert("Link copied to clipboard!");
     }
   };
 
@@ -357,23 +372,41 @@ export default function QuizzesPage() {
                               <span className="text-[11px] text-center font-extrabold text-[#10b981] dark:text-[#34d399] uppercase tracking-widest flex items-center justify-center gap-1.5 bg-[#10b981]/10 py-1.5 rounded-lg mb-1">
                                 <Check size={14} strokeWidth={3} /> Attempted
                               </span>
-                              <Link 
-                                href={`/quizzes/${quiz._id}/leaderboard`}
-                                className="w-full py-3 rounded-2xl text-sm font-bold text-gray-900 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 transition-all shadow-sm block text-center"
-                              >
-                                Leaderboard
-                              </Link>
+                              <div className="flex items-center gap-2">
+                                <Link 
+                                  href={`/quizzes/${quiz._id}/leaderboard`}
+                                  className="flex-1 py-3 rounded-2xl text-sm font-bold text-gray-900 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 transition-all shadow-sm block text-center"
+                                >
+                                  Leaderboard
+                                </Link>
+                                <button 
+                                  onClick={() => handleShare(quiz._id)}
+                                  className="flex-none p-2 text-gray-400 hover:text-[#8b5cf6] transition-all"
+                                  title="Share Quiz"
+                                >
+                                  <Share2 size={18} />
+                                </button>
+                              </div>
                             </div>
                           );
                         }
 
                         return (
-                          <Link 
-                            href={`/quizzes/${quiz._id}`}
-                            className="w-full py-3 rounded-2xl text-sm font-bold text-white bg-[#8b5cf6] hover:bg-[#7c3aed] transition-all shadow-sm hover:shadow-md block text-center"
-                          >
-                            Start
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <Link 
+                              href={`/quizzes/${quiz._id}`}
+                              className="flex-1 py-3 rounded-2xl text-sm font-bold text-white bg-[#8b5cf6] hover:bg-[#7c3aed] transition-all shadow-sm hover:shadow-md block text-center"
+                            >
+                              Start
+                            </Link>
+                            <button 
+                              onClick={() => handleShare(quiz._id)}
+                              className="flex-none p-2 text-gray-400 hover:text-[#8b5cf6] transition-all"
+                              title="Share Quiz"
+                            >
+                              <Share2 size={18} />
+                            </button>
+                          </div>
                         );
                       })()}
                     </div>
@@ -405,13 +438,23 @@ export default function QuizzesPage() {
                         </div>
                       </div>
 
-                      <button 
-                        onClick={() => handleSetReminder(quiz)}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-[#8b5cf6] bg-transparent border border-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white transition-all whitespace-nowrap"
-                      >
-                        <Bell size={14} />
-                        Set Reminder
-                      </button>
+                      <div className="w-full sm:w-auto flex items-center gap-3">
+                        <button 
+                          onClick={() => handleSetReminder(quiz)}
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-[#8b5cf6] bg-transparent border border-[#8b5cf6] hover:bg-[#8b5cf6] hover:text-white transition-all whitespace-nowrap"
+                        >
+                          <Bell size={14} />
+                          Set Reminder
+                        </button>
+                        
+                        <button 
+                          onClick={() => handleShare(quiz._id)}
+                          className="flex-none p-2 text-gray-400 hover:text-[#8b5cf6] transition-all"
+                          title="Share Quiz"
+                        >
+                          <Share2 size={16} />
+                        </button>
+                      </div>
 
                     </div>
                   ))}

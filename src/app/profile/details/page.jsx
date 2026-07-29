@@ -93,7 +93,7 @@ const ProfileContent = () => {
       registrationsCount: ev.registrationsCount || 0,
       rawRegistrations: ev.registrations || [],
 teams: ev.teams || [],
-      isHosted: ev.hostedBy?.trim().toLowerCase() === userName?.trim().toLowerCase(),
+      isHosted: userEmail?.trim().toLowerCase() === "confique01@gmail.com" || ev.hostedBy?.trim().toLowerCase() === userName?.trim().toLowerCase(),
       isRegistered: ev.registrations?.some(reg => reg.userEmail === userEmail)
     }));
   }, []);

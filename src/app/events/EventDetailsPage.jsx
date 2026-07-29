@@ -957,11 +957,11 @@ const EventDetailsPage = ({
                                     e.target.checked
                                   )
                                 }
-                                className="w-4 h-4 text-purple-500 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                                className="w-4 h-4 text-purple-500 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-purple-500"
                               />
                               <label
                                 htmlFor={`${field.name}-${optIndex}`}
-                                className="text-sm text-gray-200"
+                                className="text-sm text-gray-700 dark:text-gray-200"
                               >
                                 {option}
                               </label>

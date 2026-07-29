@@ -392,7 +392,7 @@ useEffect(() => {
 })),
     });
   }
-}, [initialData]);
+}, [initialData?.id || initialData?._id]);
 
   useEffect(() => {
     if (!eventData.hostedBy) {

@@ -65,6 +65,15 @@ const DEFAULT_AVATAR =
 // --- MOCK DATA ---
 const MOCK_EVENTS = [
   {
+    id: 99,
+    title: "Web3 Developer Summit",
+    venue: "Main Campus Auditorium",
+    date: "Wed, 29 Jul 2026",
+    poster: "https://placehold.co/400x550/10b981/ffffff?text=WEB3+SUMMIT",
+    tags: ["Team (2)", "Free"],
+    category: "Workshop",
+  },
+  {
     id: 1,
     title: "L'Oréal Brandstorm",
     venue: "Online | Rose Garden, Campus-18",
@@ -921,9 +930,9 @@ const carouselEvents = useMemo(() => {
     // Exclude mock events
     if (typeof ev.id === 'number') return false;
     
-    // For now, only show these specific 3 events in the carousel
+    // For now, only show these specific events in the carousel
     const title = (ev.title || "").toLowerCase();
-    return title.includes("genovate") || title.includes("shark tank") || title.includes("codex");
+    return title.includes("genovate") || title.includes("shark tank") || title.includes("codex") || title.includes("data science bootcamp");
   });
 
   const nonCultural = upcomingOnly.filter(ev => !isCultural(ev));

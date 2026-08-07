@@ -1,7 +1,7 @@
 import crypto from "crypto";
-import dbConnect from "../../../lib/dbConnect";
-import Event from "../../../models/Event";
-import User from "../../../models/User";
+import dbConnect from "@/lib/mongoose";
+import Event from "@/models/Event";
+import User from "@/models/User";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {

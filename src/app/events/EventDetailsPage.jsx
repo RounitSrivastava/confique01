@@ -252,15 +252,6 @@ const EventDetailsPage = ({
   }, [showSuccessPopup]);
 
   useEffect(() => {
-    if (window.Cashfree) return;
-
-    const script = document.createElement("script");
-    script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
-
-  useEffect(() => {
     // First try localStorage (page refresh support)
     const stored = localStorage.getItem("userEmail");
     if (stored) setUserEmail(stored);
@@ -574,7 +565,7 @@ const EventDetailsPage = ({
     }
     if (
       !isFree &&
-      paymentMethod === "qr" &&
+      (paymentMethod === "qr" || paymentMethod === "link") &&
       (formData["Payment Ref (Last 4 digits)"] || "").length !== 4
     ) {
       alert("Please enter the last 4 digits of your payment reference");
@@ -1045,11 +1036,9 @@ const EventDetailsPage = ({
 
 
 
-                {/* Step 3: Show QR Code and Transaction Summary after Ref Number */}
+                {/* Step 3: Show QR Code */}
                 {paymentMethod === "qr" && qrCode && (
                   <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-950 border border-purple-500 rounded-xl space-y-4">
-
-                    {/* QR Code */}
                     <div className="flex items-center space-x-4">
                       <img
                         src={qrCode}
@@ -1064,11 +1053,18 @@ const EventDetailsPage = ({
                         </p>
                       </div>
                     </div>
+                  </div>
+                )}
 
-                    {/* Transaction Input BELOW QR */}
+                {(paymentMethod === "qr" || paymentMethod === "link") && (
+                  <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-950 border border-purple-500 rounded-xl space-y-4">
+                    {paymentMethod === "link" && (
+                      <p className="text-xs text-green-500 mb-2 font-semibold">Payment link opened in a new tab. After paying, please enter your transaction ID below.</p>
+                    )}
+                    {/* Transaction Input */}
                     <div className="pt-4 border-t border-gray-200 dark:border-border-1">
                       <label className="text-xs text-gray-500 dark:text-text-3">
-                        Enter Last 4 digits of Transaction ID
+                        Enter Last 4 digits of Transaction ID <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -1081,47 +1077,46 @@ const EventDetailsPage = ({
                             "Payment Ref (Last 4 digits)": val,
                           }));
                         }}
-                        className="w-full mt-2 px-3 py-2 rounded-lg bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border border-gray-600 text-gray-900 dark:text-text-1 text-sm tracking-widest text-center"
+                        className="w-full mt-2 px-3 py-2 rounded-lg bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border text-gray-900 dark:text-text-1 text-sm tracking-widest text-center"
                         placeholder="1234"
                       />
-                      {/* Screenshot Upload */}
-                      {/* Screenshot Upload */}
-                      <div className="mt-4">
-                        <label className="text-xs text-gray-500 dark:text-text-3">
-                          Upload Payment Screenshot <span className="text-red-500">*</span>
-                        </label>
 
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files[0];
+                      {/* Screenshot Upload (Only for QR) */}
+                      {paymentMethod === "qr" && (
+                        <div className="mt-4">
+                          <label className="text-xs text-gray-500 dark:text-text-3">
+                            Upload Payment Screenshot <span className="text-red-500">*</span>
+                          </label>
 
-                            setFormData((p) => ({
-                              ...p,
-                              paymentScreenshot: file,
-                            }));
-
-                            // 🔥 clear error instantly when file selected
-                            if (file) {
-                              setFormErrors((prev) => ({
-                                ...prev,
-                                paymentScreenshot: undefined,
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              setFormData((p) => ({
+                                ...p,
+                                paymentScreenshot: file,
                               }));
-                            }
-                          }}
-                          className={`w-full mt-2 px-3 py-2 rounded-lg bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border text-gray-900 dark:text-text-1 text-sm ${formErrors.paymentScreenshot
-                            ? "border-red-500"
-                            : "border-gray-600"
-                            }`}
-                        />
+                              if (file) {
+                                setFormErrors((prev) => ({
+                                  ...prev,
+                                  paymentScreenshot: undefined,
+                                }));
+                              }
+                            }}
+                            className={`w-full mt-2 px-3 py-2 rounded-lg bg-white dark:bg-bg-1 border border-gray-200 dark:border-border-1 border text-gray-900 dark:text-text-1 text-sm ${formErrors.paymentScreenshot
+                              ? "border-red-500"
+                              : "border-gray-600"
+                              }`}
+                          />
+                          {formErrors.paymentScreenshot && (
+                            <p className="text-xs text-red-400 mt-1">
+                              {formErrors.paymentScreenshot}
+                            </p>
+                          )}
+                        </div>
+                      )}
 
-                        {formErrors.paymentScreenshot && (
-                          <p className="text-xs text-red-400 mt-1">
-                            {formErrors.paymentScreenshot}
-                          </p>
-                        )}
-                      </div>
                       {showBillAfterRef && (
                         <p className="mt-2 text-xs text-green-400">
                           ✔ Transaction captured: {formData["Payment Ref (Last 4 digits)"]}
@@ -1155,37 +1150,55 @@ const EventDetailsPage = ({
                       return;
                     }
 
+                    if (paymentMethod === "link" && displayEvent.paymentLink) {
+                      window.open(displayEvent.paymentLink, "_blank");
+                      setShowBilling(true);
+                      return;
+                    }
+
                     // GATEWAY PAYMENT
                     if (paymentMethod === "gateway") {
                       setIsSubmitting(true);
 
-                      const res = await fetch("/api/create-order", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          eventId: displayEvent.id || displayEvent._id,
-                          amount: totalAmount,
-                          email: userEmail,
-                        }),
-                      });
+                      try {
+                        const res = await fetch("/api/billdesk-order", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            eventId: displayEvent.id || displayEvent._id,
+                            amount: totalAmount,
+                            email: userEmail,
+                          }),
+                        });
 
-                      const data = await res.json();
+                        const data = await res.json();
 
-                      // 🔴 Safety check
-                      if (!data.payment_session_id) {
-                        alert("Failed to create payment session");
-                        console.error("Create order failed:", data);
+                        // 🔴 Safety check
+                        if (!data.msg || !data.actionUrl) {
+                          alert("Failed to initialize payment gateway");
+                          console.error("Create order failed:", data);
+                          setIsSubmitting(false);
+                          return;
+                        }
+
+                        // ✅ Redirect to BillDesk checkout using hidden form
+                        const form = document.createElement("form");
+                        form.method = "POST";
+                        form.action = data.actionUrl;
+
+                        const msgInput = document.createElement("input");
+                        msgInput.type = "hidden";
+                        msgInput.name = "msg";
+                        msgInput.value = data.msg;
+                        form.appendChild(msgInput);
+
+                        document.body.appendChild(form);
+                        form.submit();
+                      } catch (err) {
+                        console.error("Payment initialization error:", err);
+                        alert("Something went wrong initializing the payment.");
                         setIsSubmitting(false);
-                        return;
                       }
-
-                      // ✅ Open Cashfree checkout
-                      // ✅ Open Cashfree checkout
-                      const cashfree = new window.Cashfree({ mode: "production" });
-
-                      cashfree.checkout({
-                        paymentSessionId: data.payment_session_id,
-                      });
 
                       return;
                     }
@@ -1201,7 +1214,9 @@ const EventDetailsPage = ({
                     ? "Submitting..."
                     : (isFree || pricingMode === "free")
                       ? "Submit"
-                      : "Continue"}
+                      : paymentMethod === "link"
+                        ? "Proceed to Pay"
+                        : "Continue"}
                 </button>
               ) : (
 
@@ -1215,22 +1230,20 @@ const EventDetailsPage = ({
                     (pricingMode === "flexible" && totalAmount === 0) ||
 
                     (
-                      paymentMethod === "qr" &&
                       !isFree &&
                       (
-                        (formData["Payment Ref (Last 4 digits)"] || "").length !== 4 ||
-                        !formData.paymentScreenshot
+                        (paymentMethod === "qr" && ((formData["Payment Ref (Last 4 digits)"] || "").length !== 4 || !formData.paymentScreenshot)) ||
+                        (paymentMethod === "link" && (formData["Payment Ref (Last 4 digits)"] || "").length !== 4)
                       )
                     )
                   }
                   className={`px-6 py-2 rounded-lg text-sm font-semibold text-gray-900 dark:text-text-1 flex items-center transition-all ${isSubmitting ||
                     (pricingMode === "flexible" && totalAmount === 0) ||
                     (
-                      paymentMethod === "qr" &&
                       !isFree &&
                       (
-                        (formData["Payment Ref (Last 4 digits)"] || "").length !== 4 ||
-                        !formData.paymentScreenshot
+                        (paymentMethod === "qr" && ((formData["Payment Ref (Last 4 digits)"] || "").length !== 4 || !formData.paymentScreenshot)) ||
+                        (paymentMethod === "link" && (formData["Payment Ref (Last 4 digits)"] || "").length !== 4)
                       )
                     )
                     ? "bg-gray-700 cursor-not-allowed"

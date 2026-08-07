@@ -265,7 +265,8 @@ pricingMode: initialData?.pricingMode || "fixed",   // fixed | flexible
 fixedPrice: initialData?.fixedPrice || "",
 ticketTypes: initialData?.ticketTypes || [],       // host will create their own
 paymentCurrency: CURRENCY_CODE,
-paymentMethod: initialData?.paymentMethod || "qr", // qr | gateway
+paymentMethod: initialData?.paymentMethod || "qr", // qr | gateway | link
+    paymentLink: initialData?.paymentLink || "",
     qrCodePreviewUrl: initialData?.qrCode || "",
     qrCodeFile: initialData?.qrCode || null,
     isExternalRegistration: initialData?.isExternalRegistration || false,
@@ -382,6 +383,7 @@ useEffect(() => {
       fixedPrice: initialData.fixedPrice || "",
       ticketTypes: initialData.ticketTypes || [],
       paymentMethod: initialData.paymentMethod || "qr",
+      paymentLink: initialData.paymentLink || "",
       qrCodePreviewUrl: initialData.qrCode || "",
       qrCodeFile: initialData.qrCode || null,
       isExternalRegistration: initialData.isExternalRegistration || false,
@@ -833,6 +835,7 @@ eventEnd: eventData.eventEnd,
 fixedPrice: eventData.fixedPrice,
 ticketTypes: eventData.ticketTypes,
 paymentMethod: eventData.paymentMethod,
+        paymentLink: eventData.paymentLink,
         qrCode: qrCodeUrl,
         registrationStart: eventData.registrationStart,
         registrationEnd: eventData.registrationEnd,
@@ -1071,7 +1074,35 @@ paymentMethod: eventData.paymentMethod,
 />
     Online Gateway
   </label>
+
+  <label className="flex items-center gap-2">
+    <input
+      type="radio"
+      name="paymentMethod"
+      checked={eventData.paymentMethod === "link"}
+      onChange={() =>
+        setEventData(p => ({ ...p, paymentMethod: "link" }))
+      }
+    />
+    Payment Link
+  </label>
 </div>
+
+{eventData.paymentMethod === "link" && (
+  <div className="mt-4">
+    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      Payment Gateway Link (e.g. Razorpay, Stripe)
+    </label>
+    <input
+      type="url"
+      name="paymentLink"
+      value={eventData.paymentLink}
+      onChange={handleInputChange}
+      placeholder="https://rzp.io/l/..."
+      className="w-full mt-1 p-2 rounded-lg bg-gray-50 dark:bg-bg-1 border border-gray-300 dark:border-border-1 focus:ring-purple-500 text-gray-900 dark:text-gray-100"
+    />
+  </div>
+)}
 
     {/* Fixed price */}
     {eventData.pricingMode === "fixed" && (

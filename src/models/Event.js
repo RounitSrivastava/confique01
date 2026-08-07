@@ -24,10 +24,10 @@ const RegistrationSchema = new mongoose.Schema(
       default: null,
     },
 
-    // qr | gateway
+// qr | gateway | link
 paymentMethod: {
   type: String,
-  enum: ["qr", "gateway"],
+  enum: ["qr", "gateway", "link"],
   default: "qr",
 },
 
@@ -197,9 +197,14 @@ groupLink: {
 
     paymentMethod: {
   type: String,
-  enum: ["qr", "gateway"],
+  enum: ["qr", "gateway", "link"],
   default: "qr",
 },
+
+    paymentLink: {
+      type: String,
+      default: "",
+    },
 
     fixedPrice: {
       type: Number,
